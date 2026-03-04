@@ -70,6 +70,24 @@ describe UrlRedirectsController, inertia: true do
       expect(event.platform).to eq Platform::WEB
     end
 
+    it "retries on primary database when url redirect is not found on replica" do
+      token = @url_redirect.token
+      replica_miss = true
+      allow(UrlRedirect).to receive(:find_by).and_wrap_original do |method, **args|
+        if replica_miss && args[:token] == token
+          # Simulate replication lag: first lookup returns nil (replica miss)
+          replica_miss = false
+          nil
+        else
+          method.call(**args)
+        end
+      end
+
+      expect(ActiveRecord::Base.connection).to receive(:stick_to_primary!).at_least(:once).and_call_original
+      get :download_page, params: { id: token }
+      expect(response).to be_successful
+    end
+
     context "when mobile view param is passed" do
       it "renders correctly" do
         get :download_page, params: { id: @token, display: "mobile_app" }

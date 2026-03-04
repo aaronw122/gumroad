@@ -317,6 +317,14 @@ class UrlRedirectsController < ApplicationController
 
     def fetch_url_redirect
       @url_redirect = UrlRedirect.find_by(token: params[:id])
+
+      # Retry on primary database to handle replication lag for recently created records
+      # (e.g., guest user redirected to download page immediately after checkout)
+      if @url_redirect.nil?
+        ActiveRecord::Base.connection.stick_to_primary!
+        @url_redirect = UrlRedirect.find_by(token: params[:id])
+      end
+
       return e404 if @url_redirect.nil?
 
       # 404 if the installment had some files when this url redirect was created but now it does not (i.e. if the installment was deleted, or the creator removed the files).
