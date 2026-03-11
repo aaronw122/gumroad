@@ -14,9 +14,17 @@ class SendWorkflowPostEmailsJob
 
     @filters = @post.audience_members_filter_params
     @filters[:created_after] = Time.zone.parse(earliest_valid_time) if earliest_valid_time
-    Makara::Context.release_all
-    @members = AudienceMember.filter(seller_id: @post.seller_id, params: @filters, with_ids: true).
-      select(:id, :email, :details, :purchase_id, :follower_id, :affiliate_id).to_a
+
+    if Feature.active?(:audience_es_queries)
+      es_results = AudienceMember.es_filter_with_ids(seller_id: @post.seller_id, params: @filters)
+      @members = es_results.map do |r|
+        OpenStruct.new(id: r[:id], email: r[:email], details: r[:details], purchase_id: r[:purchase_id], follower_id: r[:follower_id], affiliate_id: r[:affiliate_id])
+      end
+    else
+      Makara::Context.release_all
+      @members = AudienceMember.filter(seller_id: @post.seller_id, params: @filters, with_ids: true).
+        select(:id, :email, :details, :purchase_id, :follower_id, :affiliate_id).to_a
+    end
 
     @members.each do |member|
       if @post.seller_or_product_or_variant_type?
