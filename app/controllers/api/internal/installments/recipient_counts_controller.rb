@@ -23,8 +23,14 @@ class Api::Internal::Installments::RecipientCountsController < Api::Internal::Ba
     installment = Installment.new(permitted_params)
     installment.seller = current_seller
 
+    audience_count = if Feature.active?(:audience_es_counts)
+      AudienceMember.es_count(seller_id: current_seller.id)
+    else
+      current_seller.audience_members.count
+    end
+
     render json: {
-      audience_count: current_seller.audience_members.count,
+      audience_count: audience_count,
       recipient_count: installment.audience_members_count
     }
   end
