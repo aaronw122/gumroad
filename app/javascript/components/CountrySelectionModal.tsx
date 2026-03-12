@@ -1,4 +1,3 @@
-import { router } from "@inertiajs/react";
 import * as React from "react";
 import { cast } from "ts-safe-cast";
 
@@ -57,7 +56,7 @@ export const CountrySelectionModal = ({ country: initialCountry, countries }: Pr
           if (previousRoute) {
             window.history.back();
           } else {
-            router.get(Routes.dashboard_path());
+            window.location.href = Routes.dashboard_path();
           }
         }}
         title="Where are you located?"
