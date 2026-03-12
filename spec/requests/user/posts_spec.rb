@@ -508,7 +508,7 @@ describe("Posts on seller profile", type: :system, js: true) do
         login_as seller
         visit "#{seller.subdomain_with_protocol}/p/#{post.slug}"
         within_section "Write a comment", section_element: :section do
-          expect(page).to have_css("img[src*='#{seller.avatar.key}']")
+          expect(page).to have_css("img[src*='#{seller.avatar_variant.key}']")
         end
       end
 
@@ -516,7 +516,7 @@ describe("Posts on seller profile", type: :system, js: true) do
         login_as commenter
         visit "#{seller.subdomain_with_protocol}/p/#{post.slug}"
         within_section "Write a comment", section_element: :section do
-          expect(page).to have_css("img[src*='#{commenter.avatar.key}']")
+          expect(page).to have_css("img[src*='#{commenter.avatar_variant.key}']")
         end
       end
 
@@ -525,7 +525,7 @@ describe("Posts on seller profile", type: :system, js: true) do
         visit "#{seller.subdomain_with_protocol}/p/#{post.slug}"
         within_section "2 comments" do
           within "article:nth-child(1)" do
-            expect(page).to have_css("img[src*='#{seller.avatar.key}']")
+            expect(page).to have_css("img[src*='#{seller.avatar_variant.key}']")
           end
           within "article:nth-child(2)" do
             expect(page).to have_css("img[src='#{ActionController::Base.helpers.asset_url("gumroad-default-avatar-5.png")}']")
