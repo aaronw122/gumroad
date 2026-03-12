@@ -103,7 +103,10 @@ describe("Email List", :js, :sidekiq_inline, :elasticsearch_wait_for_refresh, ty
           login_as buyer
           visit custom_domain_view_post_url(host: seller.subdomain_with_protocol, slug: installment3.slug)
           wait_for_ajax
+          # Wait for the async useEffect POST (incrementPostViews) to create the InstallmentEvent
+          wait_until_true { installment3.installment_events.reload.count == 1 }
         end
+        UpdateInstallmentEventsCountCacheWorker.new.perform(installment3.id)
         refresh
         expect(page).to have_table_row({ "Subject" => "Email 3 (sent)", "Emailed" => "--", "Opened" => "--", "Clicks" => "0", "Views" => "1" })
       end
