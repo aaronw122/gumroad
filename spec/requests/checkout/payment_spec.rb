@@ -35,6 +35,45 @@ describe "Checkout payment", :js, type: :system do
     expect(page).to_not have_field("PayPal", type: "radio")
   end
 
+  it "renders the Stripe Link iframe alongside the card element iframe" do
+    visit "/l/#{@product.unique_permalink}"
+    add_to_cart(@product)
+
+    within_fieldset "Card information" do
+      iframes = all("iframe", minimum: 2, wait: 10)
+      expect(iframes.length).to be >= 2
+    end
+  end
+
+  it "allows auto-filling card details from Stripe Link" do
+    visit "/l/#{@product.unique_permalink}"
+    add_to_cart(@product)
+
+    fill_in "Email address", with: "gumroad-stripe-link@example.com"
+    fill_in "Full name", with: "John Doe"
+    fill_in "ZIP code", with: "94107"
+
+    within_fieldset "Card information" do
+      within_frame(1) do
+        click_on "Autofill with Link"
+      end
+    end
+
+    within_frame(3) do
+      fill_in "Email", with: "gumroad-stripe-link@example.com"
+      fill_in "search-codeControllingInput", with: "000000"
+      click_on "Continue"
+    end
+
+    click_on "Pay"
+    expect(page).to have_alert(text: "Your purchase was successful!", visible: :all)
+
+    purchase = Purchase.last
+    expect(purchase.successful?).to be(true)
+    expect(purchase.card_type).to eq("visa")
+    expect(purchase.card_visual).to eq("**** **** **** 4242")
+  end
+
   context "email typo suggestions" do
     before { Feature.activate(:require_email_typo_acknowledgment) }
 

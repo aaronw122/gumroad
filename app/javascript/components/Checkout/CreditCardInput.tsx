@@ -78,7 +78,7 @@ export const CreditCardInput = ({
                 style: { base: baseStripeStyle ?? {} },
                 hidePostalCode: true,
                 disabled: disabled ?? false,
-                disableLink: true,
+                disableLink: false,
                 hideIcon: true,
               }}
               onReady={onReady}
