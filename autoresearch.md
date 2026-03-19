@@ -90,6 +90,13 @@ Reduce the number of flaky test failures in the Gumroad CI pipeline. Tests run o
 - **CI Run**: 23275419428 — **0 failed jobs, 0 failed specs** (first fully clean run!)
 - **Status**: KEEP
 
+### Experiment 6: Checkout stale element rescue + Circle dropdown wait (a86d85415, 697b26c37)
+- **Target 1**: `spec/support/checkout_helpers.rb` — address verification block only rescued `ElementNotFound`, not `StaleElementReferenceError`
+  - **Fix**: Add `Selenium::WebDriver::Error::StaleElementReferenceError` to rescue clause
+- **Target 2**: `spec/requests/products/edit/integrations/circle_integrations_spec.rb:24,:108` — "Select a community" dropdown not loaded when select is called
+  - **Fix**: Wait for select with specific option before interacting (`have_select("Select a community", with_options: ["Gumroad [archived]"])`)
+- **CI Run**: Pending
+
 ### Remaining Issues (for monitoring)
 - `spec/requests/purchases/product/taxes_spec.rb` — TaxJar VCR flakiness (~20-30% of runs)
 - `spec/requests/settings/payments_spec.rb` — Stripe rate limit cascade (partially mitigated by StripeRetryHelper)
