@@ -132,6 +132,7 @@ Reduce the number of flaky test failures in the Gumroad CI pipeline. Tests run o
 | 23292519245 | 0 | 0 | Ninth clean run! force_vcr_on: true on preorder tax test |
 | 23293525967 | 1 | 1 | taxes_spec WI digital product tax (no blur → no tax calc) |
 | 23294585341 | 0 | 0 | Tenth clean run! Digital product tax fix validated |
+| 23295354893 | 60 | 60 | Infrastructure: Shakapacker asset compilation failure (not test code) |
 
 ### Experiment 8: Shipping preorder tax wait (663164330)
 - **Target**: `spec/requests/purchases/product/shipping/shipping_physical_preorder_spec.rb:74` — "Sales tax US$1.07" not found before checkout
