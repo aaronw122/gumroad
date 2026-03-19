@@ -117,6 +117,7 @@ Reduce the number of flaky test failures in the Gumroad CI pipeline. Tests run o
 | 23279308447 | 1 | 2 | shipping_to_virtual_countries alert timing |
 | 23279976826 | 1 | 2 | circle_integrations_spec (VCR threading) |
 | 23280560920 | 2 | 3 | circle invalid_api_key (force_vcr_on broke it) + Canada Tax VCR |
+| 23281217235 | 2 | 3 | shipping_preorder_spec:74 tax blur + circle_integrations_spec:24,:112 VCR |
 
 ### Experiment 8: Shipping preorder tax wait (663164330)
 - **Target**: `spec/requests/purchases/product/shipping/shipping_physical_preorder_spec.rb:74` — "Sales tax US$1.07" not found before checkout
@@ -132,13 +133,19 @@ Reduce the number of flaky test failures in the Gumroad CI pipeline. Tests run o
 - **CI Run**: 23279308447 — 1 failed job (shipping_to_virtual_countries_spec — alert timing, unrelated)
 - **Status**: KEEP — targeted tax specs all passed
 
-### Experiment 10: Circle integration VCR fix attempts (da676148c, f82f89ed1)
-- **Target**: `spec/requests/products/edit/integrations/circle_integrations_spec.rb:24,:110` — VCR not replaying Circle API responses
-  - **Attempted**: `force_vcr_on: true` on describe block — broke `shows error on invalid api_key` test (line 69) which intentionally makes calls outside VCR cassette
-  - **Reverted**: `force_vcr_on: true` in f82f89ed1
-  - **Root cause**: VCR is turned off for JS tests (`setup_js`), and `vcr_turned_on` re-enables it but the Circle API call from Puma server thread may not always be intercepted. This is a fundamental VCR/WebMock threading issue.
+### Experiment 10: Circle integration VCR fix attempts (da676148c, f82f89ed1, 2cc32d6dd)
+- **Target**: `spec/requests/products/edit/integrations/circle_integrations_spec.rb:24,:112` — VCR not replaying Circle API responses
+  - **Attempt 1**: `force_vcr_on: true` on describe block — broke `shows error on invalid api_key` test (line 69) which intentionally makes calls outside VCR cassette. Reverted in f82f89ed1.
+  - **Attempt 2** (2cc32d6dd): `force_vcr_on: true` on describe block + `force_vcr_on: false` on the invalid_api_key test to override. This keeps VCR on for all tests that need it but lets the invalid key test work normally.
+  - **Root cause**: VCR is turned off by `setup_js` for JS tests, then turned back on by `vcr_turned_on`. The off/on cycle creates a window where Puma thread requests miss VCR interception.
   - **Also added**: `allow_playback_repeats: true` to all VCR cassette calls (kept, not harmful)
-- **Status**: OPEN — sporadic, no reliable fix found yet
+- **Status**: TESTING — awaiting CI validation
+
+### Experiment 11: Shipping preorder tax blur via JS (2cc32d6dd)
+- **Target**: `spec/requests/purchases/product/shipping/shipping_physical_preorder_spec.rb:74` — "Sales tax US$1.07" not found
+  - Root cause: `send_keys(:tab)` doesn't reliably trigger blur in headless Chrome when focus is in Stripe iframe
+  - **Fix**: Replace `send_keys(:tab)` with `execute_script("arguments[0].focus(); arguments[0].blur();")` to directly dispatch DOM events
+- **Status**: TESTING — awaiting CI validation
 
 ### Remaining Issues (for monitoring)
 - `spec/requests/products/edit/integrations/circle_integrations_spec.rb` — VCR threading issue with Circle API calls (sporadic)
