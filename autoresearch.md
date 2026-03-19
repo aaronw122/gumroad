@@ -115,6 +115,8 @@ Reduce the number of flaky test failures in the Gumroad CI pipeline. Tests run o
 | 23278249756 | 1 | 1 | Shipping preorder tax timing (fixed in Exp 8) |
 | 23278784509 | 1 | 1 | taxes_spec:13 async tax (fixed in Exp 9) |
 | 23279308447 | 1 | 2 | shipping_to_virtual_countries alert timing |
+| 23279976826 | 1 | 2 | circle_integrations_spec (VCR threading) |
+| 23280560920 | 2 | 3 | circle invalid_api_key (force_vcr_on broke it) + Canada Tax VCR |
 
 ### Experiment 8: Shipping preorder tax wait (663164330)
 - **Target**: `spec/requests/purchases/product/shipping/shipping_physical_preorder_spec.rb:74` — "Sales tax US$1.07" not found before checkout
@@ -130,9 +132,18 @@ Reduce the number of flaky test failures in the Gumroad CI pipeline. Tests run o
 - **CI Run**: 23279308447 — 1 failed job (shipping_to_virtual_countries_spec — alert timing, unrelated)
 - **Status**: KEEP — targeted tax specs all passed
 
+### Experiment 10: Circle integration VCR fix attempts (da676148c, f82f89ed1)
+- **Target**: `spec/requests/products/edit/integrations/circle_integrations_spec.rb:24,:110` — VCR not replaying Circle API responses
+  - **Attempted**: `force_vcr_on: true` on describe block — broke `shows error on invalid api_key` test (line 69) which intentionally makes calls outside VCR cassette
+  - **Reverted**: `force_vcr_on: true` in f82f89ed1
+  - **Root cause**: VCR is turned off for JS tests (`setup_js`), and `vcr_turned_on` re-enables it but the Circle API call from Puma server thread may not always be intercepted. This is a fundamental VCR/WebMock threading issue.
+  - **Also added**: `allow_playback_repeats: true` to all VCR cassette calls (kept, not harmful)
+- **Status**: OPEN — sporadic, no reliable fix found yet
+
 ### Remaining Issues (for monitoring)
+- `spec/requests/products/edit/integrations/circle_integrations_spec.rb` — VCR threading issue with Circle API calls (sporadic)
 - `spec/requests/purchases/product/shipping/shipping_to_virtual_countries_spec.rb` — alert timing race condition in success message
-- `spec/requests/purchases/product/taxes_spec.rb` — physical product tests may still have Chrome crash issues
+- `spec/requests/purchases/product/taxes_spec.rb:3735` — Canada Tax "assigns the selected province" VCR threading issue
 - `spec/requests/settings/payments_spec.rb` — Stripe rate limit cascade (partially mitigated by StripeRetryHelper)
 - `spec/services/exports/payouts/annual_spec.rb` — date ordering in CSV export (rare)
 - Various sporadic Chrome/Selenium issues: xpath "/html" not found, undefined method 'map' for true
