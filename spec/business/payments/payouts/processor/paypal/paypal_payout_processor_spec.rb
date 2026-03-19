@@ -12,16 +12,16 @@ describe PaypalPayoutProcessor do
       end
 
       it "returns false" do
-        expect(described_class.is_user_payable(user, 100_01)).to eq(false)
+        expect(described_class.is_user_payable(user, 10_01)).to eq(false)
       end
 
       it "adds a payout skipped note if the flag is set" do
         expect do
-          described_class.is_user_payable(user, 100_01)
+          described_class.is_user_payable(user, 10_01)
         end.not_to change { user.comments.with_type_payout_note.count }
 
         expect do
-          described_class.is_user_payable(user, 100_01, add_comment: true)
+          described_class.is_user_payable(user, 10_01, add_comment: true)
         end.to change { user.comments.with_type_payout_note.count }.by(1)
 
         content = "Payout via PayPal on #{Time.current.to_fs(:formatted_date_full_month)} skipped because the account does not have a valid PayPal payment address"
@@ -30,13 +30,13 @@ describe PaypalPayoutProcessor do
 
       it "returns true if creator has a paypal account connected", :vcr do
         create(:merchant_account_paypal, user:, charge_processor_merchant_id: "B66YJBBNCRW6L")
-        expect(described_class.is_user_payable(user, 100_01)).to eq(true)
+        expect(described_class.is_user_payable(user, 10_01)).to eq(true)
       end
     end
 
     describe "creator has set a payment address" do
       it "returns true" do
-        expect(described_class.is_user_payable(user, 100_01)).to eq(true)
+        expect(described_class.is_user_payable(user, 10_01)).to eq(true)
       end
 
       describe "when the user has a previous payout in processing state" do
@@ -46,19 +46,19 @@ describe PaypalPayoutProcessor do
         end
 
         it "returns false " do
-          expect(described_class.is_user_payable(user, 100_01)).to eq(false)
+          expect(described_class.is_user_payable(user, 10_01)).to eq(false)
 
           user.payments.processing.each { |payment| payment.mark_completed! }
-          expect(described_class.is_user_payable(user, 100_01)).to eq(true)
+          expect(described_class.is_user_payable(user, 10_01)).to eq(true)
         end
 
         it "adds a payout skipped note if the flag is set" do
           expect do
-            described_class.is_user_payable(user, 100_01)
+            described_class.is_user_payable(user, 10_01)
           end.not_to change { user.comments.with_type_payout_note.count }
 
           expect do
-            described_class.is_user_payable(user, 100_01, add_comment: true)
+            described_class.is_user_payable(user, 10_01, add_comment: true)
           end.to change { user.comments.with_type_payout_note.count }.by(1)
 
           date = Time.current.to_fs(:formatted_date_full_month)
@@ -73,16 +73,16 @@ describe PaypalPayoutProcessor do
         end
 
         it "returns false" do
-          expect(described_class.is_user_payable(user, 100_01)).to eq(false)
+          expect(described_class.is_user_payable(user, 10_01)).to eq(false)
         end
 
         it "adds a payout skipped note if the flag is set" do
           expect do
-            described_class.is_user_payable(user, 100_01)
+            described_class.is_user_payable(user, 10_01)
           end.not_to change { user.comments.with_type_payout_note.count }
 
           expect do
-            described_class.is_user_payable(user, 100_01, add_comment: true)
+            described_class.is_user_payable(user, 10_01, add_comment: true)
           end.to change { user.comments.with_type_payout_note.count }.by(1)
 
           date = Time.current.to_fs(:formatted_date_full_month)
@@ -97,16 +97,16 @@ describe PaypalPayoutProcessor do
         end
 
         it "returns false" do
-          expect(described_class.is_user_payable(user, 100_01)).to eq(false)
+          expect(described_class.is_user_payable(user, 10_01)).to eq(false)
         end
 
         it "does not add a payout skipped note" do
           expect do
-            described_class.is_user_payable(user, 100_01)
+            described_class.is_user_payable(user, 10_01)
           end.not_to change { user.comments.with_type_payout_note.count }
 
           expect do
-            described_class.is_user_payable(user, 100_01, add_comment: true)
+            described_class.is_user_payable(user, 10_01, add_comment: true)
           end.not_to change { user.comments.with_type_payout_note.count }
         end
       end
@@ -117,16 +117,16 @@ describe PaypalPayoutProcessor do
         end
 
         it "returns false" do
-          expect(described_class.is_user_payable(user, 100_01)).to eq(false)
+          expect(described_class.is_user_payable(user, 10_01)).to eq(false)
         end
 
         it "does not add a payout skipped note" do
           expect do
-            described_class.is_user_payable(user, 100_01)
+            described_class.is_user_payable(user, 10_01)
           end.not_to change { user.comments.with_type_payout_note.count }
 
           expect do
-            described_class.is_user_payable(user, 100_01, add_comment: true)
+            described_class.is_user_payable(user, 10_01, add_comment: true)
           end.not_to change { user.comments.with_type_payout_note.count }
         end
       end
@@ -134,7 +134,7 @@ describe PaypalPayoutProcessor do
 
     describe "instant payouts" do
       it "returns false" do
-        expect(described_class.is_user_payable(user, 100_01, payout_type: Payouts::PAYOUT_TYPE_INSTANT)).to be(false)
+        expect(described_class.is_user_payable(user, 10_01, payout_type: Payouts::PAYOUT_TYPE_INSTANT)).to be(false)
       end
     end
   end

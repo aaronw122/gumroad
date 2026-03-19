@@ -6452,21 +6452,21 @@ describe("Payments Settings Scenario", type: :system, js: true) do
       it "allows updating the payout threshold" do
         visit settings_payments_path
 
-        field = find_field("Minimum payout threshold", with: "100")
+        field = find_field("Minimum payout threshold", with: "10")
         field.fill_in(with: "5")
 
         expect(field["aria-invalid"]).to eq("true")
-        expect(page).to have_text("The minimum payout threshold for United States is $100.")
+        expect(page).to have_text("The minimum payout threshold for United States is $10.")
         expect(page).to have_button("Update settings", disabled: true)
 
-        field.fill_in(with: "150")
+        field.fill_in(with: "15")
         expect(field["aria-invalid"]).to eq("false")
-        expect(page).to have_text("The minimum payout threshold for United States is $100.")
+        expect(page).to have_text("The minimum payout threshold for United States is $10.")
 
         click_on "Update settings"
 
         expect(page).to have_alert(text: "Thanks! You're all set.")
-        expect(user.reload.minimum_payout_amount_cents).to eq(15000)
+        expect(user.reload.minimum_payout_amount_cents).to eq(1500)
       end
 
       context "when the user is in a cross-border payout country" do
@@ -6480,21 +6480,21 @@ describe("Payments Settings Scenario", type: :system, js: true) do
         it "shows the minimum payout threshold for the country" do
           visit settings_payments_path
 
-          field = find_field("Minimum payout threshold", with: "100")
+          field = find_field("Minimum payout threshold", with: "34.74")
           field.fill_in(with: "30")
 
           expect(field["aria-invalid"]).to eq("true")
-          expect(page).to have_text("The minimum payout threshold for South Korea is $100.")
+          expect(page).to have_text("The minimum payout threshold for South Korea is $34.74.")
           expect(page).to have_button("Update settings", disabled: true)
 
-          field.fill_in(with: "150")
+          field.fill_in(with: "40")
           expect(field["aria-invalid"]).to eq("false")
-          expect(page).to have_text("The minimum payout threshold for South Korea is $100.")
+          expect(page).to have_text("The minimum payout threshold for South Korea is $34.74.")
 
           click_on "Update settings"
 
           expect(page).to have_alert(text: "Thanks! You're all set.")
-          expect(user.reload.minimum_payout_amount_cents).to eq(15000)
+          expect(user.reload.minimum_payout_amount_cents).to eq(4000)
         end
 
         it "loads the raw stored payout threshold in the form field, not the effective minimum" do
@@ -6505,12 +6505,12 @@ describe("Payments Settings Scenario", type: :system, js: true) do
           field = find_field("Minimum payout threshold")
           expect(field.value).to eq("10")
 
-          fill_in "Minimum payout threshold", with: "150", fill_options: { clear: :backspace }
+          fill_in "Minimum payout threshold", with: "35", fill_options: { clear: :backspace }
 
           click_on "Update settings"
 
           expect(page).to have_alert(text: "Thanks! You're all set.")
-          expect(user.reload.payout_threshold_cents).to eq(15000)
+          expect(user.reload.payout_threshold_cents).to eq(3500)
         end
       end
     end
