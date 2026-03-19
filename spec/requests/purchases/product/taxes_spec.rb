@@ -13,8 +13,11 @@ describe("Product Page - Tax Scenarios", type: :system, js: true) do
     it "calls the tax endpoint for a real zip code that doesn't show in the enterprise zip codes database" do
       visit("/l/#{@product.unique_permalink}")
       add_to_cart(@product)
-      check_out(@product, address: { street: "3029 W Sherman Rd", city: "San Tan Valley", state: "AZ", zip_code: "85144", country: "US" }, should_verify_address: true) do
+      check_out(@product, address: { street: "3029 W Sherman Rd", city: "San Tan Valley", state: "AZ", zip_code: "85144" }, should_verify_address: true) do
+        expect(page).to have_field("ZIP code", with: "85144")
+        find_field("ZIP code").send_keys(:tab)
         wait_for_ajax
+        expect(page).to have_text("Sales tax", normalize_ws: true)
         expect(page).to have_text("Total US$553.50", normalize_ws: true)
       end
 
