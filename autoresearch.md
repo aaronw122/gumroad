@@ -130,6 +130,8 @@ Reduce the number of flaky test failures in the Gumroad CI pipeline. Tests run o
 | 23290109410 | 2 | 6 | Chrome crash on 2 nodes (infrastructure, not test code) |
 | 23291175323 | 1 | 1 | preorder_spec:74 tax again (VCR threading — fixed with force_vcr_on) |
 | 23292519245 | 0 | 0 | Ninth clean run! force_vcr_on: true on preorder tax test |
+| 23293525967 | 1 | 1 | taxes_spec WI digital product tax (no blur → no tax calc) |
+| 23294585341 | 0 | 0 | Tenth clean run! Digital product tax fix validated |
 
 ### Experiment 8: Shipping preorder tax wait (663164330)
 - **Target**: `spec/requests/purchases/product/shipping/shipping_physical_preorder_spec.rb:74` — "Sales tax US$1.07" not found before checkout
@@ -184,6 +186,13 @@ Reduce the number of flaky test failures in the Gumroad CI pipeline. Tests run o
   - **Fix**: Add `force_vcr_on: true` metadata to the test + use JS `nativeInputValueSetter` to force React onChange for ZIP field
   - Previous attempts (send_keys, ctrl+a, clear+refill, toggle dropdown) all failed because the core issue was VCR not intercepting the API call, not the form interaction
 - **CI Run**: 23292519245 — **0 failed jobs, 0 failed specs** (ninth clean run!)
+- **Status**: KEEP
+
+### Experiment 15: Digital product US sales tax wait + blur (2490dcd16, 02a510f79)
+- **Target**: `spec/requests/purchases/product/taxes_spec.rb` — US sales tax tests for digital products (WI, WA) submit checkout before TaxJar response
+  - Root cause: `fill_checkout_form` fills ZIP but doesn't trigger blur → React doesn't fire onChange → TaxJar API call never starts → `wait_for_ajax` returns immediately → checkout submits with pre-tax total
+  - **Fix**: Add `wait_for_ajax` + total text assertion blocks (2490dcd16) + `send_keys(:tab)` to trigger ZIP blur (02a510f79) in all 8 US sales tax tests
+- **CI Run**: 23294585341 — **0 failed jobs, 0 failed specs** (tenth clean run!)
 - **Status**: KEEP
 
 ### Remaining Issues (for monitoring)
