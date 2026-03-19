@@ -3,7 +3,7 @@
 require "spec_helper"
 require "shared_examples/authorize_called"
 
-describe("Product Edit Integrations edit - Circle", :without_circle_rate_limit, type: :system, js: true) do
+describe("Product Edit Integrations edit - Circle", :without_circle_rate_limit, type: :system, js: true, force_vcr_on: true) do
   include ProductTieredPricingHelpers
   include ProductEditPageHelpers
 
@@ -25,7 +25,7 @@ describe("Product Edit Integrations edit - Circle", :without_circle_rate_limit, 
       @product.active_integrations << create(:circle_integration)
 
       vcr_turned_on do
-        VCR.use_cassette("#{@vcr_cassette_prefix} modifies an existing integration correctly") do
+        VCR.use_cassette("#{@vcr_cassette_prefix} modifies an existing integration correctly", allow_playback_repeats: true) do
           visit edit_link_path(@product)
           wait_for_ajax
           expect(page).to have_select("Select a community", with_options: ["Gumroad [archived]"])
@@ -48,7 +48,7 @@ describe("Product Edit Integrations edit - Circle", :without_circle_rate_limit, 
 
       expect do
         vcr_turned_on do
-          VCR.use_cassette("#{@vcr_cassette_prefix} disables integration correctly") do
+          VCR.use_cassette("#{@vcr_cassette_prefix} disables integration correctly", allow_playback_repeats: true) do
             visit edit_link_path(@product)
             expect(page).to have_field("Type or paste your API token", with: GlobalConfig.get("CIRCLE_API_KEY"))
             uncheck "Invite your customers to a Circle community", allow_label_click: true
@@ -114,7 +114,7 @@ describe("Product Edit Integrations edit - Circle", :without_circle_rate_limit, 
 
         expect do
           vcr_turned_on do
-            VCR.use_cassette("#{@vcr_cassette_prefix} creates an integration for the product and enables integration for a newly created version") do
+            VCR.use_cassette("#{@vcr_cassette_prefix} creates an integration for the product and enables integration for a newly created version", allow_playback_repeats: true) do
               visit edit_link_path(product)
               check "Invite your customers to a Circle community", allow_label_click: true
               fill_in "Type or paste your API token", with: GlobalConfig.get("CIRCLE_API_KEY")
