@@ -68,7 +68,7 @@ describe("Product Edit Integrations edit - Circle", :without_circle_rate_limit, 
 
     it "shows error on invalid api_key" do
       vcr_turned_on do
-        VCR.use_cassette("#{@vcr_cassette_prefix} shows error on invalid api_key", allow_playback_repeats: true) do
+        VCR.use_cassette("#{@vcr_cassette_prefix} shows error on invalid api_key") do
           visit edit_link_path(@product)
         end
       end

@@ -3741,8 +3741,10 @@ describe("Product Page - Tax Scenarios", type: :system, js: true) do
 
       expect(page).to have_select("Country", selected: "Canada")
       expect(page).to have_select("Province", selected: "ON")
+      wait_for_ajax
 
       select "QC", from: "Province"
+      find_field("Province").send_keys(:tab)
       wait_for_ajax
       expect(page).to have_text("Total US$114.98", normalize_ws: true)
 
