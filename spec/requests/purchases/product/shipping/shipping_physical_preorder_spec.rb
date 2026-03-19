@@ -76,7 +76,11 @@ describe("Product Page - Shipping physical preoder", type: :system, js: true, sh
     add_to_cart(@product)
     check_out(@product, address: { street: "3029 W Sherman Rd", city: "San Tan Valley", state: "AZ", zip_code: "85144" }, should_verify_address: true) do
       wait_for_ajax
-      find_field("ZIP code").send_keys([:control, "a"], "85144", :tab)
+      zip_field = find_field("ZIP code")
+      zip_field.click
+      zip_field.native.clear
+      zip_field.send_keys("85144")
+      zip_field.send_keys(:tab)
       wait_for_ajax
       expect(page).to have_text("Sales tax US$1.07", normalize_ws: true)
       expect(page).to have_text("Subtotal US$16", normalize_ws: true)
