@@ -121,6 +121,7 @@ Reduce the number of flaky test failures in the Gumroad CI pipeline. Tests run o
 | 23282050777 | 0 | 0 | Fourth clean run! Circle force_vcr_on + shipping preorder tax fix |
 | 23282514418 | 0 | 0 | Fifth clean run! Verification run 5 — all fixes stable |
 | 23283351276 | 0 | 0 | Sixth clean run! Continued stability |
+| 23284023272 | 0 | 0 | Seventh clean run! |
 
 ### Experiment 8: Shipping preorder tax wait (663164330)
 - **Target**: `spec/requests/purchases/product/shipping/shipping_physical_preorder_spec.rb:74` — "Sales tax US$1.07" not found before checkout
