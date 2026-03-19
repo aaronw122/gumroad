@@ -95,10 +95,16 @@ Reduce the number of flaky test failures in the Gumroad CI pipeline. Tests run o
   - **Fix**: Add `Selenium::WebDriver::Error::StaleElementReferenceError` to rescue clause
 - **Target 2**: `spec/requests/products/edit/integrations/circle_integrations_spec.rb:24,:108` — "Select a community" dropdown not loaded when select is called
   - **Fix**: Wait for select with specific option before interacting (`have_select("Select a community", with_options: ["Gumroad [archived]"])`)
+- **CI Run**: 23275898731 — 1 failed job (circle_integrations_spec — new failure, fixed in this experiment)
+
+### Experiment 7: Canada Tax wait for tax calculation (b9840b331)
+- **Target**: `spec/requests/purchases/product/taxes_spec.rb:3691,:3715,:3748` — Canada Tax tests get wrong total (10000 vs 11200)
+  - Root cause: TaxJar API call is async; checkout submits before tax calculation completes
+  - **Fix**: Add `wait_for_ajax` + `expect(page).to have_text("Total US$...")` before check_out to ensure tax is applied
 - **CI Run**: Pending
 
 ### Remaining Issues (for monitoring)
-- `spec/requests/purchases/product/taxes_spec.rb` — TaxJar VCR flakiness (~20-30% of runs)
+- `spec/requests/purchases/product/taxes_spec.rb` — physical product tests may still have Chrome crash issues
 - `spec/requests/settings/payments_spec.rb` — Stripe rate limit cascade (partially mitigated by StripeRetryHelper)
 - `spec/services/exports/payouts/annual_spec.rb` — date ordering in CSV export (rare)
-- Various sporadic Chrome/Selenium issues: stale element, undefined method 'map' for true, xpath "/html" not found
+- Various sporadic Chrome/Selenium issues: xpath "/html" not found, undefined method 'map' for true
