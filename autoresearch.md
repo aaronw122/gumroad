@@ -133,6 +133,7 @@ Reduce the number of flaky test failures in the Gumroad CI pipeline. Tests run o
 | 23293525967 | 1 | 1 | taxes_spec WI digital product tax (no blur → no tax calc) |
 | 23294585341 | 0 | 0 | Tenth clean run! Digital product tax fix validated |
 | 23295354893 | 60 | 60 | Infrastructure: Shakapacker asset compilation failure (not test code) |
+| 23296625312 | 0 | 0 | Eleventh clean run! VCR + thumbnail fixes validated |
 
 ### Experiment 8: Shipping preorder tax wait (663164330)
 - **Target**: `spec/requests/purchases/product/shipping/shipping_physical_preorder_spec.rb:74` — "Sales tax US$1.07" not found before checkout
@@ -196,11 +197,19 @@ Reduce the number of flaky test failures in the Gumroad CI pipeline. Tests run o
 - **CI Run**: 23294585341 — **0 failed jobs, 0 failed specs** (tenth clean run!)
 - **Status**: KEEP
 
+### Experiment 16: VCR threading fix for shipping_to_virtual_countries + bundle thumbnail pre-processing (52dddb15f)
+- **Target 1**: `spec/requests/purchases/product/shipping/shipping_to_virtual_countries_spec.rb` — empty alert text on purchase success
+  - Root cause: Same VCR threading issue — `setup_js` turns off VCR, Puma thread API calls (Stripe, EasyPost) miss VCR interception, purchase silently fails
+  - **Fix**: Add `force_vcr_on: true` to describe block
+- **Target 2**: `spec/requests/checkout/bundle_spec.rb:163` — SAVEPOINT error during thumbnail variant processing
+  - Root cause: ActiveStorage processes thumbnail variant in Puma thread during page render, corrupting test transaction savepoint
+  - **Fix**: Pre-process thumbnail variants (`product.thumbnail.url`, `versioned_product.thumbnail.url`) in `before` block before page visits
+- **CI Run**: 23296625312 — **0 failed jobs, 0 failed specs** (eleventh clean run!)
+- **Status**: KEEP
+
 ### Remaining Issues (for monitoring)
 - `spec/requests/products/edit/integrations/circle_integrations_spec.rb` — VCR threading issue with Circle API calls (sporadic)
-- `spec/requests/purchases/product/shipping/shipping_to_virtual_countries_spec.rb` — alert timing race condition in success message
 - `spec/requests/purchases/product/taxes_spec.rb:3735` — Canada Tax "assigns the selected province" VCR threading issue
 - `spec/requests/settings/payments_spec.rb` — Stripe rate limit cascade (partially mitigated by StripeRetryHelper)
 - `spec/services/exports/payouts/annual_spec.rb` — date ordering in CSV export (rare)
-- `spec/requests/checkout/bundle_spec.rb:163` — SAVEPOINT error during thumbnail variant processing (same class as discover_spec)
 - Various sporadic Chrome/Selenium issues: xpath "/html" not found, undefined method 'map' for true, Chrome crash
