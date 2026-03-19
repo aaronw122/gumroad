@@ -93,7 +93,7 @@ describe "Balance Pages Scenario", js: true, type: :system do
       it "show processing payment for current payout" do
         product = create :product, user: seller, name: "Petting Capybaras For Fun And Profit"
 
-        purchase = create :purchase, price_cents: 10000, seller:, link: product, card_type: CardType::PAYPAL, purchase_state: "in_progress"
+        purchase = create :purchase, price_cents: 1000, seller:, link: product, card_type: CardType::PAYPAL, purchase_state: "in_progress"
         purchase.update_balance_and_mark_successful!
 
         payment, _ = Payouts.create_payment(now, PayoutProcessorType::PAYPAL, seller)
@@ -105,13 +105,13 @@ describe "Balance Pages Scenario", js: true, type: :system do
           displayable_payout_period_range: "Activity up to #{humanize_date(now)}",
           payout_date_formatted: humanize_date(now),
           payout_currency: "USD",
-          payout_cents: 10000,
-          payout_displayed_amount: "$100.00 USD",
+          payout_cents: 1000,
+          payout_displayed_amount: "$10.00 USD",
           is_processing: true,
           arrival_date: 3.days.from_now.strftime("%B #{3.days.from_now.day.ordinalize}, %Y"),
           status: "processing",
           payment_external_id: "12345",
-          sales_cents: 10000,
+          sales_cents: 1000,
           refunds_cents: 0,
           chargebacks_cents: 0,
           credits_cents: 0,
@@ -137,7 +137,7 @@ describe "Balance Pages Scenario", js: true, type: :system do
         visit balance_path
 
         within_section "Payout initiated on #{humanize_date now}", match: :first do
-          expect(page).to have_content("Sales\n$100.00 USD")
+          expect(page).to have_content("Sales\n$10.00 USD")
         end
       end
 
@@ -242,7 +242,7 @@ describe "Balance Pages Scenario", js: true, type: :system do
         top_period_data = {
           status: "not_payable",
           should_be_shown_currencies_always: true,
-          minimum_payout_amount_cents: 10000,
+          minimum_payout_amount_cents: 1000,
         }
 
         data = {
@@ -563,7 +563,7 @@ describe "Balance Pages Scenario", js: true, type: :system do
             it "shows the payout-skipped notice" do
               visit balance_path
 
-              expect(page).to have_text("Payout on #{Time.current.to_fs(:formatted_date_full_month)} was skipped because the account balance $5 USD was less than the minimum payout amount of $100 USD.")
+              expect(page).to have_text("Payout on #{Time.current.to_fs(:formatted_date_full_month)} was skipped because the account balance $5 USD was less than the minimum payout amount of $10 USD.")
             end
           end
 
@@ -618,7 +618,7 @@ describe "Balance Pages Scenario", js: true, type: :system do
             it "shows the payout-skipped notice" do
               visit balance_path
 
-              expect(page).to have_text("Payout on #{Time.current.to_fs(:formatted_date_full_month)} was skipped because the account balance $15 USD was less than the minimum payout amount of $100 USD.")
+              expect(page).to have_text("Payout on #{Time.current.to_fs(:formatted_date_full_month)} was skipped because the account balance $15 USD was less than the minimum payout amount of $34.74 USD.")
             end
           end
         end
@@ -708,7 +708,7 @@ describe "Balance Pages Scenario", js: true, type: :system do
           payout_note: nil,
           type: "standard",
           has_stripe_connect: false,
-          minimum_payout_amount_cents: 10000,
+          minimum_payout_amount_cents: 1000,
           is_payable: true
         }
         allow_any_instance_of(UserBalanceStatsService).to receive(:payout_period_data).and_return(data)
@@ -736,14 +736,14 @@ describe "Balance Pages Scenario", js: true, type: :system do
                  )
           create(:merchant_account, user: seller, charge_processor_merchant_id: "acct_12345")
 
-          Credit.create_for_credit!(user: seller, amount_cents: 10000, crediting_user: seller)
+          Credit.create_for_credit!(user: seller, amount_cents: 1000, crediting_user: seller)
           allow_any_instance_of(User).to receive(:compliant?).and_return(true)
           allow_any_instance_of(User).to receive(:eligible_for_instant_payouts?).and_return(true)
           allow_any_instance_of(BankAccount).to receive(:supports_instant_payouts?).and_return(true)
-          allow(StripePayoutProcessor).to receive(:instantly_payable_amount_cents_on_stripe).and_return(97_00)
+          allow(StripePayoutProcessor).to receive(:instantly_payable_amount_cents_on_stripe).and_return(9_70)
           allow_any_instance_of(InstantPayoutsService).to receive(:perform) do |_instance, *_args|
-            create(:payment, user: seller, bank_account: seller.active_bank_account, amount_cents: 97_00,
-                             json_data: { payout_type: Payouts::PAYOUT_TYPE_INSTANT, gumroad_fee_cents: 291, arrival_date: Time.current.to_i },
+            create(:payment, user: seller, bank_account: seller.active_bank_account, amount_cents: 9_70,
+                             json_data: { payout_type: Payouts::PAYOUT_TYPE_INSTANT, gumroad_fee_cents: 29, arrival_date: Time.current.to_i },
                              balances: seller.unpaid_balances)
             { success: true }
           end
@@ -752,15 +752,15 @@ describe "Balance Pages Scenario", js: true, type: :system do
         it "allows the user to trigger an instant payout" do
           visit balance_path
 
-          expect(page).to have_status(text: "You have $100.00 available for instant payout: No need to wait—get paid now!")
+          expect(page).to have_status(text: "You have $10.00 available for instant payout: No need to wait—get paid now!")
           click_on "Get paid!"
           within_modal "Instant payout" do
             expect(page).to have_text("You can request instant payouts 24/7, including weekends and holidays. Funds typically appear in your bank account within 30 minutes, though some payouts may take longer to be credited.")
             expect(page).to have_select("Pay out balance up to", selected: Date.current.strftime("%B %-d, %Y"))
             expect(page).to have_text("Sent to Bank of America", normalize_ws: true)
-            expect(page).to have_text("Amount $100", normalize_ws: true)
-            expect(page).to have_text("Instant payout fee (3%) -$3.00", normalize_ws: true)
-            expect(page).to have_text("You'll receive $97.00", normalize_ws: true)
+            expect(page).to have_text("Amount $10", normalize_ws: true)
+            expect(page).to have_text("Instant payout fee (3%) -$0.30", normalize_ws: true)
+            expect(page).to have_text("You'll receive $9.70", normalize_ws: true)
             click_on "Cancel"
           end
           expect(page).to_not have_modal("Instant payout")
@@ -773,9 +773,9 @@ describe "Balance Pages Scenario", js: true, type: :system do
           current_date = Time.current.strftime("%B #{Time.current.day.ordinalize}, %Y")
           expect(page).to have_text("Payout initiated on #{current_date} Instant", normalize_ws: true)
           expect(page).to have_text("Sales $0.00", normalize_ws: true)
-          expect(page).to have_text("Credits $100.00", normalize_ws: true)
-          expect(page).to have_text("Direct sales fees - $2.91", normalize_ws: true)
-          expect(page).to have_text("Expected deposit to Bank of America on #{current_date} Routing number: 110000000 Account: ******6789 $97.00", normalize_ws: true)
+          expect(page).to have_text("Credits $10.00", normalize_ws: true)
+          expect(page).to have_text("Direct sales fees - $0.29", normalize_ws: true)
+          expect(page).to have_text("Expected deposit to Bank of America on #{current_date} Routing number: 110000000 Account: ******6789 $9.70", normalize_ws: true)
         end
       end
 

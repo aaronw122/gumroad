@@ -134,8 +134,8 @@ describe Settings::PaymentsController, :vcr, type: :controller, inertia: true do
     describe "minimum payout threshold" do
       it "updates the payout threshold for valid amounts" do
         expect do
-          put :update, params: { payout_threshold_cents: 20000 }
-        end.to change { user.reload.payout_threshold_cents.to_i }.from(10000).to(20000)
+          put :update, params: { payout_threshold_cents: 2000 }
+        end.to change { user.reload.payout_threshold_cents.to_i }.from(1000).to(2000)
 
         expect(response).to redirect_to(settings_payments_path)
         expect(response).to have_http_status :see_other
@@ -148,7 +148,7 @@ describe Settings::PaymentsController, :vcr, type: :controller, inertia: true do
         expect(response).to redirect_to(settings_payments_path)
         expect(response).to have_http_status :found
         expect(session[:inertia_errors][:base]).to include("Your payout threshold must be greater than the minimum payout amount")
-        expect(user.reload.payout_threshold_cents).to eq(10000)
+        expect(user.reload.payout_threshold_cents).to eq(1000)
       end
     end
 

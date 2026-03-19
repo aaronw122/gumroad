@@ -88,7 +88,7 @@ describe Payouts do
         let(:user) { create(:tos_user, payment_address: "bob1@example.com") }
 
         before do
-          create(:balance, user: user, amount_cents: 10001, date: payout_date - 3)
+          create(:balance, user: user, amount_cents: 1001, date: payout_date - 3)
           create(:user_compliance_info, user:)
         end
 
@@ -101,8 +101,8 @@ describe Payouts do
     describe "unpaid balance" do
       let(:payout_date) { Date.today }
       let(:u1) { create(:singaporean_user_with_compliance_info, user_risk_state: "compliant", payment_address: "bob1@example.com") }
-      let(:u1b1) { create(:balance, user: u1, amount_cents: 4999, date: payout_date - 3) }
-      let(:u1b2) { create(:balance, user: u1, amount_cents: 5001, date: payout_date - 2) }
+      let(:u1b1) { create(:balance, user: u1, amount_cents: 499, date: payout_date - 3) }
+      let(:u1b2) { create(:balance, user: u1, amount_cents: 501, date: payout_date - 2) }
 
       describe "enough money in balance to meet minimum" do
         before { u1b1 && u1b2 }
@@ -122,7 +122,7 @@ describe Payouts do
         end
 
         describe "paid balances for the same payout date" do
-          let(:u1p1) { create(:payment_completed, user: u1, payout_period_end_date: payout_date, amount_cents: 5001) }
+          let(:u1p1) { create(:payment_completed, user: u1, payout_period_end_date: payout_date, amount_cents: 501) }
 
           before { u1b1 && u1p1 }
 
@@ -132,7 +132,7 @@ describe Payouts do
         end
 
         describe "returned balances for the same payout date" do
-          let(:u1p1) { create(:payment_returned, user: u1, payout_period_end_date: payout_date, amount_cents: 5001) }
+          let(:u1p1) { create(:payment_returned, user: u1, payout_period_end_date: payout_date, amount_cents: 501) }
 
           before { u1p1 }
 
@@ -457,10 +457,10 @@ describe Payouts do
 
         seller = create(:compliant_user, payment_address: "seller@gr.co")
         create(:user_compliance_info, user: seller)
-        create(:balance, user: seller, date: Date.today - 3, amount_cents: 9900)
+        create(:balance, user: seller, date: Date.today - 3, amount_cents: 900)
         seller2 = create(:compliant_user, payment_address: "seller@gr.co")
         create(:user_compliance_info, user: seller2)
-        create(:balance, user: seller2, date: Date.today - 3, amount_cents: 10000)
+        create(:balance, user: seller2, date: Date.today - 3, amount_cents: 1000)
         seller3 = create(:compliant_user, payment_address: "seller@gr.co")
         create(:user_compliance_info, user: seller3)
         expect(seller3.unpaid_balance_cents).to eq(0)
@@ -474,14 +474,14 @@ describe Payouts do
         end.not_to change { seller3.comments.count }
 
         date = Time.current.to_fs(:formatted_date_full_month)
-        content = "Payout on #{date} was skipped because the account balance $99 USD was less than the minimum payout amount of $100 USD."
+        content = "Payout on #{date} was skipped because the account balance $9 USD was less than the minimum payout amount of $10 USD."
         expect(seller.comments.with_type_payout_note.last.content).to eq(content)
       end
 
       it "adds a comment if payout is skipped because the account is under review" do
         seller = create(:user, payment_address: "seller@example.com")
         create(:user_compliance_info, user: seller)
-        create(:balance, user: seller, date: Date.today - 3, amount_cents: 10000)
+        create(:balance, user: seller, date: Date.today - 3, amount_cents: 1000)
 
         expect do
           described_class.create_payments_for_balances_up_to_date_for_users(Date.today - 1, PayoutProcessorType::PAYPAL, [seller])
@@ -496,7 +496,7 @@ describe Payouts do
       it "adds a comment if payout is skipped because the account is suspended" do
         seller = create(:user, user_risk_state: "suspended_for_fraud", payment_address: "seller@example.com")
         create(:user_compliance_info, user: seller)
-        create(:balance, user: seller, date: Date.today - 3, amount_cents: 10000)
+        create(:balance, user: seller, date: Date.today - 3, amount_cents: 1000)
 
         expect do
           described_class.create_payments_for_balances_up_to_date_for_users(Date.today - 1, PayoutProcessorType::PAYPAL, [seller])
@@ -520,7 +520,7 @@ describe Payouts do
       it "adds a comment if payout is skipped because payouts are paused by admin" do
         seller = create(:compliant_user, payment_address: "seller@gr.co")
         create(:user_compliance_info, user: seller)
-        create(:balance, user: seller, date: Date.today - 3, amount_cents: 10000)
+        create(:balance, user: seller, date: Date.today - 3, amount_cents: 1000)
         seller.update!(payouts_paused_internally: true)
 
         expect do
@@ -536,7 +536,7 @@ describe Payouts do
         seller = create(:compliant_user)
         create(:ach_account, user: seller)
         create(:user_compliance_info, user: seller)
-        create(:balance, user: seller, date: Date.today - 3, amount_cents: 10000)
+        create(:balance, user: seller, date: Date.today - 3, amount_cents: 1000)
         seller.update!(payouts_paused_internally: true, payouts_paused_by: User::PAYOUT_PAUSE_SOURCE_STRIPE)
 
         expect do
@@ -552,7 +552,7 @@ describe Payouts do
         seller = create(:compliant_user)
         create(:ach_account, user: seller)
         create(:user_compliance_info, user: seller)
-        create(:balance, user: seller, date: Date.today - 3, amount_cents: 10000)
+        create(:balance, user: seller, date: Date.today - 3, amount_cents: 1000)
         seller.update!(payouts_paused_internally: true, payouts_paused_by: User::PAYOUT_PAUSE_SOURCE_SYSTEM)
 
         expect do
@@ -568,7 +568,7 @@ describe Payouts do
         seller = create(:compliant_user)
         create(:ach_account, user: seller)
         create(:user_compliance_info, user: seller)
-        create(:balance, user: seller, date: Date.today - 3, amount_cents: 10000)
+        create(:balance, user: seller, date: Date.today - 3, amount_cents: 1000)
         seller.update!(payouts_paused_by_user: true)
 
         expect do
