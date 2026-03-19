@@ -24,10 +24,17 @@ module ProductFileListHelpers
   end
 
   def wait_for_file_embed_to_finish_uploading(name:)
-    row = find_embed(name:)
-    page.scroll_to row, align: :center
-    row.find("h4").hover
-    expect(row).not_to have_selector("[role='progressbar']")
+    # Re-find the embed element to avoid stale references from React re-renders during upload
+    page.document.synchronize(Capybara.default_max_wait_time) do
+      row = find_embed(name:)
+      begin
+        page.scroll_to row, align: :center
+        row.find("h4").hover
+      rescue Selenium::WebDriver::Error::StaleElementReferenceError
+        raise Capybara::ElementNotFound, "Embed element went stale during upload, retrying"
+      end
+      expect(row).not_to have_selector("[role='progressbar']")
+    end
   end
 
   def rename_file_embed(from:, to:)
