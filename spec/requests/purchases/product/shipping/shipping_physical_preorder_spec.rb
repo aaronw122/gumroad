@@ -75,8 +75,17 @@ describe("Product Page - Shipping physical preoder", type: :system, js: true, sh
     visit "/l/#{@product.unique_permalink}"
     add_to_cart(@product)
     check_out(@product, address: { street: "3029 W Sherman Rd", city: "San Tan Valley", state: "AZ", zip_code: "85144" }, should_verify_address: true) do
-      fill_in "ZIP code", with: "85144"
-      find_field("ZIP code").send_keys(:tab)
+      zip_field = find_field("ZIP code")
+      page.execute_script(<<~JS, zip_field)
+        var el = arguments[0];
+        var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        setter.call(el, '');
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        setter.call(el, '85144');
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.dispatchEvent(new Event('blur', { bubbles: true }));
+      JS
       wait_for_ajax
       expect(page).to have_text("Subtotal US$16", normalize_ws: true)
       expect(page).to have_text("Sales tax US$1.07", normalize_ws: true)
