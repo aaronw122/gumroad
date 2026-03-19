@@ -124,6 +124,8 @@ Reduce the number of flaky test failures in the Gumroad CI pipeline. Tests run o
 | 23284023272 | 0 | 0 | Seventh clean run! |
 | 23284800328 | 1 | 1 | embed_spec:114 affiliate_credit nil (fixed with .reload) |
 | 23285462696 | 0 | 0 | Eighth clean run! Embed spec fix validated |
+| 23286461571 | 2 | 2 | preorder_spec:74 tax recur + form_spec preview load (fixes pushed) |
+| 23287615726 | 1 | 5 | Chrome crash (infrastructure, not test code) |
 
 ### Experiment 8: Shipping preorder tax wait (663164330)
 - **Target**: `spec/requests/purchases/product/shipping/shipping_physical_preorder_spec.rb:74` — "Sales tax US$1.07" not found before checkout
@@ -162,10 +164,20 @@ Reduce the number of flaky test failures in the Gumroad CI pipeline. Tests run o
 - **CI Run**: 23285462696 — **0 failed jobs, 0 failed specs** (eighth clean run!)
 - **Status**: KEEP
 
+### Experiment 13: Preorder tax JS nativeInputValueSetter + form_spec preview wait (0d23e214b)
+- **Target 1**: `spec/requests/purchases/product/shipping/shipping_physical_preorder_spec.rb:74` — "Sales tax US$1.07" not found (recurring)
+  - Root cause: `send_keys([:control, "a"])` unreliable for selecting ZIP field text; form needs explicit focus + clear + retype
+  - **Fix**: Click ZIP field, ctrl+a + backspace to clear, retype "85144", tab out, `using_wait_time(15)` for tax assertion
+- **Target 2**: `spec/requests/checkout/form_spec.rb:207` — "Unable to find css h4" in preview aside
+  - Root cause: Preview sidebar content not fully loaded when `within_cart_item` runs
+  - **Fix**: Add `expect(page).to have_text("Product 1")` before `within_cart_item` to wait for preview content
+- **CI Run**: 23287615726 — 1 failed job (Chrome crash, infrastructure — not test code)
+- **Status**: KEEP — awaiting clean validation run
+
 ### Remaining Issues (for monitoring)
 - `spec/requests/products/edit/integrations/circle_integrations_spec.rb` — VCR threading issue with Circle API calls (sporadic)
 - `spec/requests/purchases/product/shipping/shipping_to_virtual_countries_spec.rb` — alert timing race condition in success message
 - `spec/requests/purchases/product/taxes_spec.rb:3735` — Canada Tax "assigns the selected province" VCR threading issue
 - `spec/requests/settings/payments_spec.rb` — Stripe rate limit cascade (partially mitigated by StripeRetryHelper)
 - `spec/services/exports/payouts/annual_spec.rb` — date ordering in CSV export (rare)
-- Various sporadic Chrome/Selenium issues: xpath "/html" not found, undefined method 'map' for true
+- Various sporadic Chrome/Selenium issues: xpath "/html" not found, undefined method 'map' for true, Chrome crash
