@@ -36,6 +36,7 @@ describe "Checkout payment", :js, type: :system do
   end
 
   it "renders the Stripe Link iframe alongside the card element iframe" do
+    Feature.activate(:stripe_link)
     visit "/l/#{@product.unique_permalink}"
     add_to_cart(@product)
 
@@ -46,6 +47,7 @@ describe "Checkout payment", :js, type: :system do
   end
 
   it "allows auto-filling card details from Stripe Link" do
+    Feature.activate(:stripe_link)
     visit "/l/#{@product.unique_permalink}"
     add_to_cart(@product)
 

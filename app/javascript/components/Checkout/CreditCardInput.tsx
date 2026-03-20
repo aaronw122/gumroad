@@ -8,6 +8,7 @@ import { getStripeInstance } from "$app/utils/stripe_loader";
 import { getCssVariable } from "$app/utils/styles";
 
 import { useFont } from "$app/components/DesignSettings";
+import { useFeatureFlags } from "$app/components/FeatureFlags";
 import { Fieldset, FieldsetTitle } from "$app/components/ui/Fieldset";
 import { InputGroup } from "$app/components/ui/InputGroup";
 import { Label } from "$app/components/ui/Label";
@@ -29,6 +30,7 @@ export const CreditCardInput = ({
   setUseSavedCard: (value: boolean) => void;
   onChange?: (evt: StripeCardElementChangeEvent) => void;
 }) => {
+  const { stripe_link: stripeLinkEnabled } = useFeatureFlags();
   // Actually set font family, size, and color and determined on the first render based on a ghost div that is unmounted
   // as soon as the measurement is performed.
   const [baseStripeStyle, setBaseStripeStyle] = React.useState<null | StripeElementStyleVariant>(null);
@@ -78,7 +80,7 @@ export const CreditCardInput = ({
                 style: { base: baseStripeStyle ?? {} },
                 hidePostalCode: true,
                 disabled: disabled ?? false,
-                disableLink: false,
+                disableLink: !stripeLinkEnabled,
                 hideIcon: true,
               }}
               onReady={onReady}
