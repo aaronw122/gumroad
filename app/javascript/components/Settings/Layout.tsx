@@ -13,7 +13,7 @@ const PAGE_TITLES = {
   team: "Team",
   payments: "Payments",
   authorized_applications: "Applications",
-  password: "Password and authentication",
+  password: "Password",
   third_party_analytics: "Third-party analytics",
   advanced: "Advanced",
 };

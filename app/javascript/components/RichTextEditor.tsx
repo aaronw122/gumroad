@@ -41,7 +41,6 @@ import { Image, uploadImages } from "$app/components/TiptapExtensions/Image";
 import { Link, Button as TiptapButton } from "$app/components/TiptapExtensions/Link";
 import { ReviewCard } from "$app/components/TiptapExtensions/ReviewCard";
 import { UpsellCard } from "$app/components/TiptapExtensions/UpsellCard";
-import { Menu as MenuContainer, MenuItem as MenuListItem, MenuItemRadio } from "$app/components/ui/Menu";
 import { Product, ProductOption, UpsellSelectModal } from "$app/components/UpsellSelectModal";
 import { Position, WithTooltip } from "$app/components/WithTooltip";
 
@@ -444,11 +443,11 @@ export const RichTextEditorToolbar = ({
             {activeFormatOption?.name ?? "Text"} <ChevronDown className="size-5" />
           </PopoverTrigger>
           <PopoverContent sideOffset={4} className="border-0 p-0 shadow-none">
-            <MenuContainer>
+            <div role="menu">
               {textFormatOptions.map((option) => (
                 <PopoverClose key={option.name} asChild>
-                  <MenuItemRadio
-                    checked={option === activeFormatOption}
+                  <div
+                    role="menuitemradio"
                     aria-checked={option === activeFormatOption}
                     className="aria-checked:bg-active-bg"
                     onClick={() => {
@@ -461,10 +460,10 @@ export const RichTextEditorToolbar = ({
                   >
                     {option.icon}
                     <span>{option.name}</span>
-                  </MenuItemRadio>
+                  </div>
                 </PopoverClose>
               ))}
-            </MenuContainer>
+            </div>
           </PopoverContent>
         </Popover>
         <div
@@ -535,15 +534,15 @@ export const RichTextEditorToolbar = ({
                     Insert <ChevronDown className="size-5" />
                   </PopoverTrigger>
                   <PopoverContent sideOffset={4} className="border-0 p-0 shadow-none">
-                    <MenuContainer>
+                    <div role="menu">
                       {insertMenuItems.map((item, i) => (
                         <React.Fragment key={i}>
                           {item.name === "horizontalRule" ? (
                             <PopoverClose asChild>
-                              <MenuListItem onClick={() => editor.chain().focus().setHorizontalRule().run()}>
+                              <div role="menuitem" onClick={() => editor.chain().focus().setHorizontalRule().run()}>
                                 <Minus className="size-5" />
                                 <span>Divider</span>
-                              </MenuListItem>
+                              </div>
                             </PopoverClose>
                           ) : (
                             <PopoverClose asChild>
@@ -553,20 +552,20 @@ export const RichTextEditorToolbar = ({
                         </React.Fragment>
                       ))}
                       <PopoverClose asChild>
-                        <MenuListItem onClick={() => setIsUpsellModalOpen(true)}>
+                        <div role="menuitem" onClick={() => setIsUpsellModalOpen(true)}>
                           <CartPlus className="size-5" />
                           <span>Upsell</span>
-                        </MenuListItem>
+                        </div>
                       </PopoverClose>
                       {productId ? (
                         <PopoverClose asChild>
-                          <MenuListItem onClick={() => setIsReviewModalOpen(true)}>
+                          <div role="menuitem" onClick={() => setIsReviewModalOpen(true)}>
                             <Star pack="filled" className="size-5" />
                             <span>Reviews</span>
-                          </MenuListItem>
+                          </div>
                         </PopoverClose>
                       ) : null}
-                    </MenuContainer>
+                    </div>
                   </PopoverContent>
                 </Popover>
               </>

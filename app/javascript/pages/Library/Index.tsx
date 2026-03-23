@@ -28,7 +28,6 @@ import { Fieldset, FieldsetTitle } from "$app/components/ui/Fieldset";
 import { Input } from "$app/components/ui/Input";
 import { InputGroup } from "$app/components/ui/InputGroup";
 import { Label } from "$app/components/ui/Label";
-import { Menu, MenuItem } from "$app/components/ui/Menu";
 import { Placeholder, PlaceholderImage } from "$app/components/ui/Placeholder";
 import { ProductCard, ProductCardFigure, ProductCardFooter, ProductCardHeader } from "$app/components/ui/ProductCard";
 import { ProductCardGrid } from "$app/components/ui/ProductCardGrid";
@@ -121,16 +120,16 @@ export const Card = ({
               <DotsHorizontalRounded className="size-5" />
             </PopoverTrigger>
             <PopoverContent className="border-0 p-0 shadow-none" usePortal>
-              <Menu>
-                <MenuItem onClick={toggleArchived}>
+              <div role="menu">
+                <div role="menuitem" onClick={toggleArchived}>
                   <Archive className="size-5" />
-                  {purchase.is_archived ? "Unarchive" : "Archive"}
-                </MenuItem>
-                <MenuItem variant="danger" onClick={() => onDelete()}>
+                  &ensp;{purchase.is_archived ? "Unarchive" : "Archive"}
+                </div>
+                <div className="danger" role="menuitem" onClick={() => onDelete()}>
                   <Trash className="size-5" />
-                  Delete permanently
-                </MenuItem>
-              </Menu>
+                  &ensp;Delete permanently
+                </div>
+              </div>
             </PopoverContent>
           </Popover>
         </div>

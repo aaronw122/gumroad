@@ -121,7 +121,7 @@ export const ProductsPageProductsTable = (props: {
                   )}
 
                   <Link href={product.url} title={product.url} target="_blank" rel="noreferrer">
-                    <small className="block">{product.url_without_protocol}</small>
+                    <small>{product.url_without_protocol}</small>
                   </Link>
                 </div>
               </TableCell>
@@ -132,7 +132,7 @@ export const ProductsPageProductsTable = (props: {
                 </Link>
 
                 {product.remaining_for_sale_count ? (
-                  <small className="block">{product.remaining_for_sale_count.toLocaleString(locale)} remaining</small>
+                  <small>{product.remaining_for_sale_count.toLocaleString(locale)} remaining</small>
                 ) : null}
               </TableCell>
 

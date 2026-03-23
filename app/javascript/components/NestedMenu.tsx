@@ -354,7 +354,7 @@ const OverlayMenu = ({
             setMenuOpen(false);
             onSelectItem?.(newSelectedItem, e);
           }}
-          className="h-full w-80 overflow-x-hidden overflow-y-auto bg-background"
+          className="bg-filled h-full w-80 overflow-x-hidden overflow-y-auto"
         />
       </Sheet>
     </>

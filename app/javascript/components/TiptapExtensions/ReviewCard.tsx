@@ -9,7 +9,6 @@ import { assertResponseError } from "$app/utils/request";
 import { useCurrentSeller } from "$app/components/CurrentSeller";
 import { Review } from "$app/components/Review";
 import { showAlert } from "$app/components/server-components/Alert";
-import { Skeleton } from "$app/components/Skeleton";
 import { createInsertCommand } from "$app/components/TiptapExtensions/utils";
 
 declare module "@tiptap/core" {
@@ -104,7 +103,7 @@ const ReviewCardNodeView = ({ node, selected, editor }: NodeViewProps) => {
           />
         </article>
       ) : (
-        <Skeleton className="h-32" />
+        <div className="dummy h-32"></div>
       )}
     </NodeViewWrapper>
   );

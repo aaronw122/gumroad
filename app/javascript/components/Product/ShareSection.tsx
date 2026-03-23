@@ -105,7 +105,7 @@ export const ShareSection = ({
               )}
               aria-label="Add to wishlist"
             >
-              <span className="flex-1 truncate">
+              <span className="text-singleline flex-1">
                 {saveState.type === "success"
                   ? saveState.wishlist.name
                   : saveState.type === "saving"
@@ -122,7 +122,6 @@ export const ShareSection = ({
               <div
                 {...props}
                 inert={isSelectionInWishlist(wishlist)}
-                className={isSelectionInWishlist(wishlist) ? "opacity-30" : undefined}
                 onClick={(e) => {
                   props.onClick?.(e);
                   void addProduct(Promise.resolve({ newlyCreated: false, wishlist }));

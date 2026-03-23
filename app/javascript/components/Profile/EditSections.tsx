@@ -44,14 +44,12 @@ import { WishlistsSectionView } from "$app/components/Profile/EditSections/Wishl
 import { RichTextEditorToolbar, useImageUploadSettings, useRichTextEditor } from "$app/components/RichTextEditor";
 import { Select } from "$app/components/Select";
 import { showAlert } from "$app/components/server-components/Alert";
-import { Skeleton } from "$app/components/Skeleton";
 import { TypeSafeOptionSelect } from "$app/components/TypeSafeOptionSelect";
 import { CardContent } from "$app/components/ui/Card";
 import { Checkbox } from "$app/components/ui/Checkbox";
 import { Fieldset, FieldsetTitle } from "$app/components/ui/Fieldset";
 import { Input } from "$app/components/ui/Input";
 import { Label } from "$app/components/ui/Label";
-import { Menu, MenuItem } from "$app/components/ui/Menu";
 import { Row, RowActions, RowContent, RowDragHandle, Rows } from "$app/components/ui/Rows";
 import { Switch } from "$app/components/ui/Switch";
 import { useOnChange } from "$app/components/useOnChange";
@@ -411,7 +409,7 @@ const ProductsSettings = ({ section }: { section: ProductsSection }) => {
                     {section.default_product_sort === "page_layout" ? (
                       <RowDragHandle aria-grabbed={product.chosen} />
                     ) : null}
-                    <span className="truncate">{product.name}</span>
+                    <span className="text-singleline">{product.name}</span>
                   </RowContent>
                   <RowActions>
                     <Checkbox
@@ -544,9 +542,10 @@ const RichTextSectionView = ({ section }: { section: RichTextSection }) => {
       {editor ? (
         <div
           ref={toolbarRef}
+          style={{ display: "contents" }}
           onMouseDown={() => setFocused(true)}
           // Conditionally rendering this breaks on Safari, so we use hidden instead
-          className={classNames(!editor.isFocused && !focused ? "hidden" : "contents")}
+          hidden={!editor.isFocused && !focused}
         >
           <RichTextEditorToolbar
             editor={editor}
@@ -623,7 +622,7 @@ const FeaturedProductSectionView = ({ section }: { section: FeaturedProductSecti
       {props ? (
         <FeaturedProductView props={props} />
       ) : section.featured_product_id ? (
-        <Skeleton className="h-128" />
+        <section className="dummy h-128" />
       ) : null}
     </SectionLayout>
   );
@@ -703,32 +702,32 @@ export const AddSectionButton = ({ side, index }: { index: number; side?: "top" 
         className="border-0 p-0 shadow-none"
         arrowClassName="dark:fill-[rgb(var(--parent-color)/var(--border-alpha))]"
       >
-        <Menu onClick={() => setOpen(false)}>
-          <MenuItem onClick={() => addSection("SellerProfileProductsSection")}>
+        <div role="menu" onClick={() => setOpen(false)}>
+          <div role="menuitem" onClick={() => addSection("SellerProfileProductsSection")}>
             <Grid className="size-5" />
-            Products
-          </MenuItem>
-          <MenuItem onClick={() => addSection("SellerProfilePostsSection")}>
+            &ensp; Products
+          </div>
+          <div role="menuitem" onClick={() => addSection("SellerProfilePostsSection")}>
             <Envelope pack="filled" className="size-5" />
-            Posts
-          </MenuItem>
-          <MenuItem onClick={() => addSection("SellerProfileFeaturedProductSection")}>
+            &ensp; Posts
+          </div>
+          <div role="menuitem" onClick={() => addSection("SellerProfileFeaturedProductSection")}>
             <Box className="size-5" />
-            Featured Product
-          </MenuItem>
-          <MenuItem onClick={() => addSection("SellerProfileRichTextSection")}>
+            &ensp; Featured Product
+          </div>
+          <div role="menuitem" onClick={() => addSection("SellerProfileRichTextSection")}>
             <FileDetail className="size-5" />
-            Rich text
-          </MenuItem>
-          <MenuItem onClick={() => addSection("SellerProfileSubscribeSection")}>
+            &ensp; Rich text
+          </div>
+          <div role="menuitem" onClick={() => addSection("SellerProfileSubscribeSection")}>
             <Bell pack="filled" className="size-5" />
-            Subscribe
-          </MenuItem>
-          <MenuItem onClick={() => addSection("SellerProfileWishlistsSection")}>
+            &ensp; Subscribe
+          </div>
+          <div role="menuitem" onClick={() => addSection("SellerProfileWishlistsSection")}>
             <FileDetail pack="filled" className="size-5" />
-            Wishlists
-          </MenuItem>
-        </Menu>
+            &ensp; Wishlists
+          </div>
+        </div>
       </PopoverContent>
     </Popover>
   );

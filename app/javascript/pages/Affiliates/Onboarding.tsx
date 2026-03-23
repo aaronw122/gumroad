@@ -170,7 +170,7 @@ export default function AffiliatesOnboarding() {
                   readOnly
                   disabled={!enableAffiliateLink}
                   defaultValue={affiliateRequestUrl}
-                  className="truncate"
+                  className="text-singleline"
                 />
                 {enableAffiliateLink ? (
                   <CopyToClipboard text={affiliateRequestUrl}>

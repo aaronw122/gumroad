@@ -218,8 +218,9 @@ const CoverUploader = ({
         </Tabs>
         <Fieldset
           role="tabpanel"
-          className={classNames("mt-4 rounded-sm border border-border p-4", uploader?.type !== "url" && "hidden")}
+          className="mt-4 rounded-sm border border-border p-4"
           id={`${uid}-url`}
+          hidden={uploader?.type !== "url"}
         >
           {uploader?.type === "url" ? (
             <div className="flex gap-2">

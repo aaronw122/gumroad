@@ -31,7 +31,6 @@ import { FileEmbed } from "$app/components/ProductEdit/ContentTab/FileEmbed";
 import { showAlert } from "$app/components/server-components/Alert";
 import { LicenseKey } from "$app/components/TiptapExtensions/LicenseKey";
 import { PostsProvider } from "$app/components/TiptapExtensions/Posts";
-import { Menu, MenuItemRadio } from "$app/components/ui/Menu";
 import { useAddThirdPartyAnalytics } from "$app/components/useAddThirdPartyAnalytics";
 import { useIsAboveBreakpoint } from "$app/components/useIsAboveBreakpoint";
 import { useOriginalLocation } from "$app/components/useOriginalLocation";
@@ -321,21 +320,23 @@ export const WithContent = ({
                 </PopoverTrigger>
               </PopoverAnchor>
               <PopoverContent sideOffset={4} className="border-0 p-0 shadow-none">
-                <Menu>
+                <div role="menu">
                   {pages.map((page, index) => (
                     <PopoverClose key={page.page_id} asChild>
-                      <MenuItemRadio
-                        checked={index === activePageIndex}
+                      <div
+                        role="menuitemradio"
+                        aria-checked={index === activePageIndex}
                         onClick={() => {
                           handlePageChange(index);
                         }}
                       >
                         <PageIcon iconKey={pageIcons[index] ?? "text-only"} />
+                        &ensp;
                         {page.title ?? "Untitled"}
-                      </MenuItemRadio>
+                      </div>
                     </PopoverClose>
                   ))}
-                </Menu>
+                </div>
               </PopoverContent>
             </Popover>
           )}

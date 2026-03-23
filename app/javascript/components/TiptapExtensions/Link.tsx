@@ -16,7 +16,6 @@ import { MenuItem, validateUrl } from "$app/components/RichTextEditor";
 import { showAlert } from "$app/components/server-components/Alert";
 import { Fieldset } from "$app/components/ui/Fieldset";
 import { Input } from "$app/components/ui/Input";
-import { MenuItem as MenuListItem } from "$app/components/ui/Menu";
 
 export const WithDialog = ({
   editor,
@@ -324,10 +323,10 @@ const TiptapButton = Node.create({
     menu: "insert",
     item: (editor) => (
       <WithDialog editor={editor} type="button">
-        <MenuListItem>
+        <div role="menuitem">
           <CursorClick className="size-5" />
           <span>Button</span>
-        </MenuListItem>
+        </div>
       </WithDialog>
     ),
   },

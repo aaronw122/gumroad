@@ -7,7 +7,6 @@ class PurchaseSearchService
     seller: nil,
     purchaser: nil,
     revenue_sharing_user: nil,
-    id: nil,
     product: nil,
     exclude_product: nil,
     exclude_purchasers_of_product: nil,
@@ -81,7 +80,6 @@ class PurchaseSearchService
       # Objects and ids
       build_body_seller
       build_body_purchaser
-      build_body_id
       build_body_product
       build_body_buyer_search
       build_body_exclude_product
@@ -140,11 +138,6 @@ class PurchaseSearchService
         purchaser.is_a?(User) ? purchaser.id : purchaser
       end
       @body[:query][:bool][:filter] << { terms: { "purchaser_id" => ids } }
-    end
-
-    def build_body_id
-      return if @options[:id].blank?
-      @body[:query][:bool][:filter] << { terms: { "id" => Array.wrap(@options[:id]) } }
     end
 
     def build_body_product

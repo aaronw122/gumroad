@@ -9,7 +9,6 @@ import { formatOrderOfMagnitude } from "$app/utils/formatOrderOfMagnitude";
 import { getCssVariable } from "$app/utils/styles";
 
 import { AuthorByline } from "$app/components/Product/AuthorByline";
-import { Skeleton } from "$app/components/Skeleton";
 import { ProductCard, ProductCardFigure, ProductCardHeader } from "$app/components/ui/ProductCard";
 import { StretchedLink } from "$app/components/ui/StretchedLink";
 import { useFollowWishlist } from "$app/components/Wishlist/FollowButton";
@@ -150,7 +149,7 @@ export const DummyCardGrid = ({ count }: { count: number }) => (
     {Array(count)
       .fill(0)
       .map((_, i) => (
-        <Skeleton key={i} className="aspect-3/1 h-auto" />
+        <div key={i} className="dummy" style={{ aspectRatio: "3 / 1", paddingBottom: 0 }} />
       ))}
   </CardGrid>
 );

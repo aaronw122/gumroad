@@ -11,7 +11,6 @@ import { PageListItem } from "$app/components/Download/PageListLayout";
 import { Popover, PopoverContent, PopoverTrigger } from "$app/components/Popover";
 import { BlurOnEnter } from "$app/components/TiptapExtensions/BlurOnEnter";
 import PlainTextStarterKit from "$app/components/TiptapExtensions/PlainTextStarterKit";
-import { Menu, MenuItem } from "$app/components/ui/Menu";
 
 export type Page = {
   id: string;
@@ -74,10 +73,7 @@ export const PageTab = ({
       role="tab"
     >
       {!disabled ? (
-        <Move
-          className="invisible absolute left-0 size-5 cursor-move text-muted group-hover/tab:visible"
-          aria-grabbed={dragging}
-        />
+        <Move className="invisible absolute left-0 size-5 text-muted group-hover/tab:visible" aria-grabbed={dragging} />
       ) : null}
       <PageIcon className="size-5" aria-label={PAGE_ICON_LABELS[icon]} />
       <span className="flex-1">
@@ -90,14 +86,14 @@ export const PageTab = ({
               <DotsHorizontalRounded className="size-5" />
             </PopoverTrigger>
             <PopoverContent usePortal className="border-0 p-0 shadow-none">
-              <Menu>
-                <MenuItem onClick={() => setRenaming(true)}>
+              <div role="menu">
+                <div role="menuitem" onClick={() => setRenaming(true)}>
                   <Pencil className="size-5" /> Rename
-                </MenuItem>
-                <MenuItem variant="danger" onClick={onDelete}>
+                </div>
+                <div className="danger" role="menuitem" onClick={onDelete}>
                   <Trash className="size-5" /> Delete
-                </MenuItem>
-              </Menu>
+                </div>
+              </div>
             </PopoverContent>
           </Popover>
         </span>

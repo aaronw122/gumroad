@@ -10,7 +10,6 @@ import AdminUserStats from "$app/components/Admin/Users/Stats";
 import type { User } from "$app/components/Admin/Users/User";
 import { CopyToClipboard } from "$app/components/CopyToClipboard";
 import { Avatar } from "$app/components/ui/Avatar";
-import { InlineList } from "$app/components/ui/InlineList";
 import { WithTooltip } from "$app/components/WithTooltip";
 
 type HeaderProps = {
@@ -35,7 +34,7 @@ const Header = ({ user, isAffiliateUser = false, url }: HeaderProps) => {
               {displayName}
             </Link>
           </h2>
-          <InlineList>
+          <ul className="inline">
             <li>
               <DateTimeWithRelativeTooltip date={user.created_at} />
             </li>
@@ -76,7 +75,7 @@ const Header = ({ user, isAffiliateUser = false, url }: HeaderProps) => {
             <li>
               <Link href={Routes.admin_user_payouts_url(user.external_id)}>Payouts</Link>
             </li>
-          </InlineList>
+          </ul>
 
           <AdminUserStats user_external_id={user.external_id} />
         </div>

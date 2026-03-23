@@ -270,11 +270,7 @@ const WorkflowEmails = ({ context, workflow }: WorkflowEmailsProps) => {
           actions={
             <>
               <Button asChild>
-                <Link
-                  href={Routes.workflows_path()}
-                  inert={isBusy || undefined}
-                  className={isBusy ? "opacity-30" : undefined}
-                >
+                <Link href={Routes.workflows_path()} inert={isBusy || undefined}>
                   {workflow.published ? (
                     <>
                       <XSquare className="size-5" />
@@ -542,7 +538,7 @@ const EmailRow = ({
             </Fieldset>
             <RichTextEditor
               id={email.id}
-              className="textarea block w-full rounded border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted focus-within:outline-2 focus-within:outline-offset-0 focus-within:outline-accent"
+              className="textarea bg-filled block w-full rounded border border-border px-4 py-3 text-foreground placeholder:text-muted focus-within:outline-2 focus-within:outline-offset-0 focus-within:outline-accent"
               ariaLabel="Email message"
               placeholder="Write a personalized message..."
               extensions={[...(isAbandonedCartWorkflow ? [AbandonedCartProductList] : [])]}
@@ -666,7 +662,7 @@ const AbandonedCartProductListNodeView = (props: NodeViewProps) => {
       </WithTooltip>
       {abandonedCartProducts.length > shownProductCount ? (
         <button
-          className="cursor-pointer text-foreground underline all-unset"
+          className="link cursor-pointer all-unset"
           onClick={() =>
             setShownProductCount(
               shownProductCount + ABANDONED_CART_PRODUCTS_TO_LOAD_PER_PAGE > abandonedCartProducts.length

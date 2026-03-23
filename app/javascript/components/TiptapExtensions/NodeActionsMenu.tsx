@@ -8,7 +8,6 @@ import { classNames } from "$app/utils/classNames";
 
 import { Button } from "$app/components/Button";
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "$app/components/Popover";
-import { Menu, MenuItem } from "$app/components/ui/Menu";
 
 const SelectedContext = React.createContext(false);
 
@@ -67,43 +66,47 @@ export const NodeActionsMenu = ({
       >
         <PopoverAnchor>
           <PopoverTrigger aria-label="Actions" data-drag-handle draggable asChild>
-            <Button size="sm" color="filled" className="cursor-move">
+            <Button size="sm" color="filled">
               <DotsVerticalRounded pack="filled" className="size-5" />
             </Button>
           </PopoverTrigger>
         </PopoverAnchor>
         <PopoverContent usePortal sideOffset={4} className="border-0 p-0 shadow-none">
-          <Menu>
+          <div role="menu">
             {actions && selectedActionIndex !== null ? (
               <>
-                <MenuItem onClick={() => setSelectedActionIndex(null)}>
+                <div onClick={() => setSelectedActionIndex(null)} role="menuitem">
                   <ChevronLeft className="size-5" />
                   <span>Back</span>
-                </MenuItem>
+                </div>
                 {assertDefined(actions[selectedActionIndex]).menu(() => setOpen(false))}
               </>
             ) : (
               <>
-                <MenuItem onClick={() => editor.commands.moveNodeUp()}>
+                <div onClick={() => editor.commands.moveNodeUp()} role="menuitem">
                   <ArrowUp className="size-5" />
                   <span>Move up</span>
-                </MenuItem>
-                <MenuItem onClick={() => editor.commands.moveNodeDown()}>
+                </div>
+                <div onClick={() => editor.commands.moveNodeDown()} role="menuitem">
                   <ArrowDown className="size-5" />
                   <span>Move down</span>
-                </MenuItem>
+                </div>
                 {actions?.map(({ item }, index) => (
-                  <MenuItem key={index} onClick={() => setSelectedActionIndex(index)}>
+                  <div key={index} onClick={() => setSelectedActionIndex(index)} role="menuitem">
                     {item()}
-                  </MenuItem>
+                  </div>
                 ))}
-                <MenuItem variant="danger" onClick={() => editor.commands.deleteSelection()}>
+                <div
+                  style={{ color: "rgb(var(--danger))" }}
+                  onClick={() => editor.commands.deleteSelection()}
+                  role="menuitem"
+                >
                   <Trash className="size-5" />
                   <span>Delete</span>
-                </MenuItem>
+                </div>
               </>
             )}
-          </Menu>
+          </div>
         </PopoverContent>
       </div>
     </Popover>

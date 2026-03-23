@@ -8,10 +8,8 @@ import { getRecommendedProducts, RecommendationType } from "$app/data/recommende
 import { CardProduct } from "$app/parsers/product";
 
 import { Card } from "$app/components/Product/Card";
-import { Skeleton } from "$app/components/Skeleton";
 import { NodeActionsMenu, NodeActionsWrapper } from "$app/components/TiptapExtensions/NodeActionsMenu";
 import { Label } from "$app/components/ui/Label";
-import { MenuItem } from "$app/components/ui/Menu";
 import { Placeholder } from "$app/components/ui/Placeholder";
 import { ProductCardGrid } from "$app/components/ui/ProductCardGrid";
 import { Radio } from "$app/components/ui/Radio";
@@ -88,11 +86,11 @@ const MoreLikeThisNodeView = ({ editor, node, extension, selected }: NodeViewPro
                 ),
                 menu: (close) => (
                   <>
-                    <MenuItem style={{ pointerEvents: "none", backgroundColor: "transparent" }}>
+                    <div role="menuitem" style={{ pointerEvents: "none", backgroundColor: "transparent" }}>
                       <b>More like this recommendations:</b>
-                    </MenuItem>
+                    </div>
                     <div onChange={close}>
-                      <MenuItem>
+                      <div role="menuitem">
                         <Label>
                           <Radio
                             checked={node.attrs.recommendationType === "own_products"}
@@ -100,8 +98,8 @@ const MoreLikeThisNodeView = ({ editor, node, extension, selected }: NodeViewPro
                           />
                           Only my products
                         </Label>
-                      </MenuItem>
-                      <MenuItem>
+                      </div>
+                      <div role="menuitem">
                         <Label>
                           <Radio
                             checked={node.attrs.recommendationType === "directly_affiliated_products"}
@@ -109,8 +107,8 @@ const MoreLikeThisNodeView = ({ editor, node, extension, selected }: NodeViewPro
                           />
                           My products and affiliated
                         </Label>
-                      </MenuItem>
-                      <MenuItem>
+                      </div>
+                      <div role="menuitem">
                         <Label>
                           <Radio
                             checked={node.attrs.recommendationType === "gumroad_affiliates_products"}
@@ -121,7 +119,7 @@ const MoreLikeThisNodeView = ({ editor, node, extension, selected }: NodeViewPro
                             Gumroad Affiliates
                           </a>
                         </Label>
-                      </MenuItem>
+                      </div>
                     </div>
                   </>
                 ),
@@ -134,11 +132,11 @@ const MoreLikeThisNodeView = ({ editor, node, extension, selected }: NodeViewPro
         {isLoading ? (
           <ProductCardGrid narrow>
             {Array.from({ length: 3 }).map((_, index) => (
-              <Skeleton key={index} className="h-128" />
+              <div key={index} className="dummy h-128" />
             ))}
           </ProductCardGrid>
         ) : recommendedProducts && recommendedProducts.length > 0 ? (
-          <ProductCardGrid narrow inert={editor.isEditable} className={editor.isEditable ? "opacity-30" : undefined}>
+          <ProductCardGrid narrow inert={editor.isEditable}>
             {recommendedProducts.map((product) => (
               <div key={product.id}>
                 <Card product={product} />

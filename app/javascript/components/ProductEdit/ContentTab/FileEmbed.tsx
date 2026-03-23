@@ -39,7 +39,6 @@ import { NodeActionsMenu, NodeActionsWrapper } from "$app/components/TiptapExten
 import { Fieldset, FieldsetTitle } from "$app/components/ui/Fieldset";
 import { Input } from "$app/components/ui/Input";
 import { Label } from "$app/components/ui/Label";
-import { Menu, MenuItem } from "$app/components/ui/Menu";
 import { Placeholder } from "$app/components/ui/Placeholder";
 import { Row, RowActions, RowContent, RowDetails } from "$app/components/ui/Rows";
 import { Switch } from "$app/components/ui/Switch";
@@ -314,15 +313,16 @@ const FileEmbedNodeView = ({ node, editor, getPos, updateAttributes }: NodeViewP
     menu: () => (
       <>
         {parentNode?.childCount === 1 ? null : (
-          <MenuItem
+          <div
             onClick={() => editor.commands.moveFileEmbedToGroup({ fileUid: cast(node.attrs.uid), groupUid: null })}
+            role="menuitem"
           >
             <FolderPlus className="size-5" />
             <span>New folder</span>
-          </MenuItem>
+          </div>
         )}
         {fileEmbedGroups.map(({ uid, name }) => (
-          <MenuItem
+          <div
             key={uid}
             onClick={() => {
               editor.commands.moveFileEmbedToGroup({ fileUid: cast(node.attrs.uid), groupUid: uid });
@@ -330,10 +330,11 @@ const FileEmbedNodeView = ({ node, editor, getPos, updateAttributes }: NodeViewP
               const fileName = filesById.get(cast<string>(node.attrs.id))?.display_name;
               if (fileName) showAlert(`Moved "${fileName}" to "${name}".`, "success");
             }}
+            role="menuitem"
           >
             <Folder pack="filled" className="size-5" />
             <span>{name || "Untitled"}</span>
-          </MenuItem>
+          </div>
         ))}
       </>
     ),
@@ -532,9 +533,10 @@ const FileEmbedNodeView = ({ node, editor, getPos, updateAttributes }: NodeViewP
                   </PopoverTrigger>
                 </PopoverAnchor>
                 <PopoverContent sideOffset={4} className="border-0 p-0 shadow-none">
-                  <Menu>
+                  <div role="menu">
                     <PopoverClose asChild>
-                      <MenuItem
+                      <div
+                        role="menuitem"
                         onClick={() => {
                           updateAttributes({ collapsed: !node.attrs.collapsed });
                         }}
@@ -545,10 +547,11 @@ const FileEmbedNodeView = ({ node, editor, getPos, updateAttributes }: NodeViewP
                           <FullscreenExit className="size-5" />
                         )}
                         <span>{node.attrs.collapsed ? "Expand selected" : "Collapse selected"}</span>
-                      </MenuItem>
+                      </div>
                     </PopoverClose>
                     <PopoverClose asChild>
-                      <MenuItem
+                      <div
+                        role="menuitem"
                         onClick={() => {
                           editor.commands.command(({ tr }) => {
                             const targetState = !node.attrs.collapsed;
@@ -570,9 +573,9 @@ const FileEmbedNodeView = ({ node, editor, getPos, updateAttributes }: NodeViewP
                           <FullscreenExit className="size-5" />
                         )}
                         <span>{node.attrs.collapsed ? "Expand all thumbnails" : "Collapse all thumbnails"}</span>
-                      </MenuItem>
+                      </div>
                     </PopoverClose>
-                  </Menu>
+                  </div>
                 </PopoverContent>
               </Popover>
             ) : null}

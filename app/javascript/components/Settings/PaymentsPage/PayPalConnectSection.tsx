@@ -78,7 +78,6 @@ const PayPalConnectSection = ({
                         referer: Routes.settings_payments_path(),
                       })}
                       inert={isFormDisabled || !paypalConnect.allow_paypal_connect}
-                      className={isFormDisabled || !paypalConnect.allow_paypal_connect ? "opacity-30" : undefined}
                     >
                       <Paypal pack="brands" className="size-5" />
                       Connect with Paypal
@@ -145,7 +144,6 @@ const PayPalConnectSection = ({
                         referer: Routes.settings_payments_path(),
                       })}
                       inert={isFormDisabled || !paypalConnect.allow_paypal_connect}
-                      className={isFormDisabled || !paypalConnect.allow_paypal_connect ? "opacity-30" : undefined}
                     >
                       <Paypal pack="brands" className="size-5" />
                       Connect with Paypal

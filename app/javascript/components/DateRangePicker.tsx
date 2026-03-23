@@ -18,7 +18,6 @@ import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "$app/com
 import { Fieldset, FieldsetDescription, FieldsetTitle } from "$app/components/ui/Fieldset";
 import { InputGroup } from "$app/components/ui/InputGroup";
 import { Label } from "$app/components/ui/Label";
-import { Menu, MenuItem } from "$app/components/ui/Menu";
 import { useUserAgentInfo } from "$app/components/UserAgent";
 
 export const DateRangePicker = ({
@@ -92,41 +91,59 @@ export const DateRangePicker = ({
             </Fieldset>
           </div>
         ) : (
-          <Menu>
-            <MenuItem onClick={() => quickSet(subDays(today, 30), today)}>Last 30 days</MenuItem>
-            <MenuItem onClick={() => quickSet(startOfMonth(today), today)}>This month</MenuItem>
-            <MenuItem
+          <div role="menu">
+            <div role="menuitem" onClick={() => quickSet(subDays(today, 30), today)}>
+              Last 30 days
+            </div>
+            <div role="menuitem" onClick={() => quickSet(startOfMonth(today), today)}>
+              This month
+            </div>
+            <div
+              role="menuitem"
               onClick={() => {
                 const lastMonth = subMonths(today, 1);
                 quickSet(startOfMonth(lastMonth), endOfMonth(lastMonth));
               }}
             >
               Last month
-            </MenuItem>
-            <MenuItem onClick={() => quickSet(startOfMonth(subMonths(today, 3)), endOfMonth(subMonths(today, 1)))}>
+            </div>
+            <div
+              role="menuitem"
+              onClick={() => quickSet(startOfMonth(subMonths(today, 3)), endOfMonth(subMonths(today, 1)))}
+            >
               Last 3 months
-            </MenuItem>
-            <MenuItem onClick={() => quickSet(startOfQuarter(today), today)}>This quarter</MenuItem>
-            <MenuItem
+            </div>
+            <div role="menuitem" onClick={() => quickSet(startOfQuarter(today), today)}>
+              This quarter
+            </div>
+            <div
+              role="menuitem"
               onClick={() => {
                 const lastQuarter = subQuarters(today, 1);
                 quickSet(startOfQuarter(lastQuarter), endOfQuarter(lastQuarter));
               }}
             >
               Last quarter
-            </MenuItem>
-            <MenuItem onClick={() => quickSet(startOfYear(today), today)}>This year</MenuItem>
-            <MenuItem
+            </div>
+            <div role="menuitem" onClick={() => quickSet(startOfYear(today), today)}>
+              This year
+            </div>
+            <div
+              role="menuitem"
               onClick={() => {
                 const lastYear = subYears(today, 1);
                 quickSet(startOfYear(lastYear), endOfYear(lastYear));
               }}
             >
               Last year
-            </MenuItem>
-            <MenuItem onClick={() => quickSet(new Date("2012-10-13"), today)}>All time</MenuItem>
-            <MenuItem onClick={() => setIsCustom(true)}>Custom range...</MenuItem>
-          </Menu>
+            </div>
+            <div role="menuitem" onClick={() => quickSet(new Date("2012-10-13"), today)}>
+              All time
+            </div>
+            <div role="menuitem" onClick={() => setIsCustom(true)}>
+              Custom range...
+            </div>
+          </div>
         )}
       </PopoverContent>
     </Popover>

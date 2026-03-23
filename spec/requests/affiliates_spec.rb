@@ -444,6 +444,7 @@ describe "Affiliates", type: :system, js: true do
 
         link = find_link("Add affiliate", inert: true)
         link.hover
+        expect(link[:style]).to eq "pointer-events: none; cursor: not-allowed; opacity: 0.3;"
         expect(link).to have_tooltip(text: "Affiliates with Brazilian Stripe accounts are not supported.")
       end
     end
@@ -911,7 +912,7 @@ describe "Affiliates", type: :system, js: true do
       visit settings_password_path
 
       menu_items = all("a[role='tab']")
-      expected_items = ["Settings", "Payments", "Password and authentication", "Advanced"]
+      expected_items = %w[Settings Payments Password Advanced]
       expect(menu_items.collect(&:text)).to include(*expected_items)
     end
   end

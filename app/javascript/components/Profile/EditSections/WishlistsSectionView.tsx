@@ -70,7 +70,7 @@ export const WishlistsSectionView = ({ section }: { section: WishlistsSection })
                     <Label role="listitem">
                       <RowContent>
                         <RowDragHandle aria-grabbed={wishlist.chosen} />
-                        <span className="truncate">{wishlist.name}</span>
+                        <span className="text-singleline">{wishlist.name}</span>
                       </RowContent>
                       <RowActions>
                         <Checkbox

@@ -39,9 +39,11 @@ const ArchivedProductsIndexPage = () => {
       archivedTabVisible
       ctaButton={<HeaderButtons query={query} setQuery={setQuery} />}
     >
-      <Deferred data={["products_data", "memberships_data"]} fallback={<ProductsContentLoading />}>
-        <ProductsContent query={query} />
-      </Deferred>
+      <section className="p-4 md:p-8">
+        <Deferred data={["products_data", "memberships_data"]} fallback={<ProductsContentLoading />}>
+          <ProductsContent query={query} />
+        </Deferred>
+      </section>
     </ProductsLayout>
   );
 };

@@ -31,7 +31,7 @@ export const SortableList = ({ currentOrder, onReorder, children, group, tag = "
         scrollSensitivity={150}
         setData={(dataTransfer: DataTransfer, draggedElement: HTMLElement) => {
           const drawers = draggedElement.querySelectorAll<HTMLElement>(".drawer");
-          for (const drawer of drawers) drawer.classList.add("hidden");
+          for (const drawer of drawers) drawer.hidden = true;
           dataTransfer.setDragImage(draggedElement, 0, 0);
         }}
         onStart={() => setIsBeingDragged(true)}

@@ -35,7 +35,6 @@ import { fetchDropboxFiles, ResponseDropboxFile, uploadDropboxFile } from "$app/
 import { type Post } from "$app/types/workflow";
 import { escapeRegExp } from "$app/utils";
 import { assertDefined } from "$app/utils/assert";
-import { classNames } from "$app/utils/classNames";
 import { formatDate } from "$app/utils/date";
 import FileUtils from "$app/utils/file";
 import GuidGenerator from "$app/utils/guid_generator";
@@ -86,7 +85,6 @@ import { Details, DetailsToggle } from "$app/components/ui/Details";
 import { Input } from "$app/components/ui/Input";
 import { InputGroup } from "$app/components/ui/InputGroup";
 import { Label } from "$app/components/ui/Label";
-import { Menu, MenuItem } from "$app/components/ui/Menu";
 import { Row, RowContent, Rows } from "$app/components/ui/Rows";
 import { Tab, Tabs } from "$app/components/ui/Tabs";
 import { Product, ProductOption, UpsellSelectModal } from "$app/components/UpsellSelectModal";
@@ -135,37 +133,35 @@ const FileUploadMenu = ({
   onSelectExistingFiles: () => void;
   onUploadFromDropbox: () => void;
 }) => (
-  <Menu aria-label="Image and file uploader">
+  <div role="menu" aria-label="Image and file uploader">
     <PopoverClose asChild>
-      <MenuItem onClick={onEmbedMedia}>
+      <div role="menuitem" onClick={onEmbedMedia}>
         <Images className="size-5" />
         <span>Embed media</span>
-      </MenuItem>
+      </div>
     </PopoverClose>
     <PopoverClose asChild>
-      <MenuItem asChild>
-        <label>
-          <input type="file" name="file" className="sr-only" multiple onChange={(e) => onUploadFile(e.target)} />
-          <Paperclip className="size-5" />
-          <span>Computer files</span>
-        </label>
-      </MenuItem>
+      <label role="menuitem">
+        <input type="file" name="file" className="sr-only" multiple onChange={(e) => onUploadFile(e.target)} />
+        <Paperclip className="size-5" />
+        <span>Computer files</span>
+      </label>
     </PopoverClose>
     {existingFiles.length > 0 ? (
       <PopoverClose asChild>
-        <MenuItem onClick={onSelectExistingFiles}>
+        <div role="menuitem" onClick={onSelectExistingFiles}>
           <File className="size-5" />
           <span>Existing product files</span>
-        </MenuItem>
+        </div>
       </PopoverClose>
     ) : null}
     <PopoverClose asChild>
-      <MenuItem onClick={onUploadFromDropbox}>
+      <div role="menuitem" onClick={onUploadFromDropbox}>
         <DropboxIcon pack="brands" className="size-5" />
         <span>Dropbox files</span>
-      </MenuItem>
+      </div>
     </PopoverClose>
-  </Menu>
+  </div>
 );
 
 const ContentTabContent = ({ selectedVariantId }: { selectedVariantId: string | null }) => {
@@ -715,10 +711,11 @@ const ContentTabContent = ({ selectedVariantId }: { selectedVariantId: string | 
                     Insert <ChevronDown className="size-5" />
                   </PopoverTrigger>
                   <PopoverContent sideOffset={4} className="border-0 p-0 shadow-none">
-                    <Menu onClick={() => setInsertMenuState(null)}>
+                    <div role="menu" onClick={() => setInsertMenuState(null)}>
                       {insertMenuState === "inputs" ? (
                         <>
-                          <MenuItem
+                          <div
+                            role="menuitem"
                             onClick={(e) => {
                               e.stopPropagation();
                               setInsertMenuState("open");
@@ -726,31 +723,32 @@ const ContentTabContent = ({ selectedVariantId }: { selectedVariantId: string | 
                           >
                             <ChevronLeft className="size-5" />
                             <span>Back</span>
-                          </MenuItem>
-                          <MenuItem onClick={() => editor.chain().focus().insertShortAnswer({}).run()}>
+                          </div>
+                          <div role="menuitem" onClick={() => editor.chain().focus().insertShortAnswer({}).run()}>
                             <FileDetail className="size-5" />
                             <span>Short answer</span>
-                          </MenuItem>
-                          <MenuItem onClick={() => editor.chain().focus().insertLongAnswer({}).run()}>
+                          </div>
+                          <div role="menuitem" onClick={() => editor.chain().focus().insertLongAnswer({}).run()}>
                             <FileDetail className="size-5" />
                             <span>Long answer</span>
-                          </MenuItem>
-                          <MenuItem onClick={() => editor.chain().focus().insertFileUpload({}).run()}>
+                          </div>
+                          <div role="menuitem" onClick={() => editor.chain().focus().insertFileUpload({}).run()}>
                             <FolderPlus className="size-5" />
                             <span>Upload file</span>
-                          </MenuItem>
+                          </div>
                         </>
                       ) : (
                         <>
-                          <MenuItem onClick={() => setAddingButton({ label: "", url: "" })}>
+                          <div role="menuitem" onClick={() => setAddingButton({ label: "", url: "" })}>
                             <CursorClick className="size-5" />
                             <span>Button</span>
-                          </MenuItem>
-                          <MenuItem onClick={() => editor.chain().focus().setHorizontalRule().run()}>
+                          </div>
+                          <div role="menuitem" onClick={() => editor.chain().focus().setHorizontalRule().run()}>
                             <Minus className="size-5" />
                             <span>Divider</span>
-                          </MenuItem>
-                          <MenuItem
+                          </div>
+                          <div
+                            role="menuitem"
                             onClick={(e) => {
                               e.stopPropagation();
                               setInsertMenuState("inputs");
@@ -760,24 +758,25 @@ const ContentTabContent = ({ selectedVariantId }: { selectedVariantId: string | 
                             <Rename />
                             <span>Input</span>
                             <ChevronRight className="ml-auto size-5" />
-                          </MenuItem>
-                          <MenuItem onClick={onInsertMoreLikeThis}>
+                          </div>
+                          <div role="menuitem" onClick={onInsertMoreLikeThis}>
                             <Grid className="size-5" />
                             <span>More like this</span>
-                          </MenuItem>
-                          <MenuItem onClick={onInsertPosts}>
+                          </div>
+                          <div role="menuitem" onClick={onInsertPosts}>
                             <FileDetail className="size-5" />
                             <span>List of posts</span>
-                          </MenuItem>
-                          <MenuItem onClick={onInsertLicense}>
+                          </div>
+                          <div role="menuitem" onClick={onInsertLicense}>
                             <Key className="size-5" />
                             <span>License key</span>
-                          </MenuItem>
-                          <MenuItem onClick={() => setShowInsertPostModal(true)}>
+                          </div>
+                          <div role="menuitem" onClick={() => setShowInsertPostModal(true)}>
                             <TwitterX pack="brands" className="size-5" />
                             <span>X post</span>
-                          </MenuItem>
-                          <MenuItem
+                          </div>
+                          <div
+                            role="menuitem"
                             onClick={(e) => {
                               e.stopPropagation();
                               setShowUpsellModal(true);
@@ -785,8 +784,9 @@ const ContentTabContent = ({ selectedVariantId }: { selectedVariantId: string | 
                           >
                             <CartPlus className="size-5" />
                             <span>Upsell</span>
-                          </MenuItem>
-                          <MenuItem
+                          </div>
+                          <div
+                            role="menuitem"
                             onClick={(e) => {
                               e.stopPropagation();
                               setShowReviewModal(true);
@@ -794,10 +794,10 @@ const ContentTabContent = ({ selectedVariantId }: { selectedVariantId: string | 
                           >
                             <Star pack="filled" className="size-5" />
                             <span>Review</span>
-                          </MenuItem>
+                          </div>
                         </>
                       )}
-                    </Menu>
+                    </div>
                   </PopoverContent>
                 </Popover>
                 <div
@@ -925,7 +925,7 @@ const ContentTabContent = ({ selectedVariantId }: { selectedVariantId: string | 
                       {product.native_type === "membership" ? (
                         <CardContent asChild details>
                           <Details>
-                            <DetailsToggle chevronPosition="right" className="grow opacity-30" inert>
+                            <DetailsToggle chevronPosition="right" className="grow" inert>
                               Membership
                             </DetailsToggle>
                           </Details>
@@ -933,14 +933,14 @@ const ContentTabContent = ({ selectedVariantId }: { selectedVariantId: string | 
                       ) : null}
                       <CardContent asChild details>
                         <Details>
-                          <DetailsToggle chevronPosition="right" className="grow opacity-30" inert>
+                          <DetailsToggle chevronPosition="right" className="grow" inert>
                             Receipt
                           </DetailsToggle>
                         </Details>
                       </CardContent>
                       <CardContent asChild details>
                         <Details>
-                          <DetailsToggle chevronPosition="right" className="grow opacity-30" inert>
+                          <DetailsToggle chevronPosition="right" className="grow" inert>
                             Library
                           </DetailsToggle>
                         </Details>
@@ -1169,7 +1169,7 @@ export const ContentTab = () => {
                     <ComboBox<Variant>
                       input={(props) => (
                         <InputGroup {...props} className="cursor-pointer py-3" aria-label="Select a version">
-                          <span className="flex-1 truncate">
+                          <span className="text-singleline flex-1">
                             {selectedVariant && !product.has_same_rich_content_for_all_variants
                               ? `Editing: ${selectedVariant.name || "Untitled"}`
                               : "Editing: All versions"}
@@ -1188,17 +1188,13 @@ export const ContentTab = () => {
                             }}
                             aria-selected={item.id === selectedVariantId}
                             inert={product.has_same_rich_content_for_all_variants}
-                            className={classNames(
-                              props.className,
-                              product.has_same_rich_content_for_all_variants ? "opacity-30" : undefined,
-                            )}
                           >
                             <div className="flex-1">
                               <h4>{item.name || "Untitled"}</h4>
                               {item.id === selectedVariant?.id ? (
-                                <small className="block">Editing</small>
+                                <small>Editing</small>
                               ) : product.has_same_rich_content_for_all_variants || item.rich_content.length ? (
-                                <small className="block">
+                                <small>
                                   Last edited on{" "}
                                   {formatDate(
                                     (product.has_same_rich_content_for_all_variants
@@ -1211,7 +1207,7 @@ export const ContentTab = () => {
                                   )}
                                 </small>
                               ) : (
-                                <small className="block text-muted">No content yet</small>
+                                <small className="text-muted">No content yet</small>
                               )}
                             </div>
                             {item.id === selectedVariant?.id && (
@@ -1229,7 +1225,7 @@ export const ContentTab = () => {
                                     setHasSameRichContent(!product.has_same_rich_content_for_all_variants);
                                   }}
                                 />
-                                <small className="block">Use the same content for all versions</small>
+                                <small>Use the same content for all versions</small>
                               </Label>
                             </div>
                           ) : null}

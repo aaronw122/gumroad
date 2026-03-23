@@ -24,11 +24,7 @@ const WorkflowList = ({ workflows }: WorkflowListProps) => {
   const canManageWorkflow = !!loggedInUser?.policies.workflow.create;
   const newWorkflowButton = (
     <Button asChild color="accent">
-      <Link
-        href={Routes.new_workflow_path()}
-        inert={!canManageWorkflow || undefined}
-        className={!canManageWorkflow ? "opacity-30" : undefined}
-      >
+      <Link href={Routes.new_workflow_path()} inert={!canManageWorkflow || undefined}>
         New workflow
       </Link>
     </Button>
@@ -129,14 +125,13 @@ const WorkflowRow = ({
     <div className="flex items-center">
       <h3 style={{ marginRight: "auto" }}>{workflow.name}</h3>
       <div style={{ display: "flex", gap: "var(--spacer-4)", alignItems: "center" }}>
-        {workflow.published ? <small className="block">Published</small> : <small className="block">Unpublished</small>}
+        {workflow.published ? <small>Published</small> : <small>Unpublished</small>}
         <div className="flex flex-wrap gap-2">
           <Button asChild size="icon">
             <Link
               href={Routes.edit_workflow_path(workflow.external_id)}
               aria-label="Edit workflow"
               inert={!canManageWorkflow || undefined}
-              className={!canManageWorkflow ? "opacity-30" : undefined}
             >
               <Pencil className="size-5" />
             </Link>
@@ -202,11 +197,7 @@ const WorkflowRow = ({
       <Placeholder>
         <h4>
           No emails yet,{" "}
-          <Link
-            href={Routes.workflow_emails_path(workflow.external_id)}
-            inert={!canManageWorkflow || undefined}
-            className={!canManageWorkflow ? "opacity-30" : undefined}
-          >
+          <Link href={Routes.workflow_emails_path(workflow.external_id)} inert={!canManageWorkflow || undefined}>
             add one
           </Link>
         </h4>

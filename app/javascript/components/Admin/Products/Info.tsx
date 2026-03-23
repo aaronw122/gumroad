@@ -6,7 +6,6 @@ import { useLazyFetch } from "$app/hooks/useLazyFetch";
 import { BooleanIcon } from "$app/components/Admin/Icons";
 import { ActiveIntegration, type Product } from "$app/components/Admin/Products/Product";
 import { LoadingSpinner } from "$app/components/LoadingSpinner";
-import { DefinitionList } from "$app/components/ui/DefinitionList";
 import { useIsIntersecting } from "$app/components/useIsIntersecting";
 
 type InfoProps = {
@@ -67,7 +66,7 @@ const AdminProductInfo = ({ product }: Props) => {
       {isLoading || !info ? (
         <LoadingSpinner />
       ) : (
-        <DefinitionList>
+        <dl>
           <dt>Type</dt>
           <dd>{info.type}</dd>
 
@@ -154,7 +153,7 @@ const AdminProductInfo = ({ product }: Props) => {
           <dd>
             <BooleanIcon value={hasDiscordIntegration} />
           </dd>
-        </DefinitionList>
+        </dl>
       )}
     </div>
   );

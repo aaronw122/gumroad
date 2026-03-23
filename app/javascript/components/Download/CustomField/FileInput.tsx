@@ -11,7 +11,6 @@ import { usePurchaseCustomFields, usePurchaseInfo } from "$app/components/Downlo
 import { FileKindIcon } from "$app/components/FileRowContent";
 import { showAlert } from "$app/components/server-components/Alert";
 import { Card, CardContent } from "$app/components/ui/Card";
-import { InlineList } from "$app/components/ui/InlineList";
 import { Placeholder } from "$app/components/ui/Placeholder";
 import { Row, RowContent, Rows } from "$app/components/ui/Rows";
 
@@ -99,10 +98,10 @@ export const FileInput = ({ customFieldId }: { customFieldId: string }) => {
                 <FileKindIcon extension={file.extension} />
                 <div>
                   <h4 className="font-bold">{file.name}</h4>
-                  <InlineList>
+                  <ul className="inline">
                     <li>{file.extension}</li>
                     <li>{FileUtils.getFullFileSizeString(file.size)}</li>
-                  </InlineList>
+                  </ul>
                 </div>
               </RowContent>
             </Row>

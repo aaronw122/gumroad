@@ -1,10 +1,9 @@
 import { StripeConnectInstance } from "@stripe/connect-js";
-import { ConnectComponentsProvider, ConnectNotificationBanner } from "@stripe/react-connect-js";
+import { ConnectNotificationBanner, ConnectComponentsProvider } from "@stripe/react-connect-js";
 import * as React from "react";
 
 import { getStripeConnectInstance } from "$app/utils/stripe_loader";
 
-import { Skeleton } from "$app/components/Skeleton";
 import { useRunOnce } from "$app/components/useRunOnce";
 
 export const StripeConnectEmbeddedNotificationBanner = () => {
@@ -16,7 +15,7 @@ export const StripeConnectEmbeddedNotificationBanner = () => {
     setConnectInstance(getStripeConnectInstance());
   });
 
-  const loader = <Skeleton className="h-40" />;
+  const loader = <div className="dummy h-40" />;
 
   return (
     <section>

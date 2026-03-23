@@ -1,8 +1,6 @@
 import { Link } from "@inertiajs/react";
 import React from "react";
 
-import { InlineList } from "$app/components/ui/InlineList";
-
 export type PurchaseStatesInfo = {
   purchase_state: string;
   stripe_refunded: boolean;
@@ -14,7 +12,7 @@ export type PurchaseStatesInfo = {
 };
 
 export const PurchaseStates = ({ purchase }: { purchase: PurchaseStatesInfo }) => (
-  <InlineList>
+  <ul className="inline">
     <li>{purchase.purchase_state}</li>
     {purchase.stripe_refunded ? <li>(refunded)</li> : null}
     {purchase.stripe_partially_refunded ? <li>(partially refunded)</li> : null}
@@ -28,5 +26,5 @@ export const PurchaseStates = ({ purchase }: { purchase: PurchaseStatesInfo }) =
         )}
       </li>
     ) : null}
-  </InlineList>
+  </ul>
 );

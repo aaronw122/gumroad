@@ -10,7 +10,6 @@ import { useLoggedInUser } from "$app/components/LoggedInUser";
 import { DashboardNavProfilePopover } from "$app/components/ProfilePopover";
 import { showAlert } from "$app/components/server-components/Alert";
 import { Avatar } from "$app/components/ui/Avatar";
-import { Menu, MenuItem } from "$app/components/ui/Menu";
 
 type ResponseData = {
   redirect_to: string;
@@ -52,33 +51,27 @@ const AdminNavFooter = () => {
 
   return (
     <DashboardNavProfilePopover user={loggedInUser}>
-      <Menu className="flex flex-col border-0! shadow-none! dark:border!">
+      <div role="menu" className="flex flex-col border-0! shadow-none! dark:border!">
         {current_user.impersonated_user ? (
           <>
-            <MenuItem asChild>
-              <a href={Routes.root_url()}>
-                <Avatar src={current_user.impersonated_user.avatar_url} alt="Your avatar" />
-                <span>{current_user.impersonated_user.name}</span>
-              </a>
-            </MenuItem>
+            <a role="menuitem" href={Routes.root_url()}>
+              <Avatar src={current_user.impersonated_user.avatar_url} alt="Your avatar" />
+              <span>{current_user.impersonated_user.name}</span>
+            </a>
             <hr className="my-2" />
           </>
         ) : null}
-        <MenuItem asChild>
-          <Link href={Routes.logout_url()} method="delete" className="all-unset">
-            <ArrowRight pack="filled" className="mx-1 size-5" />
-            Logout
-          </Link>
-        </MenuItem>
+        <Link role="menuitem" href={Routes.logout_url()} method="delete" className="all-unset">
+          <ArrowRight pack="filled" className="mr-3 ml-1 size-5" />
+          Logout
+        </Link>
         {loggedInUser?.isImpersonating ? (
-          <MenuItem asChild>
-            <a href="#" onClick={handleUnbecome} className="w-full">
-              <ArrowRight pack="filled" className="mx-1 size-5" />
-              Unbecome
-            </a>
-          </MenuItem>
+          <a role="menuitem" href="#" onClick={handleUnbecome} className="w-full">
+            <ArrowRight pack="filled" className="mr-3 ml-1 size-5" />
+            Unbecome
+          </a>
         ) : null}
-      </Menu>
+      </div>
     </DashboardNavProfilePopover>
   );
 };

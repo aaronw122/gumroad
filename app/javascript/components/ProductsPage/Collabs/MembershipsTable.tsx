@@ -78,7 +78,7 @@ export const CollabsMembershipsTable = (props: { entries: Membership[]; paginati
                   <h4 className="font-bold">{membership.name}</h4>
                 </a>
                 <a href={membership.url} title={membership.url} target="_blank" rel="noreferrer">
-                  <small className="block">{membership.url_without_protocol}</small>
+                  <small>{membership.url_without_protocol}</small>
                 </a>
               </TableCell>
 
@@ -90,16 +90,14 @@ export const CollabsMembershipsTable = (props: { entries: Membership[]; paginati
                 {membership.successful_sales_count.toLocaleString(locale)}
 
                 {membership.remaining_for_sale_count ? (
-                  <small className="block">
-                    {membership.remaining_for_sale_count.toLocaleString(locale)} remaining
-                  </small>
+                  <small>{membership.remaining_for_sale_count.toLocaleString(locale)} remaining</small>
                 ) : null}
               </TableCell>
 
               <TableCell>
                 {formatPriceCentsWithCurrencySymbol("usd", membership.revenue, { symbolFormat: "short" })}
 
-                <small className="block">
+                <small>
                   {membership.has_duration
                     ? `Including pending payments: ${formatPriceCentsWithCurrencySymbol(
                         "usd",

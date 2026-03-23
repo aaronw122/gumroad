@@ -1,6 +1,9 @@
 import { Github, Search } from "@boxicons/react";
 import { HelperClientProvider } from "@helperai/react";
 import React from "react";
+import { createCast } from "ts-safe-cast";
+
+import { register } from "$app/utils/serverComponentUtil";
 
 import { Button, NavigationButton } from "$app/components/Button";
 import { UnauthenticatedNewTicketModal } from "$app/components/support/UnauthenticatedNewTicketModal";
@@ -145,4 +148,4 @@ const Wrapper = ({ host, session, new_ticket_url, recaptcha_site_key }: WrapperP
     />
   );
 
-export default Wrapper;
+export default register({ component: Wrapper, propParser: createCast() });

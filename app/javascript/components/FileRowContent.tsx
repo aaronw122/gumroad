@@ -4,7 +4,6 @@ import * as React from "react";
 import { FILE_TYPE_EXTENSIONS_MAP } from "$app/utils/file";
 
 import { LoadingSpinner } from "$app/components/LoadingSpinner";
-import { InlineList } from "$app/components/ui/InlineList";
 
 type Props = {
   extension: string | null;
@@ -27,7 +26,7 @@ export const FileRowContent = ({ extension, name, details, externalLinkUrl, isUp
           name
         )}
       </h4>
-      <InlineList>{details}</InlineList>
+      <ul className="inline">{details}</ul>
     </div>
   </>
 );
