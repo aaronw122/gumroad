@@ -91,6 +91,7 @@ import { Alert } from "$app/components/ui/Alert";
 import { Card, CardContent } from "$app/components/ui/Card";
 import { Checkbox } from "$app/components/ui/Checkbox";
 import { Fieldset, FieldsetDescription, FieldsetTitle } from "$app/components/ui/Fieldset";
+import { InlineList } from "$app/components/ui/InlineList";
 import { Input } from "$app/components/ui/Input";
 import { Label } from "$app/components/ui/Label";
 import { PageHeader } from "$app/components/ui/PageHeader";
@@ -286,7 +287,7 @@ const CustomersPage = ({
                   </PopoverTrigger>
                 </WithTooltip>
               </PopoverAnchor>
-              <PopoverContent className="p-0">
+              <PopoverContent className="max-h-[calc(100vh-8rem)] overflow-y-auto p-0">
                 <Card className="w-140 border-none shadow-none">
                   <CardContent>
                     <ProductSelect
@@ -1264,7 +1265,7 @@ const CustomerDrawer = ({
                             {post.name}
                           </a>
                         </h5>
-                        <small className="text-muted">{`Originally sent on ${formatDateWithoutTime(new Date(post.published_at))}`}</small>
+                        <small className="block text-muted">{`Originally sent on ${formatDateWithoutTime(new Date(post.published_at))}`}</small>
                       </div>
                       <Button
                         color="primary"
@@ -1324,7 +1325,7 @@ const CustomerDrawer = ({
                             email.name
                           )}
                         </h5>
-                        <small className="text-muted">{`${email.state} ${formatDateWithoutTime(new Date(email.state_at))}`}</small>
+                        <small className="block text-muted">{`${email.state} ${formatDateWithoutTime(new Date(email.state_at))}`}</small>
                       </div>
                       {email.type === "receipt" ? (
                         <Button
@@ -1686,7 +1687,7 @@ const EmailSection = ({
                   Edit
                 </button>
               ) : (
-                <small className="text-muted">
+                <small className="block text-muted">
                   You cannot change the email of this purchase, because it was made by an existing user. Please ask them
                   to go to gumroad.com/settings to update their email.
                 </small>
@@ -2609,10 +2610,10 @@ const FileRow = ({ file, disabled, onDelete }: { file: File; disabled?: boolean;
       <FileKindIcon extension={file.extension} />
       <div>
         <h4>{file.name}</h4>
-        <ul className="inline">
+        <InlineList>
           <li>{file.extension}</li>
           <li>{FileUtils.getFullFileSizeString(file.size)}</li>
-        </ul>
+        </InlineList>
       </div>
     </RowContent>
     <RowActions>
