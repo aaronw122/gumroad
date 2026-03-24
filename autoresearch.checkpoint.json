@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1774385410113,
+  "updatedAt": 1774386632609,
   "sessionStartCommit": "8e9dfa4",
   "canonicalBranch": "fix/flaky-dropbox-test",
   "carryForwardContext": null,
@@ -10,24 +10,72 @@
     "metricUnit": "",
     "bestDirection": "higher",
     "currentSegment": 0,
-    "currentRunCount": 0,
-    "totalRunCount": 0,
-    "currentBaselineMetric": null,
-    "currentBestMetric": null,
+    "currentRunCount": 3,
+    "totalRunCount": 3,
+    "currentBaselineMetric": 1,
+    "currentBestMetric": 1,
     "confidence": null
   },
-  "lastLoggedRun": null,
-  "recentLoggedRuns": [],
+  "lastLoggedRun": {
+    "run": 3,
+    "commit": "7179dd2",
+    "metric": 1,
+    "metrics": {},
+    "status": "crash",
+    "baseline": false,
+    "description": "Same CI infra failure on rerun — .claude/worktrees tracked as git submodules breaks checkout",
+    "timestamp": 1774385532066,
+    "segment": 0,
+    "confidence": null
+  },
+  "recentLoggedRuns": [
+    {
+      "run": 1,
+      "commit": "6f47c49",
+      "metric": 1,
+      "metrics": {},
+      "status": "keep",
+      "baseline": true,
+      "description": "First CI run with fix: batch ID mappings in save_files! to prevent transitive collision",
+      "timestamp": 1774385415100,
+      "segment": 0,
+      "confidence": null
+    },
+    {
+      "run": 2,
+      "commit": "7179dd2",
+      "metric": 1,
+      "metrics": {},
+      "status": "crash",
+      "baseline": false,
+      "description": "CI infra failure: git checkout failed due to .claude/worktrees submodule path in .gitmodules. Not a test failure.",
+      "timestamp": 1774385468824,
+      "segment": 0,
+      "confidence": null
+    },
+    {
+      "run": 3,
+      "commit": "7179dd2",
+      "metric": 1,
+      "metrics": {},
+      "status": "crash",
+      "baseline": false,
+      "description": "Same CI infra failure on rerun — .claude/worktrees tracked as git submodules breaks checkout",
+      "timestamp": 1774385532066,
+      "segment": 0,
+      "confidence": null
+    }
+  ],
   "pendingRun": {
-    "command": "cd /Users/gumclaw/.openclaw/workspace/repos/gumroad && gh run watch 23510795802 --exit-status 2>&1; echo \"EXIT_CODE=$?\"",
-    "commit": "8e9dfa4",
+    "command": "cd /Users/gumclaw/.openclaw/workspace/repos/gumroad && gh run watch 23511684369 --exit-status 2>&1; echo \"EXIT_CODE=$?\"",
+    "commit": "0cf1532",
     "primaryMetric": null,
     "metrics": {},
-    "durationSeconds": 713.212,
+    "durationSeconds": 1058.055,
     "exitCode": 0,
     "passed": true,
     "timedOut": false,
-    "tailOutput": "  ✓ Start services\n  ✓ Wait for services\n  ✓ Setup test database\n  ✓ Run tests\n  - Archive capybara artifacts\n  - Archive test logs\n  ✓ Clean up\n  ✓ Post Run actions/checkout@v4\n  ✓ Complete runner\n  ✓ Complete job\n✓ Test Slow 30 in 10m40s (ID 68432017300)\n  ✓ Set up job\n  ✓ Set up runner\n  ✓ Run actions/checkout@v4\n  ✓ Login to Quay\n  ✓ Start services\n  ✓ Wait for services\n  ✓ Setup test database\n  ✓ Run tests\n  - Archive capybara artifacts\n  - Archive test logs\n  ✓ Clean up\n  ✓ Post Run actions/checkout@v4\n  ✓ Complete runner\n  ✓ Complete job\n✓ Test Slow 17 in 10m37s (ID 68432017304)\n  ✓ Set up job\n  ✓ Set up runner\n  ✓ Run actions/checkout@v4\n  ✓ Login to Quay\n  ✓ Start services\n  ✓ Wait for services\n  ✓ Setup test database\n  ✓ Run tests\n  - Archive capybara artifacts\n  - Archive test logs\n  ✓ Clean up\n  ✓ Post Run actions/checkout@v4\n  ✓ Complete runner\n  ✓ Complete job\n✓ Test Slow 40 in 10m35s (ID 68432017311)\n  ✓ Set up job\n  ✓ Set up runner\n  ✓ Run actions/checkout@v4\n  ✓ Login to Quay\n  ✓ Start services\n  ✓ Wait for services\n  ✓ Setup test database\n  ✓ Run tests\n  - Archive capybara artifacts\n  - Archive test logs\n  ✓ Clean up\n  ✓ Post Run actions/checkout@v4\n  ✓ Complete runner\n  ✓ Complete job\n✓ Test Slow 22 in 10m37s (ID 68432017320)\n  ✓ Set up job\n  ✓ Set up runner\n  ✓ Run actions/checkout@v4\n  ✓ Login to Quay\n  ✓ Start services\n  ✓ Wait for services\n  ✓ Setup test database\n  ✓ Run tests\n  - Archive capybara artifacts\n  - Archive test logs\n  ✓ Clean up\n  ✓ Post Run actions/checkout@v4\n  ✓ Complete runner\n  ✓ Complete job\n- Unblock deployment from Buildkite in 0s (ID 68433647629)\n\nANNOTATIONS\n! Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, nick-fields/retry@v3. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/\nBuild base image: .github#2\n\n! Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, nick-fields/retry@v3. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/\nBuild test image: .github#2\n\nEXIT_CODE=0",
-    "capturedAt": 1774385410113
+    "tailOutput": "  ✓ Set up runner\n  ✓ Run actions/checkout@v4\n  ✓ Login to Quay\n  ✓ Start services\n  ✓ Wait for services\n  ✓ Setup test database\n  ✓ Run tests\n  - Archive capybara artifacts\n  - Archive test logs\n  ✓ Clean up\n  ✓ Post Run actions/checkout@v4\n  ✓ Complete runner\n  ✓ Complete job\n✓ Test Slow 38 in 9m56s (ID 68435003475)\n  ✓ Set up job\n  ✓ Set up runner\n  ✓ Run actions/checkout@v4\n  ✓ Login to Quay\n  ✓ Start services\n  ✓ Wait for services\n  ✓ Setup test database\n  ✓ Run tests\n  - Archive capybara artifacts\n  - Archive test logs\n  ✓ Clean up\n  ✓ Post Run actions/checkout@v4\n  ✓ Complete runner\n  ✓ Complete job\n✓ Test Slow 28 in 9m57s (ID 68435003498)\n  ✓ Set up job\n  ✓ Set up runner\n  ✓ Run actions/checkout@v4\n  ✓ Login to Quay\n  ✓ Start services\n  ✓ Wait for services\n  ✓ Setup test database\n  ✓ Run tests\n  - Archive capybara artifacts\n  - Archive test logs\n  ✓ Clean up\n  ✓ Post Run actions/checkout@v4\n  ✓ Complete runner\n  ✓ Complete job\n✓ Test Slow 14 in 9m55s (ID 68435003611)\n  ✓ Set up job\n  ✓ Set up runner\n  ✓ Run actions/checkout@v4\n  ✓ Login to Quay\n  ✓ Start services\n  ✓ Wait for services\n  ✓ Setup test database\n  ✓ Run tests\n  - Archive capybara artifacts\n  - Archive test logs\n  ✓ Clean up\n  ✓ Post Run actions/checkout@v4\n  ✓ Complete runner\n  ✓ Complete job\n✓ Test Slow 20 in 9m56s (ID 68435003637)\n  ✓ Set up job\n  ✓ Set up runner\n  ✓ Run actions/checkout@v4\n  ✓ Login to Quay\n  ✓ Start services\n  ✓ Wait for services\n  ✓ Setup test database\n  ✓ Run tests\n  - Archive capybara artifacts\n  - Archive test logs\n  ✓ Clean up\n  ✓ Post Run actions/checkout@v4\n  ✓ Complete runner\n  ✓ Complete job\n- Unblock deployment from Buildkite (ID 68436434702)\n\nANNOTATIONS\n! Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, nick-fields/retry@v3. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/\nBuild base image: .github#2\n\nEXIT_CODE=0",
+    "capturedAt": 1774386632609
   }
 }

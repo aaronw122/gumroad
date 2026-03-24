@@ -1,1 +1,4 @@
 {"type":"config","name":"Fix flaky Dropbox test — 5 consecutive green CI runs","metricName":"consecutive_greens","metricUnit":"","bestDirection":"higher"}
+{"run":1,"commit":"6f47c49","metric":1,"metrics":{},"status":"keep","baseline":true,"description":"First CI run with fix: batch ID mappings in save_files! to prevent transitive collision","timestamp":1774385415100,"segment":0,"confidence":null}
+{"run":2,"commit":"7179dd2","metric":1,"metrics":{},"status":"crash","baseline":false,"description":"CI infra failure: git checkout failed due to .claude/worktrees submodule path in .gitmodules. Not a test failure.","timestamp":1774385468824,"segment":0,"confidence":null}
+{"run":3,"commit":"7179dd2","metric":1,"metrics":{},"status":"crash","baseline":false,"description":"Same CI infra failure on rerun — .claude/worktrees tracked as git submodules breaks checkout","timestamp":1774385532066,"segment":0,"confidence":null}
