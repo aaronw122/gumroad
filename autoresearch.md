@@ -14,9 +14,27 @@
 - #5 discard 0 3d0a8b0 — CI run 3: different flaky test failed (embed_spec.rb:114 - affiliate embed). Not related to our fix.
 - #6 crash 0 8ff94f1 — CI run 4: webpack build failure in CI (empty manifest.json). Not a test failure — CI infra issue.
 - #7 keep 1 d9a0786 — CI run 5: green (1st consecutive after reset)
+- #8 keep 2 9888ac1 — CI run 6: green (2nd consecutive)
 
 ## Plugin Checkpoint
-- Last updated: 2026-03-24T22:31:26.673Z
+- Last updated: 2026-03-24T22:43:58.874Z
+- Runs tracked: 8 current / 8 total
+- Baseline: 1
+- Best kept: 2
+- Confidence: n/a
+- Canonical branch: fix/flaky-dropbox-test
+- Last logged run: #8 keep 9888ac1 — CI run 6: green (2nd consecutive)
+- Pending run awaiting log_experiment: cd /Users/gumclaw/.openclaw/workspace/repos/gumroad && gh run watch 23515391695 --exit-status 2>&1; echo "EXIT_CODE=$?" (n/a)
+
+Z
+- Runs tracked: 8 current / 8 total
+- Baseline: 1
+- Best kept: 2
+- Confidence: n/a
+- Canonical branch: fix/flaky-dropbox-test
+- Last logged run: #8 keep 9888ac1 — CI run 6: green (2nd consecutive)
+
+Z
 - Runs tracked: 7 current / 7 total
 - Baseline: 1
 - Best kept: 2
