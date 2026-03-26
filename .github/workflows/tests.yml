@@ -173,17 +173,12 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 5
           command: |
-            docker run --rm --entrypoint="" --network ${{ env.COMPOSE_PROJECT_NAME }}_default \
-              $WEB_REPO:test-${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }} \
-              docker/ci/wait_on_connection.sh db_test 3306
-
-            docker run --rm --entrypoint="" --network ${{ env.COMPOSE_PROJECT_NAME }}_default \
-              $WEB_REPO:test-${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }} \
-              docker/ci/wait_on_connection.sh elasticsearch 9200
-
-            docker run --rm --entrypoint="" --network ${{ env.COMPOSE_PROJECT_NAME }}_default \
-              $WEB_REPO:test-${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }} \
-              docker/ci/wait_on_connection.sh minio 9000
+            IMG=$WEB_REPO:test-${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
+            NET=${{ env.COMPOSE_PROJECT_NAME }}_default
+            docker run --rm --entrypoint="" --network $NET $IMG docker/ci/wait_on_connection.sh db_test 3306 &
+            docker run --rm --entrypoint="" --network $NET $IMG docker/ci/wait_on_connection.sh elasticsearch 9200 &
+            docker run --rm --entrypoint="" --network $NET $IMG docker/ci/wait_on_connection.sh minio 9000 &
+            wait
         env:
           WEB_REPO: quay.io/gumroad/web
       - name: Setup test database
@@ -334,17 +329,12 @@ jobs:
           max_attempts: 3
           retry_wait_seconds: 5
           command: |
-            docker run --rm --entrypoint="" --network ${{ env.COMPOSE_PROJECT_NAME }}_default \
-              $WEB_REPO:test-${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }} \
-              docker/ci/wait_on_connection.sh db_test 3306
-
-            docker run --rm --entrypoint="" --network ${{ env.COMPOSE_PROJECT_NAME }}_default \
-              $WEB_REPO:test-${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }} \
-              docker/ci/wait_on_connection.sh elasticsearch 9200
-
-            docker run --rm --entrypoint="" --network ${{ env.COMPOSE_PROJECT_NAME }}_default \
-              $WEB_REPO:test-${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }} \
-              docker/ci/wait_on_connection.sh minio 9000
+            IMG=$WEB_REPO:test-${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }}
+            NET=${{ env.COMPOSE_PROJECT_NAME }}_default
+            docker run --rm --entrypoint="" --network $NET $IMG docker/ci/wait_on_connection.sh db_test 3306 &
+            docker run --rm --entrypoint="" --network $NET $IMG docker/ci/wait_on_connection.sh elasticsearch 9200 &
+            docker run --rm --entrypoint="" --network $NET $IMG docker/ci/wait_on_connection.sh minio 9000 &
+            wait
         env:
           WEB_REPO: quay.io/gumroad/web
       - name: Setup test database
