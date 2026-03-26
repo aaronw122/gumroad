@@ -1,1 +1,2 @@
 {"type":"config","name":"Gumroad CI Speed Optimization","metricName":"wall_clock_min","metricUnit":"min","bestDirection":"lower"}
+{"run":1,"commit":"0478876","metric":17.1,"metrics":{"build_min":6,"fast_longest_min":8.1,"slow_longest_min":9.8,"runner_minutes_total":765},"status":"keep","baseline":true,"description":"Baseline: current main with merged build jobs + increased parallelization (20 fast + 55 slow)","timestamp":1774554268781,"segment":0,"confidence":null}

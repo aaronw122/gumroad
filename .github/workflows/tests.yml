@@ -156,15 +156,16 @@ jobs:
         env:
           QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
           QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
-      - name: Start services
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 5
-          max_attempts: 3
-          retry_wait_seconds: 10
-          command: docker compose -f docker/docker-compose-test-and-ci.yml up -d
+      - name: Start services and pull test image
         env:
           COMPOSE_HTTP_TIMEOUT: "300"
+          WEB_REPO: quay.io/gumroad/web
+        run: |
+          # Pull test image and start services in parallel
+          docker pull --quiet $WEB_REPO:test-${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }} &
+          PULL_PID=$!
+          docker compose -f docker/docker-compose-test-and-ci.yml up -d
+          wait $PULL_PID
       - name: Wait for services
         uses: nick-fields/retry@v3
         with:
@@ -316,15 +317,16 @@ jobs:
         env:
           QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
           QUAY_PASSWORD: ${{ secrets.QUAY_PASSWORD }}
-      - name: Start services
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 5
-          max_attempts: 3
-          retry_wait_seconds: 10
-          command: docker compose -f docker/docker-compose-test-and-ci.yml up -d
+      - name: Start services and pull test image
         env:
           COMPOSE_HTTP_TIMEOUT: "300"
+          WEB_REPO: quay.io/gumroad/web
+        run: |
+          # Pull test image and start services in parallel
+          docker pull --quiet $WEB_REPO:test-${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || github.sha }} &
+          PULL_PID=$!
+          docker compose -f docker/docker-compose-test-and-ci.yml up -d
+          wait $PULL_PID
       - name: Wait for services
         uses: nick-fields/retry@v3
         with:

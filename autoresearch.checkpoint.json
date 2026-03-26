@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": 1774554259867,
+  "updatedAt": 1774554268974,
   "sessionStartCommit": "b4d3d15",
   "canonicalBranch": "autoresearch/ci-speed-2026-03-26",
   "carryForwardContext": null,
@@ -10,13 +10,47 @@
     "metricUnit": "min",
     "bestDirection": "lower",
     "currentSegment": 0,
-    "currentRunCount": 0,
-    "totalRunCount": 0,
-    "currentBaselineMetric": null,
-    "currentBestMetric": null,
+    "currentRunCount": 1,
+    "totalRunCount": 1,
+    "currentBaselineMetric": 17.1,
+    "currentBestMetric": 17.1,
     "confidence": null
   },
-  "lastLoggedRun": null,
-  "recentLoggedRuns": [],
+  "lastLoggedRun": {
+    "run": 1,
+    "commit": "0478876",
+    "metric": 17.1,
+    "metrics": {
+      "build_min": 6,
+      "fast_longest_min": 8.1,
+      "slow_longest_min": 9.8,
+      "runner_minutes_total": 765
+    },
+    "status": "keep",
+    "baseline": true,
+    "description": "Baseline: current main with merged build jobs + increased parallelization (20 fast + 55 slow)",
+    "timestamp": 1774554268781,
+    "segment": 0,
+    "confidence": null
+  },
+  "recentLoggedRuns": [
+    {
+      "run": 1,
+      "commit": "0478876",
+      "metric": 17.1,
+      "metrics": {
+        "build_min": 6,
+        "fast_longest_min": 8.1,
+        "slow_longest_min": 9.8,
+        "runner_minutes_total": 765
+      },
+      "status": "keep",
+      "baseline": true,
+      "description": "Baseline: current main with merged build jobs + increased parallelization (20 fast + 55 slow)",
+      "timestamp": 1774554268781,
+      "segment": 0,
+      "confidence": null
+    }
+  ],
   "pendingRun": null
 }

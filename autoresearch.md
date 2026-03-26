@@ -33,17 +33,21 @@ Reduce the total wall-clock time of the GitHub Actions CI pipeline (`tests.yml`)
 - Knapsack Pro dynamically balances test distribution across nodes
 
 ## What's Been Tried
-- Increased parallelization: fast 15→20, slow 45→55 (30.7min → 18.8min)
-- Merged build_base + build_test into single job (18.8min → 17.1min)
-- Enabled DOCKER_BUILDKIT=1
-- Added nick-fields/retry for Start/Wait services
-- Added Elasticsearch health check to wait_on_connection.sh
+- #1 baseline keep 17.1min 0478876 — Baseline: current main with merged build jobs + increased parallelization (20 fast + 55 slow)
 
 ## What's Been Tried
 - No logged experiments yet.
 
 ## Plugin Checkpoint
-- Last updated: 2026-03-26T19:44:19.867Z
+- Last updated: 2026-03-26T19:44:28.974Z
+- Runs tracked: 1 current / 1 total
+- Baseline: 17.1min
+- Best kept: 17.1min
+- Confidence: n/a
+- Canonical branch: autoresearch/ci-speed-2026-03-26
+- Last logged run: #1 keep 0478876 — Baseline: current main with merged build jobs + increased parallelization (20 fast + 55 slow)
+
+Z
 - Runs tracked: 0 current / 0 total
 - Baseline: n/a
 - Best kept: n/a
