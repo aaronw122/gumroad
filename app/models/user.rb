@@ -14,6 +14,8 @@ class User < ApplicationRecord
           TwoFactorAuthentication, Versionable, Comments, VipCreator, SignedUrlHelper, Purchases, SecureExternalId,
           AttributeBlockable, PayoutInfo
 
+  has_many :user_external_authentications, dependent: :destroy
+
   stripped_fields :name, :facebook_meta_tag, :google_analytics_id, :username, :email, :support_email
 
   # Minimum tags count to show tags section on user profile page

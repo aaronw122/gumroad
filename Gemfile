@@ -128,6 +128,7 @@ gem "money", "~> 6.16"
 gem "mongoid", "~> 9.0"
 gem "mysql2", ">= 0.5.6"
 gem "nokogiri", "~> 1.13"
+gem "omniauth-apple", "~> 1.3"
 gem "omniauth-google-oauth2", "~> 1.1", ">= 1.1.1"
 gem "omniauth-rails_csrf_protection", "~> 1.0"
 # Update to a normal release once https://github.com/isaacsanders/omniauth-stripe-connect/issues/67 is fixed
