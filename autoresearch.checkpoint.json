@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "updatedAt": 1774554259867,
+  "sessionStartCommit": "b4d3d15",
+  "canonicalBranch": "autoresearch/ci-speed-2026-03-26",
+  "carryForwardContext": null,
+  "session": {
+    "name": "Gumroad CI Speed Optimization",
+    "metricName": "wall_clock_min",
+    "metricUnit": "min",
+    "bestDirection": "lower",
+    "currentSegment": 0,
+    "currentRunCount": 0,
+    "totalRunCount": 0,
+    "currentBaselineMetric": null,
+    "currentBestMetric": null,
+    "confidence": null
+  },
+  "lastLoggedRun": null,
+  "recentLoggedRuns": [],
+  "pendingRun": null
+}

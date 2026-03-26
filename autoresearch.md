@@ -4,11 +4,10 @@
 Reduce the total wall-clock time of the GitHub Actions CI pipeline (`tests.yml`) from ~18 minutes to ≤14 minutes. The pipeline builds Docker images and runs Ruby/RSpec tests in parallel across multiple nodes using Knapsack Pro.
 
 ## Metrics
-- **Primary**: wall_clock_min (minutes, lower is better)
-- **Secondary**: build_min, fast_longest_min, slow_longest_min, runner_minutes_total
+- **Primary**: wall_clock_min (min, lower is better)
 
 ## How to Run
-`./autoresearch.sh` — pushes the branch, triggers CI, waits for completion, and outputs `METRIC name=number` lines.
+`autoresearch.sh` — should emit `METRIC name=number` lines for wall_clock_min.
 
 ## Files in Scope
 - `.github/workflows/tests.yml` — CI workflow: jobs, parallelization, retry logic, runner config
@@ -39,3 +38,14 @@ Reduce the total wall-clock time of the GitHub Actions CI pipeline (`tests.yml`)
 - Enabled DOCKER_BUILDKIT=1
 - Added nick-fields/retry for Start/Wait services
 - Added Elasticsearch health check to wait_on_connection.sh
+
+## What's Been Tried
+- No logged experiments yet.
+
+## Plugin Checkpoint
+- Last updated: 2026-03-26T19:44:19.867Z
+- Runs tracked: 0 current / 0 total
+- Baseline: n/a
+- Best kept: n/a
+- Confidence: n/a
+- Canonical branch: autoresearch/ci-speed-2026-03-26
