@@ -13,7 +13,7 @@ class User::OmniauthCallbacksController < Devise::OmniauthCallbacksController
 
   def stripe_connect
     auth = request.env["omniauth.auth"]
-    referer = request.env["omniauth.params"]["referer"]
+    referer = request.env["omniauth.params"]["referer"].presence || settings_payments_path
 
     Rails.logger.info("Stripe Connect referer: #{referer}, parameters: #{LogRedactor.redact(auth)}")
 

@@ -73,6 +73,23 @@ describe User::OmniauthCallbacksController do
       end
     end
 
+    context "when referer is nil" do
+      before do
+        request.env["omniauth.params"] = { "referer" => nil }
+      end
+
+      it "redirects to payments settings when country is unsupported" do
+        request.env["omniauth.auth"]["uid"] = "acct_1SOk0BEsYunTuUHD"
+        user = create(:user)
+        allow(controller).to receive(:current_user).and_return(user)
+
+        post :stripe_connect
+
+        expect(flash[:alert]).to eq "Sorry, Stripe Connect is not supported in Malaysia yet."
+        expect(response).to redirect_to settings_payments_url
+      end
+    end
+
     context "when referer is payments settings" do
       before do
         request.env["omniauth.params"] = { "referer" => settings_payments_path }
