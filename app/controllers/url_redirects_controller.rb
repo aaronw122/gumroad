@@ -271,10 +271,14 @@ class UrlRedirectsController < ApplicationController
     return render json: {} if params[:file_ids].blank?
 
     json = @url_redirect.alive_product_files.by_external_ids(params[:file_ids]).each_with_object({}) do |product_file, hash|
-      urls = []
-      urls << @url_redirect.hls_playlist_or_smil_xml_path(product_file) if product_file.streamable?
-      urls << @url_redirect.signed_location_for_file(product_file) if product_file.listenable? || product_file.streamable?
-      hash[product_file.external_id] = urls
+      begin
+        urls = []
+        urls << @url_redirect.hls_playlist_or_smil_xml_path(product_file) if product_file.streamable?
+        urls << @url_redirect.signed_location_for_file(product_file) if product_file.listenable? || product_file.streamable?
+        hash[product_file.external_id] = urls
+      rescue Aws::S3::Errors::NotFound
+        next
+      end
     end
 
     render json:

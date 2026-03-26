@@ -2178,6 +2178,19 @@ describe UrlRedirectsController, inertia: true do
         expect(response.parsed_body[@video.external_id]).to eq([@url_redirect.hls_playlist_or_smil_xml_path(@video), @url_redirect.signed_location_for_file(@video)])
       end
     end
+
+    it "skips files whose S3 objects are missing" do
+      allow_any_instance_of(UrlRedirect).to receive(:signed_location_for_file).and_wrap_original do |method, file|
+        raise Aws::S3::Errors::NotFound.new(nil, "Not Found") if file == @audio
+        method.call(file)
+      end
+
+      get :media_urls, params: { id: @url_redirect.token, file_ids: [@audio.external_id, @video.external_id] }
+
+      expect(response).to be_successful
+      expect(response.parsed_body).not_to have_key(@audio.external_id)
+      expect(response.parsed_body[@video.external_id]).to be_present
+    end
   end
 
   describe "POST 'save_last_content_page'" do
