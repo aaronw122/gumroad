@@ -17,6 +17,12 @@ describe EuropeanBankAccount do
       expect(create(:fr_bank_account).country).to eq("FR")
       expect(create(:nl_bank_account).country).to eq("NL")
     end
+
+    it "falls back to the raw prefix when ISO3166 lookup returns nil" do
+      bank_account = create(:european_bank_account)
+      allow(bank_account).to receive(:account_number_decrypted).and_return("XX1234567890")
+      expect(bank_account.country).to eq("XX")
+    end
   end
 
   describe "#currency" do

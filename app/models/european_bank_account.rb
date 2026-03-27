@@ -13,7 +13,8 @@ class EuropeanBankAccount < BankAccount
   end
 
   def country
-    ISO3166::Country[account_number_decrypted[0, 2]].alpha2
+    country_code = account_number_decrypted[0, 2]
+    ISO3166::Country[country_code]&.alpha2 || country_code&.upcase
   end
 
   def currency
