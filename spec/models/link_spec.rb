@@ -3782,6 +3782,18 @@ describe Link, :vcr do
         product.enable_transcode_videos_on_purchase!
       end.to change { product.transcode_videos_on_purchase }.from(false).to(true)
     end
+
+    context "when the product has an expired default offer code" do
+      it "succeeds without raising a validation error" do
+        product = create(:product)
+        offer_code = create(:offer_code, products: [product], user: product.user)
+        product.update!(default_offer_code: offer_code)
+        offer_code.update_column(:expires_at, 1.day.ago)
+
+        expect { product.enable_transcode_videos_on_purchase! }.not_to raise_error
+        expect(product.reload.transcode_videos_on_purchase?).to eq true
+      end
+    end
   end
 
   describe "#auto_transcode_videos?" do

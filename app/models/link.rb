@@ -1077,7 +1077,7 @@ class Link < ApplicationRecord
     return if transcode_videos_on_purchase?
 
     self.transcode_videos_on_purchase = true
-    save!
+    save!(validate: false)
   end
 
   def auto_transcode_videos?
