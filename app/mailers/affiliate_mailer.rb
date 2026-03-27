@@ -206,7 +206,7 @@ class AffiliateMailer < ApplicationMailer
       @quantity = @purchase.quantity
       @variants = @purchase.variants_list
       @variants_count = @purchase.variant_names&.count || 0
-      @cut = MoneyFormatter.format(@purchase.affiliate_credit_cents + @purchase.affiliate_credit.fee_cents, :usd, no_cents_if_whole: true, symbol: true)
+      @cut = MoneyFormatter.format(@purchase.affiliate_credit_cents + (@purchase.affiliate_credit&.fee_cents || 0), :usd, no_cents_if_whole: true, symbol: true)
 
       @subject = "You made a sale!"
       set_notify_of_sale_headers(is_preorder: @is_preorder)

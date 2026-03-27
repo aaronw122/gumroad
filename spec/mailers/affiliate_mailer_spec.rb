@@ -106,6 +106,22 @@ describe AffiliateMailer do
         expect(mail.body.encoded).to include "(Blue, Small)"
       end
     end
+
+    context "for a collaborator with no affiliate_credit record" do
+      it "handles missing affiliate_credit gracefully" do
+        product = create(:product, user: seller, name: product_name, price_cents: 0)
+        collaborator = create(:collaborator, seller:, affiliate_basis_points: 40_00, products: [product])
+        purchase = create(:purchase, link: product, seller:, price_cents: 0)
+        purchase.update_columns(affiliate_id: collaborator.id, affiliate_credit_cents: 8_00)
+
+        expect(purchase.reload.affiliate_credit).to be_nil
+
+        mail = AffiliateMailer.notify_affiliate_of_sale(purchase.id)
+        expect(mail.to).to eq([collaborator.affiliate_user.form_email])
+        expect(mail.body.encoded).to include "Your cut"
+        expect(mail.body.encoded).to include "$8"
+      end
+    end
   end
 
   describe "#notify_direct_affiliate_of_updated_products" do
