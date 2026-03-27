@@ -635,5 +635,25 @@ describe "Product::Searchable - Search scenarios" do
         expect(Link.search(Link.search_options(user_id: [product1.user_id, product2.user_id])).records.map(&:id)).to eq([product1.id, product2.id])
       end
     end
+
+    describe "the :search param" do
+      it "does not raise BadRequest when :search is a string (e.g. passed via query string)" do
+        index_model_records(Link)
+        expect do
+          Link.search(Link.search_options(search: "AI freelancer template")).response
+        end.not_to raise_error
+      end
+
+      it "appends a Hash :search clause to the bool must array" do
+        options = Link.search_options(search: { term: { is_recommendable: true } })
+        expect(options[:query][:bool][:must]).to include(term: { is_recommendable: true })
+      end
+
+      it "does not append a String :search to the bool must array" do
+        options = Link.search_options(search: "some string")
+        must_clauses = options[:query][:bool][:must]
+        expect(must_clauses).to all(be_a(Hash))
+      end
+    end
   end
 end
