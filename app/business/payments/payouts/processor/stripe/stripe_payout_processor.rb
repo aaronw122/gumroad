@@ -182,7 +182,7 @@ class StripePayoutProcessor
     []
   rescue Stripe::InvalidRequestError => e
     failed = true
-    ErrorNotifier.notify(e)
+    ErrorNotifier.notify(e) if !e.message["Cannot create transfers"]
     [e.message]
   rescue Stripe::AuthenticationError, Stripe::APIConnectionError
     failed = true

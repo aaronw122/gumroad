@@ -299,6 +299,78 @@ describe StripePayoutProcessor, :vcr do
     end
   end
 
+  describe ".prepare_payment_and_set_amount error notifications" do
+    let(:user) { create(:user) }
+    let(:bank_account) { create(:ach_account_stripe_succeed, user:) }
+    let(:merchant_account) { create(:merchant_account, user:) }
+    let!(:gumroad_merchant_account) do
+      MerchantAccount.gumroad(StripeChargeProcessor.charge_processor_id) ||
+        MerchantAccount.create!(charge_processor_id: StripeChargeProcessor.charge_processor_id, charge_processor_merchant_id: "gumroad_stripe")
+    end
+
+    before do
+      user
+      bank_account
+      merchant_account
+      bank_account.reload
+      user.reload
+    end
+
+    let(:balances) do
+      [
+        create(:balance, user:, state: "processing", merchant_account: gumroad_merchant_account, amount_cents: 10_00)
+      ]
+    end
+    let(:payment) do
+      payment = create(:payment, user:, currency: nil, amount_cents: nil)
+      payment.balances << balances
+      payment
+    end
+
+    context "when the internal transfer raises 'Cannot create transfers'" do
+      before do
+        allow(StripeTransferInternallyToCreator).to receive(:transfer_funds_to_account).and_raise(
+          Stripe::InvalidRequestError.new("Cannot create transfers; please contact us via https://support.stripe.com/contact with details for assistance.", "amount_cents")
+        )
+      end
+
+      it "does not notify error tracker" do
+        expect(ErrorNotifier).not_to receive(:notify)
+        described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+      end
+
+      it "returns the error message" do
+        errors = described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+        expect(errors).to eq(["Cannot create transfers; please contact us via https://support.stripe.com/contact with details for assistance."])
+      end
+
+      it "marks the payment as failed" do
+        described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+        payment.reload
+        expect(payment.state).to eq("failed")
+      end
+    end
+
+    context "when the internal transfer raises an unknown InvalidRequestError" do
+      before do
+        allow(StripeTransferInternallyToCreator).to receive(:transfer_funds_to_account).and_raise(
+          Stripe::InvalidRequestError.new("Something unexpected happened", "amount_cents")
+        )
+      end
+
+      it "notifies error tracker" do
+        expect(ErrorNotifier).to receive(:notify)
+        described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+      end
+
+      it "marks the payment as failed" do
+        described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+        payment.reload
+        expect(payment.state).to eq("failed")
+      end
+    end
+  end
+
   describe ".enqueue_payments" do
     let!(:yesterday) { Date.yesterday.to_s }
     let!(:user_ids) { [1, 2, 3, 4] }
