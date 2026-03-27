@@ -89,6 +89,19 @@ describe AdminSearchService do
       expect(purchases).to eq([purchase])
     end
 
+    it "returns purchases when filtering by both creator_email and transaction_date" do
+      seller = create(:user, email: "seller@example.com")
+      product = create(:product, user: seller)
+      purchase = create(:free_purchase, link: product)
+      purchase.update_columns(stripe_fingerprint: "fp_match", created_at: Time.zone.local(2024, 6, 15, 12, 0, 0))
+
+      other_purchase = create(:free_purchase, link: create(:product, user: seller))
+      other_purchase.update_columns(stripe_fingerprint: "fp_other", created_at: Time.zone.local(2023, 1, 1, 12, 0, 0))
+
+      purchases = AdminSearchService.new.search_purchases(creator_email: seller.email, transaction_date: "2024-06-15")
+      expect(purchases).to eq([purchase])
+    end
+
     it "returns no purchases when creator email is not found" do
       create(:purchase)
       purchases = AdminSearchService.new.search_purchases(creator_email: "nonexistent@example.com")

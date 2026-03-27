@@ -4,7 +4,7 @@ class AdminSearchService
   class InvalidDateError < StandardError; end
 
   def search_purchases(query: nil, email: nil, product_title_query: nil, purchase_status: nil, creator_email: nil, license_key: nil, transaction_date: nil, last_4: nil, card_type: nil, price: nil, expiry_date: nil, limit: nil)
-    purchases = Purchase.order(created_at: :desc)
+    purchases = Purchase.order("purchases.created_at DESC")
 
     if email.present?
       purchases = purchases.where(email: email)
@@ -77,7 +77,7 @@ class AdminSearchService
         formatted_date = parse_date!(transaction_date)
         start_date = (formatted_date - 1.days).beginning_of_day.to_fs(:db)
         end_date = (formatted_date + 1.days).end_of_day.to_fs(:db)
-        purchases = purchases.where("created_at between ? and ?", start_date, end_date)
+        purchases = purchases.where("purchases.created_at between ? and ?", start_date, end_date)
       end
       purchases = purchases.where(card_type:) if card_type.present?
       purchases = purchases.where(card_visual_sql_finder(last_4)) if last_4.present?
