@@ -147,12 +147,19 @@ class User < ApplicationRecord
   scope :holding_non_zero_balance, lambda {
     joins(:balances).merge(Balance.unpaid).group("balances.user_id").having("SUM(balances.amount_cents) != 0")
   }
+  ADMIN_SEARCH_MAX_EXECUTION_TIME_MS = 10_000
+  ADMIN_SEARCH_RESULT_LIMIT = 500
+
   scope :admin_search, ->(query) {
     query = query.to_s.strip
     if EmailFormatValidator.valid?(query)
       where(email: query)
     else
-      where(external_id: query).or(where("email LIKE ?", "%#{query}%")).or(where("name LIKE ?", "%#{query}%"))
+      where(external_id: query)
+        .or(where("email LIKE ?", "%#{query}%"))
+        .or(where("name LIKE ?", "%#{query}%"))
+        .optimizer_hints("MAX_EXECUTION_TIME(#{ADMIN_SEARCH_MAX_EXECUTION_TIME_MS})")
+        .limit(ADMIN_SEARCH_RESULT_LIMIT)
     end
   }
 
