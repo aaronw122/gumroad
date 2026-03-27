@@ -152,11 +152,11 @@ class Charge < ApplicationRecord
   end
 
   def external_id_for_invoice
-    purchase_as_chargeable.external_id
+    purchase_as_chargeable&.external_id || external_id
   end
 
   def external_id_numeric_for_invoice
-    purchase_as_chargeable.external_id_numeric.to_s
+    purchase_as_chargeable&.external_id_numeric&.to_s || external_id_numeric.to_s
   end
 
   def country_or_ip_country

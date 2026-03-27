@@ -197,6 +197,14 @@ describe Charge, :vcr do
     it "returns the external_id of the purchase" do
       expect(charge.external_id_for_invoice).to eq(purchase.external_id)
     end
+
+    context "when there are no successful purchases" do
+      let(:charge) { create(:charge) }
+
+      it "falls back to the charge's own external_id" do
+        expect(charge.external_id_for_invoice).to eq(charge.external_id)
+      end
+    end
   end
 
   describe "#external_id_numeric_for_invoice" do
@@ -205,6 +213,14 @@ describe Charge, :vcr do
 
     it "returns the external_id_numeric of the purchase" do
       expect(charge.external_id_numeric_for_invoice).to eq(purchase.external_id_numeric.to_s)
+    end
+
+    context "when there are no successful purchases" do
+      let(:charge) { create(:charge) }
+
+      it "falls back to the charge's own external_id_numeric" do
+        expect(charge.external_id_numeric_for_invoice).to eq(charge.external_id_numeric.to_s)
+      end
     end
   end
 
