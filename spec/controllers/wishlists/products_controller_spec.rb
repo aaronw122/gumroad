@@ -179,6 +179,15 @@ describe Wishlists::ProductsController do
         expect(response.parsed_body["items"].map { |wp| wp["id"] }).to match_array([wishlist_product1.external_id, wishlist_product2.external_id])
       end
     end
+
+    it "returns first page when requested page exceeds total pages" do
+      wishlist_product = create(:wishlist_product, wishlist:)
+
+      get :index, params: { wishlist_id: wishlist.external_id, page: 999 }
+
+      expect(response).to be_successful
+      expect(response.parsed_body["items"].map { |wp| wp["id"] }).to eq([wishlist_product.external_id])
+    end
   end
 
   describe "DELETE destroy" do

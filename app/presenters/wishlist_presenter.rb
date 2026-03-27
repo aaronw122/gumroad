@@ -112,7 +112,11 @@ class WishlistPresenter
 
   private
     def paginated_public_items(request:, pundit_user:, recommended_by:, page:)
-      pagination, wishlist_products = pagy(wishlist.alive_wishlist_products, page:, limit: PER_PAGE)
+      begin
+        pagination, wishlist_products = pagy(wishlist.alive_wishlist_products, page:, limit: PER_PAGE)
+      rescue Pagy::OverflowError
+        pagination, wishlist_products = pagy(wishlist.alive_wishlist_products, page: 1, limit: PER_PAGE)
+      end
 
       paginated_products = wishlist_products
       .includes(product: ProductPresenter::ASSOCIATIONS_FOR_CARD)
