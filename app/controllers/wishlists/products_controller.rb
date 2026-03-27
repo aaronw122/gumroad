@@ -39,7 +39,7 @@ class Wishlists::ProductsController < ApplicationController
 
     authorize wishlist_product
 
-    wishlist_product.mark_deleted!
+    wishlist_product.mark_deleted(validate: false)
 
     head :no_content
   end

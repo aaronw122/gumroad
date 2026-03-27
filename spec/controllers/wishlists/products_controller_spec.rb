@@ -195,5 +195,16 @@ describe Wishlists::ProductsController do
       expect(response).to be_successful
       expect(wishlist_product.reload).to be_deleted
     end
+
+    it "marks the wishlist product as deleted even when the product has since gained variants" do
+      product = wishlist_product.product
+      category = create(:variant_category, title: "Category", link: product)
+      create(:variant, variant_category: category, name: "Untitled 1")
+
+      delete :destroy, params: { wishlist_id: wishlist.external_id, id: wishlist_product.external_id }
+
+      expect(response).to have_http_status(:no_content)
+      expect(wishlist_product.reload).to be_deleted
+    end
   end
 end
