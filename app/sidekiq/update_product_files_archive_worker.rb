@@ -132,7 +132,11 @@ class UpdateProductFilesArchiveWorker
         estimated_size += product_file.size
       else
         Rails.logger.info("Fetching product file size from S3.")
-        estimated_size += product_file.s3_object.content_length if product_file.s3?
+        begin
+          estimated_size += product_file.s3_object.content_length if product_file.s3?
+        rescue Aws::S3::Errors::NotFound
+          Rails.logger.info("Product file not found on S3, skipping size estimation.")
+        end
       end
     end
     estimated_size

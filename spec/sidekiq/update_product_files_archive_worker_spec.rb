@@ -188,4 +188,25 @@ describe UpdateProductFilesArchiveWorker, :vcr do
       end
     end
   end
+
+  describe "#calculate_estimated_size" do
+    let(:worker) { described_class.new }
+    let(:product) { create(:product) }
+    let(:product_files_archive) { create(:product_files_archive, link: product) }
+
+    it "skips files missing from S3 instead of raising" do
+      product_file_with_size = create(:product_file, link: product, size: 1000)
+      product_file_missing_on_s3 = create(:product_file, link: product, size: nil)
+      product_files_archive.product_files << [product_file_with_size, product_file_missing_on_s3]
+
+      s3_object = instance_double(Aws::S3::Object)
+      allow(product_file_missing_on_s3).to receive(:s3?).and_return(true)
+      allow(product_file_missing_on_s3).to receive(:s3_object).and_return(s3_object)
+      allow(s3_object).to receive(:content_length).and_raise(Aws::S3::Errors::NotFound.new(nil, "Not Found"))
+
+      result = worker.calculate_estimated_size(product_files_archive)
+
+      expect(result).to eq(1000)
+    end
+  end
 end
