@@ -100,6 +100,18 @@ describe Api::Mobile::PurchasesController do
       expect(response.parsed_body["products"][0]["file_data"].map { _1["name_displayable"] }).to eq(["Extras", "Move on", "Summer times", "Watch: How do I make music?", "Tricks"])
     end
 
+    it "eager-loads display_asset_previews to avoid N+1 queries" do
+      product = create(:product, user: @user)
+      create(:asset_preview, link: product)
+      create(:purchase_with_balance, link: product, purchaser: @purchaser, seller: @user)
+
+      get :index, params: @params
+
+      purchases_relation = @purchaser.purchases.for_mobile_listing
+      product_link = purchases_relation.first.url_redirect.purchase.link
+      expect(product_link.association(:display_asset_previews)).to be_loaded
+    end
+
     it "includes thumbnail url if available" do
       product = create(:product, user: @user, name: "The Works of Edgar Gumstein", description: "A collection of works spanning 1984 — 1994")
       thumbnail = create(:thumbnail, product:)
