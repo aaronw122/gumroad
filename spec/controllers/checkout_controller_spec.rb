@@ -163,6 +163,18 @@ describe CheckoutController, type: :controller, inertia: true do
       end
     end
 
+    it "handles cart_product_ids as a single string param without raising" do
+      product = create(:product)
+
+      request.headers["X-Inertia"] = "true"
+      request.headers["X-Inertia-Partial-Component"] = "Checkout/Show"
+      request.headers["X-Inertia-Partial-Data"] = "recommended_products"
+
+      get :show, params: { cart_product_ids: product.external_id }
+
+      expect(response).to be_successful
+    end
+
     describe "for partial visits" do
       let(:recommender_model_name) { RecommendedProductsService::MODEL_SALES }
       let(:cart_product) { create(:product) }

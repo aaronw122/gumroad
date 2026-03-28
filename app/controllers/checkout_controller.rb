@@ -102,7 +102,7 @@ class CheckoutController < ApplicationController
     def recommended_products
       args = {
         purchaser: logged_in_user,
-        cart_product_ids: params.fetch(:cart_product_ids, []).map { ObfuscateIds.decrypt(_1) },
+        cart_product_ids: Array(params[:cart_product_ids]).map { ObfuscateIds.decrypt(_1) },
         recommender_model_name: session[:recommender_model_name],
         limit: params[:limit].present? ? params[:limit].to_i : 6,
         recommendation_type: params[:recommendation_type],
