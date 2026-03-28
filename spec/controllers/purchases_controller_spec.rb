@@ -1331,6 +1331,17 @@ describe PurchasesController, :vcr do
             get :unsubscribe, params: { id: secure_id, confirmation_text: "wrong@example.com" }
             expect(response).to redirect_to(root_path)
           end
+
+          it "does not raise when find_by_secure_external_id returns nil but confirmation_text is present" do
+            # Regression test for Sentry: `nil.charge` raised NoMethodError when the purchase could not
+            # be found. With the fix, nil-safe navigation is used and the request redirects to root.
+            allow(Purchase).to receive(:find_by_secure_external_id).and_return(nil)
+
+            expect do
+              get :unsubscribe, params: { id: "some_secure_id", confirmation_text: "any@example.com" }
+            end.not_to raise_error
+            expect(response).to redirect_to(root_path)
+          end
         end
       end
 
