@@ -1047,7 +1047,7 @@ class Link < ApplicationRecord
     attrs[:recurrence] = recurrence&.recurrence
     attrs[:pay_in_installments] = !!params[:pay_in_installments] && allow_installment_plan?
     attrs[:price] = [
-      customizable_price.present? || variant&.customizable_price.present? ? params[:price].to_i : 0,
+      customizable_price.present? || variant&.customizable_price.present? ? Array(params[:price]).first.to_i : 0,
       (recurrence&.price_cents || (attrs[:rental] ? rental_price_cents : price_cents)) +
       (attrs[:option]&.fetch(:price_difference_cents) || 0)
     ].max

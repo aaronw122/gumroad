@@ -4723,6 +4723,27 @@ describe Link, :vcr do
     end
   end
 
+  describe "#cart_item" do
+    context "when price param is an array (malformed request)" do
+      it "does not raise NoMethodError and returns a valid price" do
+        product = create(:product, customizable_price: true, price_cents: 100)
+        # Simulates a malformed request like ?price[]=500 where Rails parses price as an Array
+        params = ActionController::Parameters.new(price: ["500"])
+        expect { product.cart_item(params) }.not_to raise_error
+        result = product.cart_item(params)
+        expect(result[:price]).to eq(500)
+      end
+
+      it "returns 0 when price array is empty" do
+        product = create(:product, customizable_price: true, price_cents: 100)
+        params = ActionController::Parameters.new(price: [])
+        expect { product.cart_item(params) }.not_to raise_error
+        result = product.cart_item(params)
+        expect(result[:price]).to eq(100)
+      end
+    end
+  end
+
   describe "installment plan" do
     let!(:product) { create(:product, price_cents: 1000) }
     let!(:installment_plan) { create(:product_installment_plan, link: product, number_of_installments: 2) }
