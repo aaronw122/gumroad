@@ -49,10 +49,12 @@ describe("The supporter count", js: true, type: :system) do
       expect(page).to have_text("0 members")
 
       create(:membership_purchase, link: product, succeeded_at: 1.hour.ago, price_cents: 100)
+      Rails.cache.clear
       visit("/l/#{product.unique_permalink}")
       expect(page).to have_text("1 member")
 
       create(:membership_purchase, link: product, succeeded_at: 1.hour.ago, price_cents: 100)
+      Rails.cache.clear
       visit("/l/#{product.unique_permalink}")
       expect(page).to have_text("2 members")
     end

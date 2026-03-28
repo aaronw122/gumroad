@@ -83,10 +83,12 @@ describe("Product page sales count", js: true, type: :system) do
       expect(page).to have_text("0 sales")
 
       create(:purchase, link: @product, succeeded_at: 1.hour.ago)
+      Rails.cache.clear
       visit @product.long_url
       expect(page).to have_text("1 sale")
 
       create(:purchase, link: @product, succeeded_at: 1.hour.ago)
+      Rails.cache.clear
       visit @product.long_url
       expect(page).to have_text("2 sales")
     end
