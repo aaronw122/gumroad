@@ -120,6 +120,22 @@ describe ProfileSectionsPresenter do
                                                                                               sections:
                                                                                             })
     end
+
+    it "returns nil props when featured product no longer exists" do
+      featured_product_section.update_column(:json_data, featured_product_section.json_data.merge("featured_product_id" => 0))
+
+      sections = common_sections_props
+      sections[1][:posts] = posts.map(&method(:post_data))
+      sections[2][:props] = nil
+      sections[2].delete(:featured_product_id)
+      sections[5].merge!(wishlists: WishlistPresenter.cards_props(wishlists: Wishlist.where(id: wishlists.map(&:id)), pundit_user: pundit_user, layout: Product::Layout::PROFILE))
+      expect(subject.props(request:, pundit_user:, seller_custom_domain_url: nil)).to match({
+                                                                                              currency_code: pundit_user.user.currency_type,
+                                                                                              show_ratings_filter: true,
+                                                                                              creator_profile: ProfilePresenter.new(seller:, pundit_user:).creator_profile,
+                                                                                              sections:
+                                                                                            })
+    end
   end
 
   describe "compute_description parameter" do

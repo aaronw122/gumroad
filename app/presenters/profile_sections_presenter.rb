@@ -105,9 +105,10 @@ class ProfileSectionsPresenter
         unless is_owner
           cached_props.merge!(
             {
-              props: cached_props[:featured_product_id].present? ?
-                       ProductPresenter.new(product: seller.products.find_by_external_id(cached_props.delete(:featured_product_id)), pundit_user:, request:).product_props(seller_custom_domain_url:) :
-                       nil,
+              props: begin
+                       product = cached_props[:featured_product_id].present? ? seller.products.find_by_external_id(cached_props.delete(:featured_product_id)) : nil
+                       product ? ProductPresenter.new(product:, pundit_user:, request:).product_props(seller_custom_domain_url:) : nil
+                     end,
             }
           )
         end
