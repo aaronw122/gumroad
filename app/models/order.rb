@@ -40,7 +40,7 @@ class Order < ApplicationRecord
   end
 
   def email
-    purchase_as_orderable.email
+    purchase_as_orderable&.email
   end
 
   def locale

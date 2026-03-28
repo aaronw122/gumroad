@@ -73,6 +73,14 @@ describe Order do
     it "returns the email of the purchase" do
       expect(order.email).to eq(purchase.email)
     end
+
+    context "when there are no successful purchases" do
+      let(:purchase) { create(:failed_purchase) }
+
+      it "returns nil" do
+        expect(order.email).to be_nil
+      end
+    end
   end
 
   describe "#locale" do
