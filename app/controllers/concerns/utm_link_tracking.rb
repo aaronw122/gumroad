@@ -31,26 +31,32 @@ module UtmLinkTracking
 
       utm_params = required_params.merge(optional_params).transform_values { _1.to_s.strip.downcase.gsub(/[^a-z0-9\-_]/u, "-").presence }
 
-      ActiveRecord::Base.transaction do
-        utm_link = UtmLink.active.find_or_initialize_by(utm_params.merge(target_resource_type:, target_resource_id:))
-        auto_create_utm_link(utm_link, seller) if utm_link.new_record?
-        return unless utm_link.persisted?
-        return unless Feature.active?(:utm_links, utm_link.seller)
+      utm_link_params = utm_params.merge(target_resource_type:, target_resource_id:)
 
-        utm_link.utm_link_visits.create!(
-          user: current_user,
-          referrer: request.referrer,
-          ip_address: request.remote_ip,
-          user_agent: request.user_agent,
-          browser_guid: cookies[:_gumroad_guid],
-          country_code: GeoIp.lookup(request.remote_ip)&.country_code
-        )
+      begin
+        ActiveRecord::Base.transaction do
+          utm_link = UtmLink.active.find_or_initialize_by(utm_link_params)
+          auto_create_utm_link(utm_link, seller) if utm_link.new_record?
+          return unless utm_link.persisted?
+          return unless Feature.active?(:utm_links, utm_link.seller)
 
-        utm_link.first_click_at ||= Time.current
-        utm_link.last_click_at = Time.current
-        utm_link.save!
+          utm_link.utm_link_visits.create!(
+            user: current_user,
+            referrer: request.referrer,
+            ip_address: request.remote_ip,
+            user_agent: request.user_agent,
+            browser_guid: cookies[:_gumroad_guid],
+            country_code: GeoIp.lookup(request.remote_ip)&.country_code
+          )
 
-        UpdateUtmLinkStatsJob.perform_async(utm_link.id)
+          utm_link.first_click_at ||= Time.current
+          utm_link.last_click_at = Time.current
+          utm_link.save!
+
+          UpdateUtmLinkStatsJob.perform_async(utm_link.id)
+        end
+      rescue ActiveRecord::RecordNotUnique
+        retry if (utm_link = UtmLink.active.find_by(utm_link_params))
       end
     end
 

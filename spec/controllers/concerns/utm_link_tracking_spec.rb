@@ -290,6 +290,42 @@ describe UtmLinkTracking, type: :controller do
       end
     end
 
+    it "handles concurrent duplicate UTM link creation gracefully", :sidekiq_inline do
+      request.host = "#{seller.subdomain}"
+      request.path = "/"
+      allow(controller).to receive(:root_path).and_return("/")
+
+      normalized_params = utm_params.transform_values { _1.to_s.strip.downcase.gsub(/[^a-z0-9\-_]/u, "-").presence }
+      existing_utm_link = create(:utm_link, seller:, **normalized_params, target_resource_type: "profile_page", target_resource_id: nil)
+
+      attempted_once = false
+      allow(UtmLink).to receive(:active).and_wrap_original do |original_method|
+        relation = original_method.call
+        if !attempted_once
+          allow(relation).to receive(:find_or_initialize_by).and_wrap_original do |_find_method, *args|
+            attempted_once = true
+            UtmLink.new(args.first)
+          end
+        end
+        relation
+      end
+
+      original_save = UtmLink.instance_method(:save!)
+      allow_any_instance_of(UtmLink).to receive(:save!) do |receiver, **args|
+        if receiver.new_record?
+          raise ActiveRecord::RecordNotUnique, "Duplicate entry"
+        else
+          original_save.bind_call(receiver, **args)
+        end
+      end
+
+      expect do
+        get :action, params: utm_params
+      end.to change(UtmLinkVisit, :count).by(1)
+
+      expect(existing_utm_link.reload.utm_link_visits.count).to eq(1)
+    end
+
     it "does not auto-create UTM link when feature is disabled" do
       Feature.deactivate_user(:utm_links, seller)
       request.host = "#{seller.subdomain}"
