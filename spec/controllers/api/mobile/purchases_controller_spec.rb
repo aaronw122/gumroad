@@ -304,7 +304,7 @@ describe Api::Mobile::PurchasesController do
 
       it "limits unpaginated results to DEFAULT_PURCHASES_LIMIT" do
         products = create_list(:product, 3, user: @user)
-        purchases = products.map { |product| create(:purchase_with_balance, link: product, purchaser: @purchaser, seller: @user) }
+        products.map { |product| create(:purchase_with_balance, link: product, purchaser: @purchaser, seller: @user) }
 
         stub_const("Api::Mobile::PurchasesController::DEFAULT_PURCHASES_LIMIT", 2)
 
