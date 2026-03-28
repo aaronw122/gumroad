@@ -483,6 +483,95 @@ describe UrlRedirect do
     end
   end
 
+  describe "#has_purchased_variants_from_categories_with_files?" do
+    it "returns false when there is no purchase" do
+      url_redirect = create(:url_redirect, purchase: nil)
+      expect(url_redirect.send(:has_purchased_variants_from_categories_with_files?)).to be false
+    end
+
+    it "returns false when purchase has no variant attributes" do
+      product = create(:product)
+      purchase = build(:purchase, link: product)
+      url_redirect = create(:url_redirect, purchase:)
+      expect(url_redirect.send(:has_purchased_variants_from_categories_with_files?)).to be false
+    end
+
+    it "returns true when a purchased variant has files" do
+      product = create(:product)
+      product_file = create(:product_file, link: product)
+      variant_category = create(:variant_category, link: product)
+      variant = create(:variant, variant_category:)
+      variant.product_files << product_file
+      purchase = build(:purchase, link: product)
+      purchase.variant_attributes = [variant]
+      url_redirect = create(:url_redirect, purchase:)
+
+      expect(url_redirect.send(:has_purchased_variants_from_categories_with_files?)).to be true
+    end
+
+    it "returns true when a sibling variant in the same category has files" do
+      product = create(:product)
+      product_file = create(:product_file, link: product)
+      variant_category = create(:variant_category, link: product)
+      purchased_variant = create(:variant, variant_category:)
+      sibling_variant = create(:variant, variant_category:)
+      sibling_variant.product_files << product_file
+      purchase = build(:purchase, link: product)
+      purchase.variant_attributes = [purchased_variant]
+      url_redirect = create(:url_redirect, purchase:)
+
+      expect(url_redirect.send(:has_purchased_variants_from_categories_with_files?)).to be true
+    end
+
+    it "returns false when no variant or sibling has files" do
+      product = create(:product)
+      variant_category = create(:variant_category, link: product)
+      variant = create(:variant, variant_category:)
+      purchase = build(:purchase, link: product)
+      purchase.variant_attributes = [variant]
+      url_redirect = create(:url_redirect, purchase:)
+
+      expect(url_redirect.send(:has_purchased_variants_from_categories_with_files?)).to be false
+    end
+
+    it "does not count deleted sibling variants" do
+      product = create(:product)
+      product_file = create(:product_file, link: product)
+      variant_category = create(:variant_category, link: product)
+      purchased_variant = create(:variant, variant_category:)
+      deleted_sibling = create(:variant, variant_category:)
+      deleted_sibling.product_files << product_file
+      deleted_sibling.mark_deleted!
+      purchase = build(:purchase, link: product)
+      purchase.variant_attributes = [purchased_variant]
+      url_redirect = create(:url_redirect, purchase:)
+
+      expect(url_redirect.send(:has_purchased_variants_from_categories_with_files?)).to be false
+    end
+
+    it "uses a bounded number of queries regardless of variant count" do
+      product = create(:product)
+      product_file = create(:product_file, link: product)
+      variant_category = create(:variant_category, link: product)
+      variants = 5.times.map { create(:variant, variant_category:) }
+      variants.first.product_files << product_file
+      purchase = build(:purchase, link: product)
+      purchase.variant_attributes = variants
+      url_redirect = create(:url_redirect, purchase:)
+
+      query_count = 0
+      callback = lambda { |_name, _start, _finish, _id, payload|
+        query_count += 1 if payload[:name] != "SCHEMA" && payload[:name] != "CACHE"
+      }
+
+      ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
+        url_redirect.send(:has_purchased_variants_from_categories_with_files?)
+      end
+
+      expect(query_count).to be <= 4
+    end
+  end
+
   describe "#rich_content_json" do
     it "returns empty hash if there's no associated object" do
       url_redirect = create(:url_redirect)

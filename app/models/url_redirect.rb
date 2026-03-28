@@ -394,10 +394,27 @@ class UrlRedirect < ApplicationRecord
     end
 
     def has_purchased_variants_from_categories_with_files?
+      return @_has_purchased_variants_from_categories_with_files if defined?(@_has_purchased_variants_from_categories_with_files)
+
+      @_has_purchased_variants_from_categories_with_files = compute_has_purchased_variants_from_categories_with_files
+    end
+
+    def compute_has_purchased_variants_from_categories_with_files
       return false unless purchase
-      purchase.variant_attributes.any? do |variant|
-        variant.is_a?(Variant) && (variant.has_files? || (variant.variant_category && variant.variant_category.variants.alive.any?(&:has_files?)))
-      end
+
+      purchased_variants = purchase.variant_attributes.select { _1.is_a?(Variant) }
+      return false if purchased_variants.empty?
+
+      variant_ids = purchased_variants.map(&:id)
+      return true if ProductFile.alive.joins(:base_variants).where(base_variants: { id: variant_ids }).exists?
+
+      category_ids = purchased_variants.filter_map(&:variant_category_id).uniq
+      return false if category_ids.empty?
+
+      sibling_variant_ids = Variant.alive.where(variant_category_id: category_ids).where.not(id: variant_ids).pluck(:id)
+      return false if sibling_variant_ids.empty?
+
+      ProductFile.alive.joins(:base_variants).where(base_variants: { id: sibling_variant_ids }).exists?
     end
 
     def has_purchased_variants_from_categories_with_rich_content?
