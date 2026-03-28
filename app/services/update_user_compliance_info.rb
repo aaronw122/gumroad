@@ -47,7 +47,12 @@ class UpdateUserComplianceInfo
         if compliance_params[:business_tax_id].present?
           new_compliance_info.business_tax_id = compliance_params[:business_tax_id].gsub(/\D/, "")
         end
-        new_compliance_info.birthday = Date.new(compliance_params[:dob_year].to_i, compliance_params[:dob_month].to_i, compliance_params[:dob_day].to_i) if compliance_params[:dob_year].present? && compliance_params[:dob_year].to_i > 0
+        if compliance_params[:dob_year].present? && compliance_params[:dob_year].to_i > 0
+          year = compliance_params[:dob_year].to_i
+          month = compliance_params[:dob_month].to_i
+          day = compliance_params[:dob_day].to_i
+          new_compliance_info.birthday = Date.new(year, month, day) if Date.valid_date?(year, month, day)
+        end
         new_compliance_info.skip_stripe_job_on_create = true
         new_compliance_info.phone =                   compliance_params[:phone]                   if compliance_params[:phone].present?
         new_compliance_info.business_phone =          compliance_params[:business_phone]          if compliance_params[:business_phone].present?

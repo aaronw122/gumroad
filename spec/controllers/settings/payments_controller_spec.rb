@@ -356,6 +356,32 @@ describe Settings::PaymentsController, :vcr, type: :controller, inertia: true do
         end
       end
 
+      describe "user enters invalid date of birth components" do
+        before do
+          put :update, params: { user: params }
+        end
+
+        it "does not raise an error when dob_month and dob_day are blank" do
+          params.merge!(dob_year: "1990", dob_month: "", dob_day: "")
+          old_birthday = user.alive_user_compliance_info.birthday
+
+          put :update, params: { user: params }
+
+          expect(response).to redirect_to(settings_payments_path)
+          expect(user.alive_user_compliance_info.birthday).to eq(old_birthday)
+        end
+
+        it "does not raise an error when dob_day is invalid for the given month" do
+          params.merge!(dob_year: "1990", dob_month: "2", dob_day: "31")
+          old_birthday = user.alive_user_compliance_info.birthday
+
+          put :update, params: { user: params }
+
+          expect(response).to redirect_to(settings_payments_path)
+          expect(user.alive_user_compliance_info.birthday).to eq(old_birthday)
+        end
+      end
+
       describe "creator enters an invalid zip code" do
         before do
           params.merge!(
