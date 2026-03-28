@@ -10,6 +10,15 @@ class UpdateUserComplianceInfo
 
   def process
     if compliance_params.present?
+      if compliance_params[:business_tax_id].present? && compliance_params[:is_business]
+        stripped_ein = compliance_params[:business_tax_id].gsub(/\D/, "")
+        country_code = compliance_params[:business_country].presence || compliance_params[:country].presence ||
+          user.fetch_or_build_user_compliance_info.legal_entity_country_code
+        if country_code == Compliance::Countries::USA.alpha2 && stripped_ein.length != 9
+          return { success: false, error_message: "US business tax IDs (EIN) must have 9 digits." }
+        end
+      end
+
       old_compliance_info = user.fetch_or_build_user_compliance_info
       saved, new_compliance_info = old_compliance_info.dup_and_save do |new_compliance_info|
         # if the following fields are submitted and are blank, we don't clear the field for the user
@@ -57,11 +66,6 @@ class UpdateUserComplianceInfo
       end
 
       return { success: false, error_message: new_compliance_info.errors.full_messages.to_sentence } unless saved
-
-      if new_compliance_info.is_business && new_compliance_info.legal_entity_country_code == "US" &&
-          new_compliance_info.business_tax_id.present? && new_compliance_info.business_tax_id.length != 9
-        return { success: false, error_message: "US business tax IDs (EIN) must have 9 digits." }
-      end
 
       begin
         StripeMerchantAccountManager.handle_new_user_compliance_info(new_compliance_info)
