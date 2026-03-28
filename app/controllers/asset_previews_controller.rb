@@ -23,7 +23,7 @@ class AssetPreviewsController < ApplicationController
       asset_preview.file&.blob&.purge
       render(json: { success: false, error: asset_preview.errors.any? ? asset_preview.errors.full_messages.to_sentence : "Could not process your preview, please try again." })
     end
-  rescue *INTERNET_EXCEPTIONS
+  rescue *INTERNET_EXCEPTIONS, Aws::S3::Errors::MetadataTooLarge
     render(json: { success: false, error: "Could not process your preview, please try again." })
   end
 

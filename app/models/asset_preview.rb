@@ -189,8 +189,13 @@ class AssetPreview < ApplicationRecord
       tempfile = Tempfile.new(binmode: true)
       tempfile.write(response.body)
       tempfile.rewind
+      filename = File.basename(new_uri.path)
+      if filename.length > 200
+        ext = File.extname(filename)
+        filename = "#{filename[0, 200 - ext.length]}#{ext}"
+      end
       blob = ActiveStorage::Blob.create_and_upload!(io: tempfile,
-                                                    filename: File.basename(new_url),
+                                                    filename: filename,
                                                     content_type: response.content_type)
       self.file.attach(blob.signed_id)
       self.file.analyze

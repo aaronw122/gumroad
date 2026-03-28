@@ -189,6 +189,27 @@ describe AssetPreview, :vcr do
         asset_preview.save!
       end.to raise_error(SsrfFilter::PrivateIPAddress)
     end
+
+    it "strips query parameters from the filename" do
+      url_with_query = "#{AWS_S3_ENDPOINT}/#{S3_BUCKET}/specs/test.png?token=abc123&sig=xyz"
+      asset_preview.url = url_with_query
+      asset_preview.analyze_file
+      asset_preview.save!
+
+      expect(asset_preview.file.filename.to_s).to eq("test.png")
+    end
+
+    it "truncates extremely long filenames while preserving the extension" do
+      long_name = "a" * 250
+      url_with_long_name = "#{AWS_S3_ENDPOINT}/#{S3_BUCKET}/specs/#{long_name}.png"
+      asset_preview.url = url_with_long_name
+      asset_preview.analyze_file
+      asset_preview.save!
+
+      filename = asset_preview.file.filename.to_s
+      expect(filename.length).to be <= 200
+      expect(filename).to end_with(".png")
+    end
   end
 
   it "auto-generates a GUID on creation" do

@@ -33,6 +33,15 @@ describe AssetPreviewsController do
       end.to change { product.asset_previews.alive.count }.by(1)
     end
 
+    it "handles Aws::S3::Errors::MetadataTooLarge gracefully" do
+      allow_any_instance_of(AssetPreview).to receive(:url=).and_raise(Aws::S3::Errors::MetadataTooLarge.new(nil, "Metadata too large"))
+      post(:create, params: { link_id: product.unique_permalink, asset_preview: { url: s3_url }, format: :json })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body["success"]).to be(false)
+      expect(response.parsed_body["error"]).to be_present
+    end
+
     it "doesn't add a preview if there are too many previews" do
       stub_const("Link::MAX_PREVIEW_COUNT", 1)
       allow_any_instance_of(AssetPreview).to receive(:analyze_file).and_return(nil)
