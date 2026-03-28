@@ -727,6 +727,22 @@ describe Order::ChargeService, :vcr do
     end
   end
 
+  describe "#ensure_all_purchases_processed" do
+    it "does not raise when called with nil" do
+      order = create(:order)
+      charge_service = Order::ChargeService.new(order:, params: nil)
+
+      expect { charge_service.send(:ensure_all_purchases_processed, nil) }.not_to raise_error
+    end
+
+    it "does not raise when called with an empty array" do
+      order = create(:order)
+      charge_service = Order::ChargeService.new(order:, params: nil)
+
+      expect { charge_service.send(:ensure_all_purchases_processed, []) }.not_to raise_error
+    end
+  end
+
   describe "#mandate_options_for_stripe" do
     let!(:seller) { create(:user) }
     let!(:membership_product) { create(:membership_product_with_preset_tiered_pricing, user: seller) }
