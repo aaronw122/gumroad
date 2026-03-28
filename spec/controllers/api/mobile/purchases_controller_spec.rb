@@ -316,6 +316,19 @@ describe Api::Mobile::PurchasesController do
                                              user_id: @purchaser.external_id }.as_json(api_scopes: ["mobile_api"]))
       end
     end
+
+    it "limits unpaginated results to DEFAULT_UNPAGINATED_LIMIT" do
+      stub_const("Api::Mobile::PurchasesController::DEFAULT_UNPAGINATED_LIMIT", 3)
+      products = 4.times.map { create(:product, user: @user, price_cents: 0) }
+      products.each do |product|
+        create(:purchase, link: product, purchaser: @purchaser, seller: @user)
+      end
+
+      get :index, params: @params
+
+      expect(response.parsed_body["success"]).to eq(true)
+      expect(response.parsed_body["products"].size).to eq(3)
+    end
   end
 
   describe "POST archive" do
