@@ -82,6 +82,27 @@ describe ShipmentsController, :vcr  do
           expect(response.parsed_body["error_message"]).to eq "We are unable to verify your shipping address. Is your address correct?"
         end
       end
+
+      describe "when EasyPost returns nil address fields" do
+        it "treats nil fields as address mismatch and does not raise" do
+          address = OpenStruct.new(
+            street1: "1640 17TH ST",
+            city: "SAN FRANCISCO",
+            state: nil,
+            zip: "94107",
+            country: "US",
+            verifications: OpenStruct.new(
+              delivery: OpenStruct.new(success: true, errors: [])
+            )
+          )
+          allow_any_instance_of(EasyPost::Services::Address).to receive(:create).and_return(address)
+
+          post :verify_shipping_address, params: @params
+
+          expect(response.parsed_body["success"]).to be(false)
+          expect(response.parsed_body["easypost_verification_required"]).to be(true)
+        end
+      end
     end
 
     describe "international address" do

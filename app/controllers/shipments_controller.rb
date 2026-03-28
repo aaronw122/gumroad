@@ -89,10 +89,8 @@ class ShipmentsController < ApplicationController
     # Address suggestion and formatting helpers
 
     def formatted_address(address)
-      # For street address cannot use titlecase directly on string,
-      # since "17th st", gets converted to "17 Th St", instead of "17th St".
-      street = address[:street1].split.map(&:capitalize).join(" ")
-      city = address[:city].titleize
+      street = address[:street1].to_s.split.map(&:capitalize).join(" ")
+      city = address[:city].to_s.titleize
       zip = formatted_zip_for(address)
       state = formatted_state_for(address)
       "#{street}, #{city}, #{state}, #{zip}"
@@ -109,6 +107,7 @@ class ShipmentsController < ApplicationController
     end
 
     def match_field_for(old_addr, new_addr, field)
+      return false if new_addr[field].nil? || old_addr[field].nil?
       new_addr[field].downcase == old_addr[field].downcase
     end
 
@@ -122,14 +121,17 @@ class ShipmentsController < ApplicationController
     end
 
     def formatted_zip_for(address)
+      return address[:zip].to_s if address[:zip].nil?
       in_us?(address) ? address[:zip][0..4] : address[:zip]
     end
 
     def formatted_state_for(address)
+      return address[:state].to_s if address[:state].nil?
       in_us?(address) ? address[:state].upcase : address[:state].titleize
     end
 
     def in_us?(address)
+      return false if address[:country].nil?
       ["US", "UNITED STATES"].include?(address[:country].upcase)
     end
 end
