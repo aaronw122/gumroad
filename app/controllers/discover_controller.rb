@@ -46,6 +46,7 @@ class DiscoverController < ApplicationController
         recommended_by: RecommendationType::GUMROAD_SEARCH_RECOMMENDATION,
         target: Product::Layout::DISCOVER,
         compute_description: false,
+        compute_inventory: false,
         query: params[:query],
         offer_code: params[:offer_code]
       )
@@ -85,6 +86,7 @@ class DiscoverController < ApplicationController
             target: product_info.target,
             recommender_model_name: product_info.recommender_model_name,
             affiliate_id: product_info.affiliate_id,
+            compute_inventory: false,
           )
         end
       else
@@ -110,7 +112,8 @@ class DiscoverController < ApplicationController
             product:,
             request:,
             recommended_by: RecommendationType::GUMROAD_DISCOVER_RECOMMENDATION,
-            target: Product::Layout::DISCOVER
+            target: Product::Layout::DISCOVER,
+            compute_inventory: false,
           )
         end
       end
