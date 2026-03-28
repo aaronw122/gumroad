@@ -6,6 +6,7 @@ module Product::Searchable
   # we want to show 9 tags, but this is used as an array indexing which starts at 0
   MAX_NUMBER_OF_TAGS = 8
   RECOMMENDED_PRODUCTS_PER_PAGE = 9
+  MAX_SEARCH_SIZE = 100
   MAX_NUMBER_OF_FILETYPES = 8
   MAX_OFFER_CODES_IN_INDEX = 300
 
@@ -150,7 +151,7 @@ module Product::Searchable
   class_methods do
     def search_options(params)
       search_options = Elasticsearch::DSL::Search.search do
-        size params.fetch(:size, RECOMMENDED_PRODUCTS_PER_PAGE)
+        size [params.fetch(:size, RECOMMENDED_PRODUCTS_PER_PAGE).to_i, MAX_SEARCH_SIZE].min
         from (params[:from].to_i - 1).clamp(0, MAX_RESULT_WINDOW - size)
         _source false
         if params[:track_total_hits]

@@ -623,6 +623,28 @@ describe "Product::Searchable - Search scenarios" do
       end
     end
 
+    describe "option 'size'" do
+      it "defaults to RECOMMENDED_PRODUCTS_PER_PAGE" do
+        search = Link.search_options({})
+        expect(search.to_hash[:size]).to eq(Product::Searchable::RECOMMENDED_PRODUCTS_PER_PAGE)
+      end
+
+      it "caps size at MAX_SEARCH_SIZE" do
+        search = Link.search_options(size: 10_000)
+        expect(search.to_hash[:size]).to eq(Product::Searchable::MAX_SEARCH_SIZE)
+      end
+
+      it "allows size values within MAX_SEARCH_SIZE" do
+        search = Link.search_options(size: 50)
+        expect(search.to_hash[:size]).to eq(50)
+      end
+
+      it "handles string size params" do
+        search = Link.search_options(size: "10000")
+        expect(search.to_hash[:size]).to eq(Product::Searchable::MAX_SEARCH_SIZE)
+      end
+    end
+
     describe "searching by multiple user IDs" do
       let!(:product1) { create(:product) }
       let!(:product2) { create(:product) }
