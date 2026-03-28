@@ -113,6 +113,14 @@ describe SignupController, type: :controller, inertia: true do
           expect(controller.user_signed_in?).to eq true
         end
 
+        it "redirects to a subdomain next URL without raising UnsafeRedirectError" do
+          subdomain_url = "https://app.#{ROOT_DOMAIN}/dashboard"
+          post "create", params: { user: { email: @user.email, password: "password" }, next: subdomain_url }
+
+          expect(response).to redirect_to(subdomain_url)
+          expect(controller.user_signed_in?).to eq true
+        end
+
         it "returns json response" do
           post "create", params: { user: { email: @user.email, password: "password" } }, format: :json
 
