@@ -4800,4 +4800,19 @@ describe Link, :vcr do
       end
     end
   end
+
+  describe "#cart_item" do
+    context "when product is a tiered membership with an invalid variant ID" do
+      let(:seller) { create(:user) }
+      let(:membership) { create(:membership_product, user: seller) }
+
+      it "falls back to product prices when variant is not found" do
+        allow(Variant).to receive(:find_by_external_id).and_return(nil)
+        params = { option: membership.options.first[:id] }
+        result = membership.cart_item(params)
+        expect(result).to be_a(Hash)
+        expect(result).to have_key(:price)
+      end
+    end
+  end
 end
