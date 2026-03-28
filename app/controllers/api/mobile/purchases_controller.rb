@@ -4,6 +4,7 @@ class Api::Mobile::PurchasesController < Api::Mobile::BaseController
   before_action { doorkeeper_authorize! :mobile_api }
   before_action :fetch_purchase, only: [:purchase_attributes, :archive, :unarchive]
   DEFAULT_SEARCH_RESULTS_SIZE = 10
+  DEFAULT_PURCHASES_LIMIT = 25
 
   def index
     purchases = current_resource_owner.purchases.for_mobile_listing
@@ -12,6 +13,7 @@ class Api::Mobile::PurchasesController < Api::Mobile::BaseController
         purchases.page_with_kaminari(params[:page]).per(params[:per_page])
       )
     else
+      purchases = purchases.limit(DEFAULT_PURCHASES_LIMIT)
       media_locations_scope = MediaLocation.where(product_id: purchases.pluck(:link_id))
       cache [purchases, media_locations_scope], expires_in: 10.minutes do
         purchases_to_json(purchases)

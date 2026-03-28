@@ -302,6 +302,18 @@ describe Api::Mobile::PurchasesController do
                                              user_id: @purchaser.external_id }.as_json(api_scopes: ["mobile_api"]))
       end
 
+      it "applies a default limit when pagination params are not given" do
+        product = @mobile_friendly_pdf_product
+        30.times do |i|
+          create(:free_purchase, link: product, purchaser: @purchaser, seller: @user,
+                                 created_at: (i + 1).minutes.from_now)
+        end
+
+        get :index, params: @params
+
+        expect(response.parsed_body[:products].size).to eq(25)
+      end
+
       it "paginates results when pagination params are given" do
         created_at_minute_advance = 0
         purchases = [@mobile_friendly_pdf_product, @mobile_friendly_movie_product, @mobile_zip_file_product].map do |product|
