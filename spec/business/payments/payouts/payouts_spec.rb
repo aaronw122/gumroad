@@ -692,4 +692,31 @@ describe Payouts do
       end
     end
   end
+
+  describe ".create_payment" do
+    let(:payout_date) { Date.today - 1 }
+    let(:seller) { create(:user) }
+    let!(:balance) { create(:balance, user: seller, merchant_account: create(:merchant_account, user: nil), date: payout_date - 1, amount_cents: 10_00) }
+
+    before do
+      create(:ach_account, user: seller)
+      allow(StripePayoutProcessor).to receive(:is_balance_payable).and_return(true)
+    end
+
+    context "when prepare_payment_and_set_amount marks the payment as failed" do
+      before do
+        allow(StripePayoutProcessor).to receive(:prepare_payment_and_set_amount) do |payment, _balances|
+          payment.mark_failed!
+          ["Stripe error"]
+        end
+      end
+
+      it "returns the failed payment without raising StateMachines::InvalidTransition" do
+        payment, errors = described_class.create_payment(payout_date, PayoutProcessorType::STRIPE, seller)
+
+        expect(payment.state).to eq(Payment::FAILED)
+        expect(errors).to eq(["Stripe error"])
+      end
+    end
+  end
 end
