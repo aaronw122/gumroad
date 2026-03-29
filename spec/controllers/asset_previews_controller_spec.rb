@@ -33,6 +33,13 @@ describe AssetPreviewsController do
       end.to change { product.asset_previews.alive.count }.by(1)
     end
 
+    it "returns an error for an invalid signed blob id" do
+      post(:create, params: { link_id: product.unique_permalink, asset_preview: { signed_blob_id: "invalid-blob-id" }, format: :json })
+      expect(response).to be_successful
+      expect(response.parsed_body["success"]).to eq(false)
+      expect(response.parsed_body["error"]).to eq("Could not process your preview, please try again.")
+    end
+
     it "doesn't add a preview if there are too many previews" do
       stub_const("Link::MAX_PREVIEW_COUNT", 1)
       allow_any_instance_of(AssetPreview).to receive(:analyze_file).and_return(nil)
