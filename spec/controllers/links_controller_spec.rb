@@ -385,6 +385,21 @@ describe LinksController, :vcr, inertia: true do
           expect(response).to be_successful
           expect(coffee_product.reload.suggested_price_cents).to eq(500)
         end
+
+        it "does not raise ArgumentError when price_difference_cents is nil" do
+          coffee_product = create(:coffee_product)
+          sign_in coffee_product.user
+
+          post :update, params: {
+            id: coffee_product.unique_permalink,
+            variants: [
+              { price_difference_cents: nil },
+              { price_difference_cents: 700 }
+            ]
+          }, as: :json
+
+          expect(response.parsed_body["error_message"]).not_to include("comparison of NilClass")
+        end
       end
 
       describe "content_updated_at" do
