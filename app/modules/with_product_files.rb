@@ -18,10 +18,10 @@ module WithProductFiles
   # Call this method only if you're sure that you're not changing the files within the same action.
   def alive_product_files
     cached_alive_product_files || self.cached_alive_product_files = if association(:ordered_alive_product_files).loaded?
-      ordered_alive_product_files.to_a
-    else
-      product_files.alive.in_order.to_a
-    end
+                                    ordered_alive_product_files.to_a
+                                  else
+                                    product_files.alive.in_order.to_a
+                                  end
   end
 
   def has_files?
