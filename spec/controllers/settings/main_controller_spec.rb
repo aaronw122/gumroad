@@ -396,7 +396,7 @@ describe Settings::MainController, type: :controller, inertia: true do
           expect(product2.reload.support_email).to eq("contact@example.com")
         end
 
-        it "fails when email isn't valid" do
+        it "returns validation error when product support email is invalid" do
           product_level_support_emails = [
             { email: "invalid-email", product_ids: [product1.external_id] }
           ]
@@ -404,7 +404,7 @@ describe Settings::MainController, type: :controller, inertia: true do
 
           expect(response).to redirect_to(settings_main_path)
           expect(response).to have_http_status :found
-          expect(flash[:alert]).to eq("Something broke. We're looking into what happened. Sorry about this!")
+          expect(flash[:alert]).to eq("Support email is invalid")
         end
 
         it "only associates products belonging to current seller" do
