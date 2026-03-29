@@ -22,7 +22,7 @@ class DisputeEvidence::GenerateRefundPolicyImageService
     end
 
     optimized_binary_data = optimize_image(binary_data)
-    image = MiniMagick::Image.read(binary_data)
+    image = MiniMagick::Image.read(optimized_binary_data)
     raise ImageTooLargeError if image.size > max_size_allowed
 
     optimized_binary_data
