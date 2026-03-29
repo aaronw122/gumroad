@@ -54,7 +54,12 @@ class Api::Mobile::AnalyticsController < Api::Mobile::BaseController
       if params[:date_range]
         @end_date = ActiveSupport::TimeZone[current_resource_owner.timezone].today
         if params[:date_range] == "all"
-          @start_date = GUMROAD_STARTED_DATE
+          first_sale_at = current_resource_owner.first_sale_created_at_for_analytics
+          @start_date = if first_sale_at
+            first_sale_at.in_time_zone(current_resource_owner.timezone).to_date
+          else
+            @end_date - 29
+          end
         else
           offset = { "1d" => 0, "1w" => 6, "1m" => 29, "1y" => 364 }.fetch(params[:date_range])
           @start_date = @end_date - offset

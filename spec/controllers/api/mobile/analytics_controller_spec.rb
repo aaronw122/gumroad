@@ -147,7 +147,17 @@ describe Api::Mobile::AnalyticsController do
         expect(assigns(:end_date)).to eq(Date.new(2021, 6, 15))
 
         get action_name, params: @params.merge(date_range: "all")
-        expect(assigns(:start_date)).to eq(Date.new(2011, 4, 4))
+        expect(assigns(:start_date)).to eq(Date.new(2021, 5, 17))
+        expect(assigns(:end_date)).to eq(Date.new(2021, 6, 15))
+      end
+    end
+
+    it "uses the first sale date as start_date for date_range=all when the user has sales" do
+      @user.update!(timezone: "Eastern Time (US & Canada)")
+      create(:purchase, link: build(:product, user: @user), created_at: Time.utc(2020, 3, 15))
+      travel_to Time.utc(2021, 6, 16) do
+        get action_name, params: @params.merge(date_range: "all")
+        expect(assigns(:start_date)).to eq(Date.new(2020, 3, 14))
         expect(assigns(:end_date)).to eq(Date.new(2021, 6, 15))
       end
     end
