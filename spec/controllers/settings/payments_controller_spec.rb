@@ -791,6 +791,26 @@ describe Settings::PaymentsController, :vcr, type: :controller, inertia: true do
         end
       end
 
+      describe "updating account holder name without an existing bank account" do
+        let(:params) do
+          {
+            bank_account: {
+              type: AchAccount.name,
+              account_holder_full_name: "gumbot"
+            }
+          }
+        end
+
+        it "does not raise an error" do
+          expect(user.active_bank_account).to be_nil
+
+          put(:update, params:)
+
+          expect(response).to redirect_to(settings_payments_path)
+          expect(response).to have_http_status :see_other
+        end
+      end
+
       describe "canadian bank account" do
         let(:user) { create(:user) }
 
