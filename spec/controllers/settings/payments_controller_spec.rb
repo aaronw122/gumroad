@@ -1187,6 +1187,23 @@ describe Settings::PaymentsController, :vcr, type: :controller, inertia: true do
       end
     end
 
+    context "when StripeMerchantAccountManager.create_account raises MerchantRegistrationUserNotReadyError" do
+      before do
+        allow(StripeMerchantAccountManager).to receive(:create_account)
+          .and_raise(MerchantRegistrationUserNotReadyError.new(0, "has bank account currency mismatch"))
+        user.update!(payment_address: nil)
+        create(:ach_account_stripe_succeed, user:)
+      end
+
+      it "redirects with a user-friendly error message" do
+        put :update, params: { user: params }
+
+        expect(response).to redirect_to(settings_payments_path)
+        expect(response).to have_http_status :found
+        expect(session[:inertia_errors][:base]).to eq(["Your bank account currency doesn't match your country's payout currency. Please update your bank account."])
+      end
+    end
+
     context "when updating country" do
       it "calls UpdateUserCountry service" do
         expect(UpdateUserCountry).to receive(:new).with(new_country_code: "GB", user:).and_call_original

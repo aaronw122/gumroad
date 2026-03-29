@@ -81,6 +81,9 @@ class Settings::PaymentsController < Settings::BaseController
     if current_seller.active_bank_account && current_seller.merchant_accounts.stripe.alive.empty? && current_seller.native_payouts_supported?
       begin
         StripeMerchantAccountManager.create_account(current_seller, passphrase: GlobalConfig.get("STRONGBOX_GENERAL_PASSWORD"))
+      rescue MerchantRegistrationUserNotReadyError
+        redirect_with_error("Your bank account currency doesn't match your country's payout currency. Please update your bank account.")
+        return
       rescue Stripe::InvalidRequestError => e
         if e.code == "postal_code_invalid"
           country = current_seller.fetch_or_build_user_compliance_info.legal_entity_country
@@ -89,7 +92,6 @@ class Settings::PaymentsController < Settings::BaseController
           redirect_with_error(e.try(:message) || "Something went wrong.")
         end
         return
-        return redirect_with_error(e.try(:message) || "Something went wrong.")
       end
     end
 
