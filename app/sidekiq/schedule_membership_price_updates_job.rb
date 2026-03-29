@@ -48,6 +48,8 @@ class ScheduleMembershipPriceUpdatesJob
         end
       else
         ActiveRecord::Base.transaction do
+          original_purchase.perceived_price_cents = nil
+          original_purchase.price_range = nil
           original_purchase.set_price_and_rate
           new_price = original_purchase.displayed_price_cents
           raise ActiveRecord::Rollback

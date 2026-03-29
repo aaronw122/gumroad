@@ -210,6 +210,25 @@ describe ScheduleMembershipPriceUpdatesJob do
           end
         end
 
+        context "when the tier has customizable pricing" do
+          it "records a plan change based on the updated tier price, not the buyer's pay-what-you-want price" do
+            enabled_tier.update!(customizable_price: true)
+            buyer_pwyw_price = original_price
+            enabled_subscription.original_purchase.update!(
+              perceived_price_cents: buyer_pwyw_price,
+              price_range: "#{buyer_pwyw_price / 100}+",
+              displayed_price_cents: buyer_pwyw_price
+            )
+
+            expect do
+              described_class.new.perform(enabled_tier.id)
+            end.to change { enabled_subscription.subscription_plan_changes.for_product_price_change.alive.count }.by(1)
+
+            plan_change = enabled_subscription.subscription_plan_changes.for_product_price_change.alive.last
+            expect(plan_change.perceived_price_cents).to eq(new_price)
+          end
+        end
+
         context "when the price for a recurrence is deleted" do
           it "does nothing but notify error tracker" do
             enabled_tier.prices.alive.find_by(recurrence: "monthly").mark_deleted!
