@@ -28,6 +28,10 @@ class Settings::MainController < Settings::BaseController
     current_seller.update_product_level_support_emails!(params[:user][:product_level_support_emails])
 
     redirect_to settings_main_path, status: :see_other, notice: "Your account has been updated!"
+  rescue ActiveModel::ValidationError => e
+    error_message = current_seller.errors.full_messages.to_sentence.presence ||
+      e.model.errors.full_messages.to_sentence
+    redirect_to settings_main_path, alert: error_message
   rescue StandardError => e
     ErrorNotifier.notify(e)
     error_message = current_seller.errors.full_messages.to_sentence.presence ||
