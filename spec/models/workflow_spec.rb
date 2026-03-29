@@ -135,6 +135,18 @@ describe Workflow do
       expect(seller_workflow.reload.deleted_at.present?).to be(true)
       expect(installment1.reload.deleted_at.present?).to be(true)
     end
+
+    it "succeeds when an installment has a blank message" do
+      seller = create(:user)
+      workflow = create(:workflow, seller:, link: nil)
+      installment = create(:installment, workflow:)
+      create(:installment_rule, installment:, delayed_delivery_time: 3.days)
+      installment.update_column(:message, "")
+
+      expect { workflow.mark_deleted! }.not_to raise_error
+      expect(workflow.reload.deleted_at).to be_present
+      expect(installment.reload.deleted_at).to be_present
+    end
   end
 
   describe "#schedule_installment", :freeze_time do

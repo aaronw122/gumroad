@@ -53,10 +53,10 @@ class Workflow < ApplicationRecord
   def mark_deleted!
     self.deleted_at = Time.current
     installments.each do |installment|
-      installment.mark_deleted!
-      installment.installment_rule.mark_deleted!
+      installment.mark_deleted(validate: false)
+      installment.installment_rule.mark_deleted(validate: false)
     end
-    save!
+    save!(validate: false)
   end
 
   def publish!
