@@ -35,6 +35,13 @@ describe S3UtilityController do
       expect(response).to be_forbidden
     end
 
+    it "returns bad request when to_sign param is missing" do
+      get :generate_multipart_signature
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response.parsed_body["success"]).to be(false)
+    end
+
     it "allows sellers to sign request for buckets they own" do
       sign_string = "POST\n\nvideo/quicktime; charset=UTF-8\n\nx-amz-acl:private\nx-amz-date:Mon, 02 Mar 2015 17:21:19 \
       GMT\n/gumroad-specs/attachments/#{seller.external_id}/bf03be06616f4dfd88da7c37005a9b2f/original/capturedvideo%20(1)-5-2.mov?uploads"

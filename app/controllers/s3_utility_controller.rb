@@ -6,7 +6,8 @@ class S3UtilityController < Sellers::BaseController
   before_action :authorize
 
   def generate_multipart_signature
-    # Prevent attackers from using newlines to split the request body and bypass the seller check
+    return render(json: { success: false, error: "Bad request" }, status: :bad_request) if params["to_sign"].blank?
+
     params["to_sign"].split(/[\n\r\s]/).grep(/\A\//).each do |url|
       return render(json: { success: false, error: "Unauthorized" }, status: :forbidden) if !%r{\A/#{S3_BUCKET}/\w+/#{current_seller.external_id}/}.match?(url)
     end
