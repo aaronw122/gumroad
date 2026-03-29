@@ -116,6 +116,7 @@ class CheckoutController < ApplicationController
           target: product_info.target,
           recommender_model_name: product_info.recommender_model_name,
           affiliate_id: product_info.affiliate_id,
+          skip_quantity_remaining: true,
         )
       end
     end

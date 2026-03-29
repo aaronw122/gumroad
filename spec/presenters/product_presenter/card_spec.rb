@@ -76,6 +76,15 @@ describe ProductPresenter::Card do
 
         expect(result).not_to have_key(:description)
       end
+
+      it "sets quantity_remaining to nil when skip_quantity_remaining is true" do
+        product.update!(max_purchase_count: 100)
+        result_with = described_class.new(product:).for_web
+        result_without = described_class.new(product:).for_web(skip_quantity_remaining: true)
+
+        expect(result_with[:quantity_remaining]).to be_present
+        expect(result_without[:quantity_remaining]).to be_nil
+      end
     end
 
     context "membership product" do

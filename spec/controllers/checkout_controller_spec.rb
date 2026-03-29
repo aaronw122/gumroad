@@ -176,6 +176,7 @@ describe CheckoutController, type: :controller, inertia: true do
             recommended_by:,
             recommender_model_name:,
             target:,
+            skip_quantity_remaining: true,
           )
         end
       end
