@@ -9,7 +9,7 @@ class Api::V2::LinksController < Api::V2::BaseController
 
   def index
     products = current_resource_owner.products.visible.includes(
-      :preorder_link, :tags, :taxonomy,
+      :preorder_link, :tags, :taxonomy, :ordered_alive_product_files,
       variant_categories_alive: [:alive_variants],
     ).order(created_at: :desc)
 

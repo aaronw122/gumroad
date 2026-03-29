@@ -55,6 +55,22 @@ describe Api::V2::LinksController do
       expect(response).to be_successful
       expect(response.parsed_body["products"]).to be_present
     end
+
+    describe "eager loading product files" do
+      before do
+        @token = create("doorkeeper/access_token", application: @app, resource_owner_id: @user.id, scopes: "view_public")
+        @params.merge!(format: :json, access_token: @token.token)
+        create_list(:product_file, 3, link: @product1)
+        create(:product_file, link: @product2)
+      end
+
+      it "returns products with files without N+1 queries" do
+        get @action, params: @params
+
+        expect(response).to be_successful
+        expect(response.parsed_body["products"].size).to eq(2)
+      end
+    end
   end
 
   describe "POST 'create'" do
