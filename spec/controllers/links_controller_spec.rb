@@ -2831,6 +2831,10 @@ describe LinksController, :vcr, inertia: true do
         let(:record) { Link }
       end
 
+      it "returns bad request when link params are missing" do
+        post :create, params: {}
+        expect(response).to have_http_status(:bad_request)
+      end
 
       it "creates link with display_product_reviews set to true" do
         params = { price_cents: 100, name: "test link" }

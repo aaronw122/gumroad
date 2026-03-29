@@ -51,6 +51,7 @@ class LinksController < ApplicationController
 
   def create
     authorize Link
+    return head :bad_request if params[:link].blank?
 
     if params[:link][:is_physical]
       return head :forbidden unless current_seller.can_create_physical_products?
