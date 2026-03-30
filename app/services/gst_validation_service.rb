@@ -25,6 +25,8 @@ class GstValidationService
       response = HTTParty.post(IRAS_ENDPOINT, body:, timeout: 5, headers:)
 
       response["returnCode"] == "10" && response["data"]["Status"] == "Registered"
+    rescue Net::ReadTimeout, Net::OpenTimeout, Errno::ECONNREFUSED, SocketError
+      false
     end
   end
 end

@@ -44,6 +44,18 @@ describe QstValidationService, :vcr do
     expect(described_class.new(qst_id).process).to be(false)
   end
 
+  it "returns false when the Revenu Quebec API times out" do
+    expect(HTTParty).to receive(:get).and_raise(Net::ReadTimeout)
+
+    expect(described_class.new(qst_id).process).to be(false)
+  end
+
+  it "returns false when the Revenu Quebec API connection is refused" do
+    expect(HTTParty).to receive(:get).and_raise(Errno::ECONNREFUSED)
+
+    expect(described_class.new(qst_id).process).to be(false)
+  end
+
   it "handles QST IDs that need encoding" do
     expect(described_class.new("needs encoding").process).to be(false)
   end

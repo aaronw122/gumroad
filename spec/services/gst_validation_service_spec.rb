@@ -64,6 +64,22 @@ describe GstValidationService do
     expect(described_class.new(gst_id).process).to be(false)
   end
 
+  it "returns false when the IRAS API times out" do
+    gst_id = "T9100001B"
+
+    expect(HTTParty).to receive(:post).and_raise(Net::ReadTimeout)
+
+    expect(described_class.new(gst_id).process).to be(false)
+  end
+
+  it "returns false when the IRAS API connection is refused" do
+    gst_id = "T9100001B"
+
+    expect(HTTParty).to receive(:post).and_raise(Errno::ECONNREFUSED)
+
+    expect(described_class.new(gst_id).process).to be(false)
+  end
+
   it "returns false when a gst id is provided with an invalid format" do
     gst_id = "asdf"
 

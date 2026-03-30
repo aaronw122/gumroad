@@ -47,6 +47,22 @@ describe MvaValidationService do
     expect(described_class.new("   ").process).to be(false)
   end
 
+  it "returns false when the Vatstack API times out" do
+    mva_id = "977074010MVA"
+
+    expect(HTTParty).to receive(:post).and_raise(Net::ReadTimeout)
+
+    expect(described_class.new(mva_id).process).to be(false)
+  end
+
+  it "returns false when the Vatstack API connection is refused" do
+    mva_id = "977074010MVA"
+
+    expect(HTTParty).to receive(:post).and_raise(Errno::ECONNREFUSED)
+
+    expect(described_class.new(mva_id).process).to be(false)
+  end
+
   it "returns false when mva with invalid format is provided" do
     mva_id = "some-invalid-id"
     query_response = "SOMEINVALIDID"

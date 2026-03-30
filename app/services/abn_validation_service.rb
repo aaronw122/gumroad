@@ -27,5 +27,7 @@ class AbnValidationService
     return false if response["valid"].nil?
 
     response["valid"] && response["active"]
+  rescue Net::ReadTimeout, Net::OpenTimeout, Errno::ECONNREFUSED, SocketError
+    false
   end
 end

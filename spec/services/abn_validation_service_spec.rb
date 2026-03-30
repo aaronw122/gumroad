@@ -48,6 +48,22 @@ describe AbnValidationService do
     expect(described_class.new("   ").process).to be(false)
   end
 
+  it "returns false when the Vatstack API times out" do
+    abn_id = "51824753556"
+
+    expect(HTTParty).to receive(:post).and_raise(Net::ReadTimeout)
+
+    expect(described_class.new(abn_id).process).to be(false)
+  end
+
+  it "returns false when the Vatstack API connection is refused" do
+    abn_id = "51824753556"
+
+    expect(HTTParty).to receive(:post).and_raise(Errno::ECONNREFUSED)
+
+    expect(described_class.new(abn_id).process).to be(false)
+  end
+
   it "returns false when abn with invalid format is provided" do
     abn_id = "some-invalid-id"
     query_response = "SOMEINVALIDID"

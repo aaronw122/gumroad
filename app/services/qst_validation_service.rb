@@ -23,5 +23,7 @@ class QstValidationService
     def valid_qst?
       response = HTTParty.get(QST_VALIDATION_ENDPOINT_TEMPLATE.expand(qst_id:).to_s, timeout: 5)
       response.code == 200 && response.parsed_response.dig("Resultat", "StatutSousDossierUsager") == "R"
+    rescue Net::ReadTimeout, Net::OpenTimeout, Errno::ECONNREFUSED, SocketError
+      false
     end
 end
