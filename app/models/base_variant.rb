@@ -141,7 +141,7 @@ class BaseVariant < ApplicationRecord
   end
 
   def sales_count_for_inventory
-    purchases.counts_towards_inventory.sum(:quantity)
+    link.variant_inventory_count_for(id) || purchases.counts_towards_inventory.sum(:quantity)
   end
 
   def is_downloadable?

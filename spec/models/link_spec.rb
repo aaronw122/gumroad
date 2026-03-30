@@ -2006,6 +2006,30 @@ describe Link, :vcr do
         expect(bundle.remaining_for_sale_count).to eq(3)
       end
     end
+
+    describe "batch-loads variant inventory counts" do
+      it "uses a constant number of queries regardless of variant count" do
+        product = create(:product, max_purchase_count: 100)
+        category = create(:variant_category, link: product)
+        variants = 5.times.map { |i| create(:variant, variant_category: category, max_purchase_count: i == 0 ? 1 : 10) }
+        variants.each do |v|
+          purchase = create(:purchase, link: product)
+          purchase.variant_attributes << v
+        end
+        product.reload
+
+        sum_query_count = 0
+        counter = ->(_name, _start, _finish, _id, payload) {
+          sum_query_count += 1 if payload[:sql].match?(/SUM/i) && payload[:sql].match?(/quantity/i)
+        }
+
+        ActiveSupport::Notifications.subscribed(counter, "sql.active_record") do
+          product.variants_available?
+        end
+
+        expect(sum_query_count).to eq(1)
+      end
+    end
   end
 
   describe "#remaining_call_availabilities" do

@@ -643,9 +643,25 @@ class Link < ApplicationRecord
     sales.counts_towards_inventory.sum(:quantity)
   end
 
+  def preload_variant_inventory_counts!
+    return @variant_inventory_counts if @variant_inventory_counts
+
+    @variant_inventory_counts = Purchase
+      .joins("INNER JOIN base_variants_purchases ON base_variants_purchases.purchase_id = purchases.id")
+      .where("base_variants_purchases.base_variant_id IN (?)", alive_variants.select(:id))
+      .counts_towards_inventory
+      .group("base_variants_purchases.base_variant_id")
+      .sum(:quantity)
+  end
+
+  def variant_inventory_count_for(variant_id)
+    @variant_inventory_counts&.fetch(variant_id, 0)
+  end
+
   def variants_available?
     return true if variant_categories_alive.empty?
 
+    preload_variant_inventory_counts!
     variant_categories_alive.any?(&:available?)
   end
 
