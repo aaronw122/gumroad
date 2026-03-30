@@ -259,6 +259,8 @@ module WithProductFiles
     end
 
     def apply_rich_content_id_mappings(rich_content, mappings)
+      return unless rich_content.is_a?(Hash)
+
       if rich_content["type"] == "fileEmbed" && mappings.key?(rich_content["attrs"]["id"])
         rich_content["attrs"]["id"] = mappings[rich_content["attrs"]["id"]]
       end

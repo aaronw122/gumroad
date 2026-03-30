@@ -1339,6 +1339,27 @@ describe LinksController, :vcr, inertia: true do
           expect(embed_ids).to eq(["placeholder_b", "real_b"])
         end
 
+        it "handles nil and non-hash elements in rich content tree without raising" do
+          rich_content_node = {
+            "type" => "doc",
+            "content" => [
+              nil,
+              { "type" => "fileEmbed", "attrs" => { "id" => "placeholder_a" } },
+              "unexpected_string",
+              nil,
+            ],
+          }
+
+          mappings = { "placeholder_a" => "real_a" }
+
+          expect {
+            @product.send(:apply_rich_content_id_mappings, rich_content_node, mappings)
+          }.not_to raise_error
+
+          embed = rich_content_node["content"].find { |node| node.is_a?(Hash) && node["type"] == "fileEmbed" }
+          expect(embed["attrs"]["id"]).to eq("real_a")
+        end
+
         it "saves variant-level rich content containing file embeds with the persisted IDs" do
           external_id1 = "ext1"
           external_id2 = "ext2"
