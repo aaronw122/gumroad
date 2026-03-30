@@ -501,6 +501,21 @@ describe Api::Mobile::PurchasesController do
       expect(response.parsed_body[:purchases][0][:purchase_id]).to eq(purchase_2.external_id)
     end
 
+    it "includes purchases with the same email but no linked user" do
+      purchase_with_user = create(:purchase, purchaser: @purchaser, email: @purchaser.email)
+      purchase_without_user = create(:purchase, purchaser: nil, email: @purchaser.email)
+      create(:purchase, email: "other@example.com")
+      index_model_records(Purchase)
+
+      get :search, params: @params
+
+      expect(response).to match_json_schema("api/mobile/purchases")
+      returned_ids = response.parsed_body[:purchases].pluck(:purchase_id)
+      expect(returned_ids).to include(purchase_with_user.external_id)
+      expect(returned_ids).to include(purchase_without_user.external_id)
+      expect(returned_ids.size).to eq(2)
+    end
+
     it "returns aggregation based on sellers" do
       seller_1 = create(:named_user)
       seller_2 = create(:named_user)

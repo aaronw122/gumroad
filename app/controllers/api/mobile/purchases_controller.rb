@@ -89,7 +89,7 @@ class Api::Mobile::PurchasesController < Api::Mobile::BaseController
 
       options = {
         buyer_query: params[:q],
-        purchaser: current_resource_owner,
+        email: current_resource_owner.email,
         for_library: true,
         track_total_hits: true,
         from: ((@page - 1) * @items),
