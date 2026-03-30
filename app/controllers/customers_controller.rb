@@ -8,6 +8,8 @@ class CustomersController < Sellers::BaseController
   before_action :set_on_page_type
 
   CUSTOMERS_PER_PAGE = 20
+  MAX_ES_RESULT_WINDOW = 10_000
+  MAX_PAGE = (MAX_ES_RESULT_WINDOW / CUSTOMERS_PER_PAGE) - 1
 
   layout "inertia", only: [:index]
 
@@ -28,7 +30,7 @@ class CustomersController < Sellers::BaseController
   end
 
   def paged
-    params[:page] = params[:page].to_i - 1
+    params[:page] = [params[:page].to_i - 1, MAX_PAGE].min
     sales = fetch_sales(
       query: params[:query],
       sort: params[:sort] ? { params[:sort][:key] => { order: params[:sort][:direction] } } : nil,

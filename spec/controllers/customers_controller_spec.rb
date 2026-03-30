@@ -103,6 +103,12 @@ describe CustomersController, :vcr, type: :controller, inertia: true do
       expect(response).to be_successful
       expect(customer_ids[response]).to match_array([purchases.third.external_id, purchases.fourth.external_id])
     end
+
+    it "caps the page parameter to avoid Elasticsearch result window overflow" do
+      get :paged, params: { page: 100_000 }
+      expect(response).to be_successful
+      expect(response.parsed_body.deep_symbolize_keys[:pagination][:page]).to be <= (CustomersController::MAX_PAGE + 1)
+    end
   end
 
   describe "GET charges" do
