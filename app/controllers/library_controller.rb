@@ -14,16 +14,30 @@ class LibraryController < Sellers::BaseController
   def index
     authorize Purchase
 
-    set_meta_tag(title: "Library")
-    purchase_results, creator_counts, bundles = LibraryPresenter.new(logged_in_user).library_cards
+    presenter = LibraryPresenter.new(logged_in_user)
+    purchase_results, creator_counts, bundles, next_cursor = presenter.library_cards(cursor: params[:cursor])
 
-    render inertia: "Library/Index", props: {
-      results: purchase_results,
-      creators: creator_counts,
-      bundles:,
-      reviews_page_enabled: Feature.active?(:reviews_page, current_seller),
-      following_wishlists_enabled: Feature.active?(:follow_wishlists, current_seller),
-    }
+    respond_to do |format|
+      format.html do
+        set_meta_tag(title: "Library")
+        render inertia: "Library/Index", props: {
+          results: purchase_results,
+          creators: creator_counts,
+          bundles:,
+          next_cursor:,
+          reviews_page_enabled: Feature.active?(:reviews_page, current_seller),
+          following_wishlists_enabled: Feature.active?(:follow_wishlists, current_seller),
+        }
+      end
+      format.json do
+        render json: {
+          results: purchase_results,
+          creators: creator_counts,
+          bundles:,
+          next_cursor:,
+        }
+      end
+    end
   end
 
   def archive

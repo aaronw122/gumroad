@@ -29,6 +29,15 @@ describe LibraryController, :vcr, type: :controller, inertia: true do
         expect(inertia.component).to eq("Library/Index")
         expect(inertia.props[:results]).to be_an(Array)
         expect(inertia.props[:results].map { |r| r.dig(:product, :name) }).to include("Visible Product")
+        expect(inertia.props).to have_key(:next_cursor)
+      end
+
+      it "returns paginated JSON when requested with cursor" do
+        get :index, format: :json
+        expect(response).to be_successful
+        body = response.parsed_body
+        expect(body["results"]).to be_an(Array)
+        expect(body).to have_key("next_cursor")
       end
 
       it "doesn't show refunded purchases" do

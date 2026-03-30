@@ -33,7 +33,7 @@ describe LibraryPresenter do
     end
 
     it "returns all necessary properties for library page" do
-      purchases, creators = described_class.new(buyer).library_cards
+      purchases, creators, _bundles, next_cursor = described_class.new(buyer).library_cards
 
       expect(purchases).to eq([
                                 product: product_details,
@@ -48,6 +48,7 @@ describe LibraryPresenter do
                                 }])
 
       expect(creators).to eq([{ id: creator.external_id, name: creator.name }])
+      expect(next_cursor).to be_nil
     end
 
     it "does not return the URL of a deleted thumbnail" do
@@ -200,6 +201,43 @@ describe LibraryPresenter do
 
         gift_purchase_ids = purchases.map { |p| p[:purchase][:id] }
         expect(gift_purchase_ids).to include(gift_receiver_purchase.external_id)
+      end
+    end
+
+    describe "pagination" do
+      before do
+        stub_const("LibraryPresenter::PER_PAGE", 2)
+      end
+
+      let(:product2) { create(:product, name: "Product 2", user: creator) }
+      let(:product3) { create(:product, name: "Product 3", user: creator) }
+      let!(:purchase2) { create(:purchase, link: product2, purchaser: buyer).tap { _1.create_url_redirect! } }
+      let!(:purchase3) { create(:purchase, link: product3, purchaser: buyer).tap { _1.create_url_redirect! } }
+
+      it "returns the first page of results with a next_cursor" do
+        purchases, _creators, _bundles, next_cursor = described_class.new(buyer).library_cards
+
+        expect(purchases.size).to eq(2)
+        expect(purchases.map { |p| p[:product][:name] }).to eq(["Product 3", "Product 2"])
+        expect(next_cursor).to be_present
+      end
+
+      it "returns the next page when a cursor is provided" do
+        _first_page, _creators, _bundles, next_cursor = described_class.new(buyer).library_cards
+        purchases, _creators, _bundles, second_next_cursor = described_class.new(buyer).library_cards(cursor: next_cursor)
+
+        expect(purchases.size).to eq(1)
+        expect(purchases.first[:product][:name]).to eq("hello")
+        expect(second_next_cursor).to be_nil
+      end
+
+      it "returns nil next_cursor when all results fit in one page" do
+        purchase2.update!(is_deleted_by_buyer: true)
+        purchase3.update!(is_deleted_by_buyer: true)
+
+        _purchases, _creators, _bundles, next_cursor = described_class.new(buyer).library_cards
+
+        expect(next_cursor).to be_nil
       end
     end
 

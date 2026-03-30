@@ -4,7 +4,7 @@ import { produce } from "immer";
 import * as React from "react";
 import { cast, is } from "ts-safe-cast";
 
-import { deletePurchasedProduct, setPurchaseArchived } from "$app/data/library";
+import { deletePurchasedProduct, fetchLibraryPage, setPurchaseArchived } from "$app/data/library";
 import { ProductNativeType } from "$app/parsers/product";
 import { assertDefined } from "$app/utils/assert";
 import { classNames } from "$app/utils/classNames";
@@ -182,6 +182,7 @@ type Props = {
   results: Result[];
   creators: { id: string; name: string }[];
   bundles: { id: string; label: string }[];
+  next_cursor: number | null;
   reviews_page_enabled: boolean;
   following_wishlists_enabled: boolean;
 };
@@ -196,6 +197,9 @@ type Params = {
 
 type State = {
   results: Result[];
+  creators: { id: string; name: string }[];
+  bundles: { id: string; label: string }[];
+  nextCursor: number | null;
   search: Params;
 };
 
@@ -203,7 +207,8 @@ type Action =
   | { type: "set-search"; search: Partial<Params> }
   | { type: "update-search"; search: Partial<Params> }
   | { type: "set-archived"; purchaseId: string; isArchived: boolean }
-  | { type: "delete-purchase"; id: string };
+  | { type: "delete-purchase"; id: string }
+  | { type: "append-page"; results: Result[]; creators: { id: string; name: string }[]; bundles: { id: string; label: string }[]; nextCursor: number | null };
 
 const reducer: React.Reducer<State, Action> = produce((state, action) => {
   switch (action.type) {
@@ -225,6 +230,19 @@ const reducer: React.Reducer<State, Action> = produce((state, action) => {
     case "delete-purchase": {
       const index = state.results.findIndex((result) => result.purchase.id === action.id);
       if (index !== -1) state.results.splice(index, 1);
+      break;
+    }
+    case "append-page": {
+      state.results.push(...action.results);
+      const existingCreatorIds = new Set(state.creators.map((c) => c.id));
+      for (const creator of action.creators) {
+        if (!existingCreatorIds.has(creator.id)) state.creators.push(creator);
+      }
+      const existingBundleIds = new Set(state.bundles.map((b) => b.id));
+      for (const bundle of action.bundles) {
+        if (!existingBundleIds.has(bundle.id)) state.bundles.push(bundle);
+      }
+      state.nextCursor = action.nextCursor;
       break;
     }
   }
@@ -253,7 +271,7 @@ const extractParams = (rawParams: URLSearchParams): Params => ({
 });
 
 export default function LibraryPage() {
-  const { results, creators, bundles, reviews_page_enabled, following_wishlists_enabled } = cast<Props>(
+  const { results, creators, bundles, next_cursor, reviews_page_enabled, following_wishlists_enabled } = cast<Props>(
     usePage().props,
   );
 
@@ -262,7 +280,11 @@ export default function LibraryPage() {
   const [state, dispatch] = React.useReducer(reducer, null, () => ({
     search: extractParams(new URL(originalLocation).searchParams),
     results,
+    creators,
+    bundles,
+    nextCursor: next_cursor,
   }));
+  const [loadingMore, setLoadingMore] = React.useState(false);
   const [enteredQuery, setEnteredQuery] = React.useState(state.search.query);
   useGlobalEventListener("popstate", (e: PopStateEvent) => {
     const search = is<Params>(e.state) ? e.state : extractParams(new URLSearchParams(window.location.search));
@@ -293,14 +315,14 @@ export default function LibraryPage() {
       return counts;
     }, new Map<string, number>());
 
-    return creators
+    return state.creators
       .map((creator) => ({
         ...creator,
         count: productCountByCreatorId.get(creator.id) ?? 0,
       }))
       .filter((creator) => creator.count > 0)
       .sort((a, b) => b.count - a.count);
-  }, [creators, state.results, state.search.showArchivedOnly]);
+  }, [state.creators, state.results, state.search.showArchivedOnly]);
 
   const [resultsLimit, setResultsLimit] = React.useState(15);
   React.useEffect(() => setResultsLimit(15), [filteredResults]);
@@ -369,10 +391,31 @@ export default function LibraryPage() {
 
   const shouldShowFilter = !showArchivedNotice && (hasParams || archivedCount > 0 || state.results.length > 9);
 
+  const loadMoreFromServer = React.useCallback(async () => {
+    if (loadingMore || !state.nextCursor) return;
+    setLoadingMore(true);
+    try {
+      const page = await fetchLibraryPage(state.nextCursor);
+      dispatch({ type: "append-page", results: page.results, creators: page.creators, bundles: page.bundles, nextCursor: page.next_cursor });
+    } catch {
+      // noop
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [state.nextCursor, loadingMore]);
+
+  const handleScrollToBottom = React.useCallback(() => {
+    if (resultsLimit < filteredResults.length) {
+      setResultsLimit((prev) => prev + 15);
+    } else if (state.nextCursor) {
+      void loadMoreFromServer();
+    }
+  }, [resultsLimit, filteredResults.length, state.nextCursor, loadMoreFromServer]);
+
   return (
     <Layout
       selectedTab="purchases"
-      onScrollToBottom={() => setResultsLimit((prevNumberOfResults) => prevNumberOfResults + 15)}
+      onScrollToBottom={handleScrollToBottom}
       reviewsPageEnabled={reviews_page_enabled}
       followingWishlistsEnabled={following_wishlists_enabled}
     >
@@ -478,7 +521,7 @@ export default function LibraryPage() {
                       </FormSelect>
                     </Fieldset>
                   </CardContent>
-                  {bundles.length > 0 ? (
+                  {state.bundles.length > 0 ? (
                     <CardContent>
                       <Fieldset className="grow basis-0">
                         <FieldsetTitle>
@@ -487,8 +530,8 @@ export default function LibraryPage() {
                         <Select
                           inputId={bundlesUid}
                           instanceId={bundlesUid}
-                          options={bundles}
-                          value={bundles.filter(({ id }) => state.search.bundles.includes(id))}
+                          options={state.bundles}
+                          value={state.bundles.filter(({ id }) => state.search.bundles.includes(id))}
                           onChange={(selectedOptions) =>
                             dispatch({
                               type: "update-search",
