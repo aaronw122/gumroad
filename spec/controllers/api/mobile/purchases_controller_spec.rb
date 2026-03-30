@@ -302,6 +302,18 @@ describe Api::Mobile::PurchasesController do
                                              user_id: @purchaser.external_id }.as_json(api_scopes: ["mobile_api"]))
       end
 
+      it "limits results to DEFAULT_PURCHASES_LIMIT when no pagination params are given" do
+        products = create_list(:product, 3, user: @user)
+        purchases = products.map { |product| create(:purchase_with_balance, link: product, purchaser: @purchaser, seller: @user) }
+
+        stub_const("Api::Mobile::PurchasesController::DEFAULT_PURCHASES_LIMIT", 2)
+
+        get :index, params: @params
+
+        expect(response.parsed_body[:success]).to eq(true)
+        expect(response.parsed_body[:products].size).to eq(2)
+      end
+
       it "paginates results when pagination params are given" do
         created_at_minute_advance = 0
         purchases = [@mobile_friendly_pdf_product, @mobile_friendly_movie_product, @mobile_zip_file_product].map do |product|
