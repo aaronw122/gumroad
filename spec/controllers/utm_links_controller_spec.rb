@@ -436,6 +436,26 @@ describe UtmLinksController, type: :controller, inertia: true do
       expect(utm_link.reload).to be_deleted
     end
 
+    it "soft deletes the UTM link when a duplicate with the same UTM params exists" do
+      create(:utm_link, seller:).tap do |duplicate|
+        duplicate.utm_source = utm_link.utm_source
+        duplicate.utm_medium = utm_link.utm_medium
+        duplicate.utm_campaign = utm_link.utm_campaign
+        duplicate.utm_term = utm_link.utm_term
+        duplicate.utm_content = utm_link.utm_content
+        duplicate.target_resource_type = utm_link.target_resource_type
+        duplicate.target_resource_id = utm_link.target_resource_id
+        duplicate.save!(validate: false)
+      end
+
+      expect do
+        delete :destroy, params: { id: utm_link.external_id }
+      end.to change { utm_link.reload.deleted_at }.from(nil).to(be_within(5.seconds).of(DateTime.current))
+
+      expect(response).to redirect_to(dashboard_utm_links_path)
+      expect(flash[:notice]).to eq("Link deleted!")
+    end
+
     it "preserves query, page, and sort params in redirect" do
       delete :destroy, params: {
         id: utm_link.external_id,

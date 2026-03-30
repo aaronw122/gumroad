@@ -141,6 +141,7 @@ class UtmLink < ApplicationRecord
     end
 
     def utm_fields_are_unique_per_target_resource
+      return if being_marked_as_deleted?
       return if self.class.alive.where(
         seller_id:,
         utm_source:,
