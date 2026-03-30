@@ -193,7 +193,6 @@ class AssetPreview < ApplicationRecord
                                                     filename: File.basename(new_url),
                                                     content_type: response.content_type)
       self.file.attach(blob.signed_id)
-      self.file.analyze
     end
   end
 
@@ -202,6 +201,8 @@ class AssetPreview < ApplicationRecord
       file.analyze
     end
   end
+
+  alias_method :analyze, :analyze_file
 
   private
     def set_position

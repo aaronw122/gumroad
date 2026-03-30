@@ -26,16 +26,21 @@ describe AssetPreviewsController do
     end
 
     it "adds a preview if one already exists" do
-      allow_any_instance_of(AssetPreview).to receive(:analyze_file).and_return(nil)
       product = create(:product, user: seller, preview: fixture_file_upload("kFDzu.png", "image/png"))
       expect do
         post(:create, params: { link_id: product.unique_permalink, asset_preview: { url: s3_url }, format: :json })
       end.to change { product.asset_previews.alive.count }.by(1)
     end
 
+    it "enqueues a background job to analyze the file" do
+      post(:create, params: { link_id: product.unique_permalink, asset_preview: { url: s3_url }, format: :json })
+      asset_preview = product.asset_previews.last
+      expect(AnalyzeFileWorker.jobs.size).to eq(1)
+      expect(AnalyzeFileWorker.jobs.last["args"]).to eq([asset_preview.id, "AssetPreview"])
+    end
+
     it "doesn't add a preview if there are too many previews" do
       stub_const("Link::MAX_PREVIEW_COUNT", 1)
-      allow_any_instance_of(AssetPreview).to receive(:analyze_file).and_return(nil)
       allow_any_instance_of(ActiveStorage::Blob).to receive(:purge).and_return(nil)
       create(:asset_preview, link: product)
       expect do

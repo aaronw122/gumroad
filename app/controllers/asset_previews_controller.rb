@@ -15,9 +15,8 @@ class AssetPreviewsController < ApplicationController
       asset_preview.url = permitted_params[:url]
     end
 
-    asset_preview.analyze_file
-
     if asset_preview.save
+      AnalyzeFileWorker.perform_async(asset_preview.id, AssetPreview.name)
       render(json: { success: true, asset_previews: @product.display_asset_previews, active_preview_id: asset_preview.guid })
     else
       asset_preview.file&.blob&.purge
