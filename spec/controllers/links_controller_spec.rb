@@ -1352,9 +1352,9 @@ describe LinksController, :vcr, inertia: true do
 
           mappings = { "placeholder_a" => "real_a" }
 
-          expect {
+          expect do
             @product.send(:apply_rich_content_id_mappings, rich_content_node, mappings)
-          }.not_to raise_error
+          end.not_to raise_error
 
           embed = rich_content_node["content"].find { |node| node.is_a?(Hash) && node["type"] == "fileEmbed" }
           expect(embed["attrs"]["id"]).to eq("real_a")
