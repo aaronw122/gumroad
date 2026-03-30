@@ -20,7 +20,9 @@ class OfferCodeDiscountComputingService
     products_data = {}
 
     links.each do |link|
-      purchase_quantity = products[link.unique_permalink][:quantity].to_i
+      product_info = products_by_permalink[link.unique_permalink]
+      next unless product_info
+      purchase_quantity = product_info[:quantity].to_i
       offer_code = find_applicable_offer_code_for(link)
 
       next unless offer_code
@@ -48,6 +50,10 @@ class OfferCodeDiscountComputingService
       @_links ||= Link.visible
         .includes({ available_cross_sells: :product })
         .where(unique_permalink: products.values.map { it[:permalink] })
+    end
+
+    def products_by_permalink
+      @_products_by_permalink ||= products.values.index_by { it[:permalink] }
     end
 
     def offer_codes

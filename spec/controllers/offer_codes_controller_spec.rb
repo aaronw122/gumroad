@@ -81,5 +81,33 @@ describe OfferCodesController do
                                            },
                                          })
     end
+
+    it "returns products data when product keys do not match permalinks" do
+      params = {
+        code: offer_code.code,
+        products: {
+          "0" => {
+            permalink: product.unique_permalink,
+            quantity: 2
+          }
+        }
+      }
+      get :compute_discount, params: params
+
+      expect(response.parsed_body).to eq({
+                                           "valid" => true,
+                                           "products_data" => {
+                                             product.unique_permalink => {
+                                               "type" => "fixed",
+                                               "cents" => offer_code.amount,
+                                               "product_ids" => [product.external_id],
+                                               "minimum_quantity" => nil,
+                                               "expires_at" => nil,
+                                               "duration_in_billing_cycles" => nil,
+                                               "minimum_amount_cents" => nil,
+                                             },
+                                           },
+                                         })
+    end
   end
 end
