@@ -66,6 +66,14 @@ describe Api::Mobile::SalesController, :vcr do
       end
     end
 
+    context "when the refund amount converts to less than 1 cent" do
+      it "responds with error message" do
+        patch :refund, params: @params.merge(id: @purchase.external_id, amount: "0.001")
+
+        expect(response.parsed_body).to eq "success" => false, "message" => "Refund amount must be at least 1 cent."
+      end
+    end
+
     context "when the purchase is refunded" do
       it "responds with HTTP success" do
         allow_any_instance_of(User).to receive(:unpaid_balance_cents).and_return(10_00)

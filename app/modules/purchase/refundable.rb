@@ -8,7 +8,10 @@ class Purchase
         refund_and_save!(refunding_user_id)
       else
         refund_amount_cents = refunding_amount_cents(amount)
-        if refund_amount_cents > amount_refundable_cents
+        if refund_amount_cents < 1
+          errors.add :base, "Refund amount must be at least 1 cent."
+          false
+        elsif refund_amount_cents > amount_refundable_cents
           errors.add :base, "Refund amount cannot be greater than the purchase price."
           false
         elsif refund_amount_cents == price_cents || refund_amount_cents == amount_refundable_cents

@@ -111,6 +111,21 @@ describe "PurchaseRefunds", :vcr do
     end
 
     describe "partial refund with amount" do
+      it "returns false with error when refund amount converts to less than 1 cent" do
+        expect(ChargeProcessor).to_not receive(:refund!)
+        result = @purchase.refund!(refunding_user_id: @user.id, amount: 0.001)
+        expect(result).to be(false)
+        expect(@purchase.errors[:base]).to include("Refund amount must be at least 1 cent.")
+        expect(@purchase.reload.stripe_refunded).to be(false)
+      end
+
+      it "returns false with error when refund amount is zero" do
+        expect(ChargeProcessor).to_not receive(:refund!)
+        result = @purchase.refund!(refunding_user_id: @user.id, amount: 0)
+        expect(result).to be(false)
+        expect(@purchase.errors[:base]).to include("Refund amount must be at least 1 cent.")
+      end
+
       it "updates refund status" do
         expect(ChargeProcessor).to receive(:refund!).with(@purchase.charge_processor_id, @purchase.stripe_transaction_id, anything).and_call_original
         expect(@purchase.stripe_refunded).to_not be(true)
