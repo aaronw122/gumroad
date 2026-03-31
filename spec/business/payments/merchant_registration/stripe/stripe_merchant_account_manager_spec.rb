@@ -11522,4 +11522,98 @@ describe StripeMerchantAccountManager, :vcr do
       end
     end
   end
+
+  describe ".sync_external_accounts_from_stripe" do
+    let(:user) { create(:user, email: "sync-test@example.com") }
+    let(:merchant_account) { create(:merchant_account, user:, charge_processor_merchant_id: "acct_test123") }
+    let(:stripe_account_id) { merchant_account.charge_processor_merchant_id }
+
+    it "syncs bank accounts from a Stripe::StripeObject" do
+      stripe_account = Stripe::Util.convert_to_stripe_object({
+        "id" => stripe_account_id,
+        "external_accounts" => {
+          "data" => [
+            {
+              "id" => "ba_ext1",
+              "object" => "bank_account",
+              "last4" => "6789",
+              "routing_number" => "110000000",
+              "country" => "US",
+              "account_holder_name" => "Test Holder",
+              "fingerprint" => "fp_bank1"
+            }
+          ]
+        }
+      }, {})
+
+      expect {
+        StripeMerchantAccountManager.send(:sync_external_accounts_from_stripe, user, merchant_account, stripe_account)
+      }.to change { user.bank_accounts.alive.count }.by(1)
+
+      bank_account = user.bank_accounts.alive.last
+      expect(bank_account.stripe_bank_account_id).to eq("ba_ext1")
+      expect(bank_account.stripe_connect_account_id).to eq(stripe_account_id)
+      expect(bank_account.account_number_last_four).to eq("6789")
+    end
+
+    it "does not raise when stripe_account is a Stripe::StripeObject with card external accounts" do
+      stripe_account = Stripe::Util.convert_to_stripe_object({
+        "id" => stripe_account_id,
+        "external_accounts" => {
+          "data" => [
+            {
+              "id" => "card_ext1",
+              "object" => "card",
+              "brand" => "Visa",
+              "last4" => "4242",
+              "exp_month" => 12,
+              "exp_year" => 2030,
+              "country" => "US",
+              "funding" => "debit",
+              "fingerprint" => "fp_card1"
+            }
+          ]
+        }
+      }, {})
+
+      expect {
+        StripeMerchantAccountManager.send(:sync_external_accounts_from_stripe, user, merchant_account, stripe_account)
+      }.not_to raise_error
+    end
+
+    it "handles missing external_accounts gracefully" do
+      stripe_account = Stripe::Util.convert_to_stripe_object({
+        "id" => stripe_account_id
+      }, {})
+
+      expect {
+        StripeMerchantAccountManager.send(:sync_external_accounts_from_stripe, user, merchant_account, stripe_account)
+      }.not_to change { user.bank_accounts.alive.count }
+    end
+
+    it "removes bank accounts no longer present in Stripe" do
+      existing_bank_account = create(:ach_account_stripe_succeed, user:, stripe_connect_account_id: stripe_account_id, stripe_bank_account_id: "ba_old")
+
+      stripe_account = Stripe::Util.convert_to_stripe_object({
+        "id" => stripe_account_id,
+        "external_accounts" => {
+          "data" => [
+            {
+              "id" => "ba_new",
+              "object" => "bank_account",
+              "last4" => "1111",
+              "routing_number" => "110000000",
+              "country" => "US",
+              "account_holder_name" => "New Holder",
+              "fingerprint" => "fp_new"
+            }
+          ]
+        }
+      }, {})
+
+      StripeMerchantAccountManager.send(:sync_external_accounts_from_stripe, user, merchant_account, stripe_account)
+
+      expect(existing_bank_account.reload.deleted_at).to be_present
+    end
+  end
 end

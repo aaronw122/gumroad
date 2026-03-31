@@ -835,7 +835,7 @@ module StripeMerchantAccountManager
   end
 
   def self.sync_external_accounts_from_stripe(user, merchant_account, stripe_account)
-    external_accounts = stripe_account.dig("external_accounts", "data")
+    external_accounts = stripe_account["external_accounts"]&.[]("data")
     return if external_accounts.blank?
 
     stripe_account_id = stripe_account["id"]
