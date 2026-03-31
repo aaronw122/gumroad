@@ -14,6 +14,9 @@ class StripeChargeProcessor
 
   MANDATE_PREFIX = "Mandate-"
 
+  BGN_TRANSFER_REVERSAL_UNSUPPORTED_ERROR = "Transfer reversals in BGN are no longer supported"
+  BGN_TO_EUR_FIXED_RATE = 1.95583
+
   REQUEST_MANUAL_3DS_PARAMS = {
     payment_method_options: {
       card: {
@@ -409,6 +412,25 @@ class StripeChargeProcessor
 
     get_refund(stripe_refund.id, merchant_account:)
   rescue Stripe::InvalidRequestError => e
+    if params[:reverse_transfer] && e.message.include?(BGN_TRANSFER_REVERSAL_UNSUPPORTED_ERROR)
+      params.delete(:reverse_transfer)
+      params.delete(:refund_application_fee)
+
+      if merchant_migrated?(merchant_account)
+        begin
+          stripe_refund = Stripe::Refund.create(params, stripe_account: merchant_account.charge_processor_merchant_id)
+        rescue StandardError => e2
+          Rails.logger.error "Falling back to retrieve from Gumroad account due to #{e2.inspect}"
+          stripe_refund = Stripe::Refund.create(params)
+        end
+      else
+        stripe_refund = Stripe::Refund.create(params)
+      end
+
+      self.class.debit_connected_account_for_bgn_transfer(stripe_charge, amount_cents)
+      return get_refund(stripe_refund.id, merchant_account:)
+    end
+
     raise ChargeProcessorAlreadyRefundedError.new("Stripe charge was already refunded. Stripe response: #{e.message}", original_error: e) unless e.message[/already been refunded/].nil?
 
     raise ChargeProcessorInvalidRequestError.new(original_error: e)
@@ -977,6 +999,25 @@ class StripeChargeProcessor
   end
 
   private_class_method
+  def self.debit_connected_account_for_bgn_transfer(stripe_charge, refund_amount_cents)
+    transfer = Stripe::Transfer.retrieve(stripe_charge.transfer)
+    connected_account_id = stripe_charge.destination
+
+    if refund_amount_cents.present?
+      proportion = refund_amount_cents.to_f / stripe_charge.amount
+      bgn_amount = (transfer.amount * proportion).round
+    else
+      bgn_amount = transfer.amount - transfer.amount_reversed
+    end
+
+    eur_amount = (bgn_amount / BGN_TO_EUR_FIXED_RATE).ceil
+
+    Stripe::Transfer.create(
+      { amount: eur_amount, currency: "eur", destination: Stripe::Account.retrieve.id },
+      { stripe_account: connected_account_id }
+    )
+  end
+
   def self.calculate_transfer_reversal(transfer, data)
     return unless transfer.present?
 

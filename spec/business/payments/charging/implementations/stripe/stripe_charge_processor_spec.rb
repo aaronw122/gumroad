@@ -1271,6 +1271,103 @@ describe StripeChargeProcessor, :vcr do
         end
       end
 
+      describe "when Stripe returns BGN transfer reversal unsupported error" do
+        let(:charge_id) { "ch_bgn_test" }
+        let(:stripe_account_id) { "acct_bgn_test" }
+        let(:transfer_id) { "tr_bgn_test" }
+        let(:bgn_error_message) { "Transfer reversals in BGN are no longer supported. Please create account debits in eur to reverse BGN transfers." }
+        let(:mock_stripe_charge) do
+          double("Stripe::Charge", id: charge_id, destination: stripe_account_id, transfer: transfer_id, amount: amount_cents)
+        end
+        let(:mock_transfer) do
+          double("Stripe::Transfer", amount: 900, amount_reversed: 0, currency: "bgn")
+        end
+        let(:mock_refund) { double("Stripe::Refund", id: "re_bgn_test") }
+        let(:mock_refund_result) { instance_double(StripeChargeRefund) }
+        let(:mock_debit_transfer) { double("Stripe::Transfer", id: "tr_debit_bgn") }
+        let(:mock_platform_account) { double("Stripe::Account", id: "acct_platform") }
+
+        before do
+          allow(Stripe::Charge).to receive(:retrieve).with(charge_id).and_return(mock_stripe_charge)
+          allow(Stripe::Transfer).to receive(:retrieve).with(transfer_id).and_return(mock_transfer)
+          allow(Stripe::Account).to receive(:retrieve).and_return(mock_platform_account)
+        end
+
+        context "with a full refund" do
+          before do
+            call_count = 0
+            allow(Stripe::Refund).to receive(:create) do |params, _opts = {}|
+              call_count += 1
+              if call_count == 1 && params[:reverse_transfer]
+                raise Stripe::InvalidRequestError.new(bgn_error_message, :reverse_transfer)
+              end
+              mock_refund
+            end
+            allow(subject).to receive(:get_refund).with("re_bgn_test", merchant_account: nil).and_return(mock_refund_result)
+          end
+
+          it "retries the refund without reverse_transfer and refund_application_fee" do
+            calls = []
+            allow(Stripe::Refund).to receive(:create) do |params, _opts = {}|
+              calls << params.dup
+              if calls.size == 1 && params[:reverse_transfer]
+                raise Stripe::InvalidRequestError.new(bgn_error_message, :reverse_transfer)
+              end
+              mock_refund
+            end
+            allow(Stripe::Transfer).to receive(:create).and_return(mock_debit_transfer)
+
+            subject.refund!(charge_id)
+
+            expect(calls.size).to eq(2)
+            expect(calls[0]).to eq({ charge: charge_id, reverse_transfer: true, refund_application_fee: true })
+            expect(calls[1]).to eq({ charge: charge_id })
+          end
+
+          it "debits the connected account in EUR" do
+            expect(Stripe::Transfer).to receive(:create).with(
+              { amount: (900 / 1.95583).ceil, currency: "eur", destination: "acct_platform" },
+              { stripe_account: stripe_account_id }
+            ).and_return(mock_debit_transfer)
+
+            subject.refund!(charge_id)
+          end
+
+          it "returns a refund result" do
+            allow(Stripe::Transfer).to receive(:create).and_return(mock_debit_transfer)
+            expect(subject.refund!(charge_id)).to eq(mock_refund_result)
+          end
+        end
+
+        context "with a partial refund" do
+          let(:refund_amount_cents) { 5_00 }
+
+          before do
+            call_count = 0
+            allow(Stripe::Refund).to receive(:create) do |params, _opts = {}|
+              call_count += 1
+              if call_count == 1 && params[:reverse_transfer]
+                raise Stripe::InvalidRequestError.new(bgn_error_message, :reverse_transfer)
+              end
+              mock_refund
+            end
+            allow(subject).to receive(:get_refund).with("re_bgn_test", merchant_account: nil).and_return(mock_refund_result)
+          end
+
+          it "debits the connected account proportionally in EUR" do
+            proportional_bgn = (900 * 5_00.to_f / amount_cents).round
+            eur_amount = (proportional_bgn / 1.95583).ceil
+
+            expect(Stripe::Transfer).to receive(:create).with(
+              { amount: eur_amount, currency: "eur", destination: "acct_platform" },
+              { stripe_account: stripe_account_id }
+            ).and_return(mock_debit_transfer)
+
+            subject.refund!(charge_id, amount_cents: refund_amount_cents)
+          end
+        end
+      end
+
       describe "already refunded" do
         before do
           subject.refund!(charge_id)
