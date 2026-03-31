@@ -6,6 +6,7 @@ module Payment::FailureReason
   CANNOT_PAY = "cannot_pay"
   DEBIT_CARD_LIMIT = "debit_card_limit"
   INSUFFICIENT_FUNDS = "insufficient_funds"
+  REQUIREMENTS_DUE = "requirements_due"
 
   PAYPAL_MASS_PAY = {
     "PAYPAL 1000" => "Unknown error",
@@ -133,6 +134,10 @@ module Payment::FailureReason
     "unsupported_card" => {
       reason: "the bank no longer supports payouts to this card",
       solution: "Change the card used for payouts",
+    },
+    "requirements_due" => {
+      reason: "the Stripe account has outstanding requirements that need to be collected before payouts can be created",
+      solution: "Visit the Stripe dashboard to complete any outstanding verification or compliance requirements",
     },
   }
   private_constant :STRIPE_FAILURE_SOLUTIONS

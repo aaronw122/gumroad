@@ -259,6 +259,8 @@ class StripePayoutProcessor
       failure_reason = Payment::FailureReason::DEBIT_CARD_LIMIT
     elsif e.message["Insufficient funds in Stripe account"]
       failure_reason = Payment::FailureReason::INSUFFICIENT_FUNDS
+    elsif e.message["Cannot create payouts"]
+      failure_reason = Payment::FailureReason::REQUIREMENTS_DUE
     else
       ErrorNotifier.notify(e)
     end
