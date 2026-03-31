@@ -128,11 +128,30 @@ describe Product::StructuredData do
         context "when the product is sold out" do
           before do
             product.update!(max_purchase_count: 10)
+            Rails.cache.clear
             allow(product).to receive(:remaining_for_sale_count).and_return(0)
           end
 
           it "sets availability to SoldOut" do
             expect(product.structured_data["offers"]["availability"]).to eq(Product::StructuredData::AVAILABILITY_SOLD_OUT)
+          end
+        end
+
+        context "when availability is cached" do
+          before do
+            product.update!(max_purchase_count: 10)
+            Rails.cache.clear
+          end
+
+          it "caches remaining_for_sale_count and reuses it on subsequent calls" do
+            allow(product).to receive(:remaining_for_sale_count).and_return(5, 0)
+
+            first_result = product.structured_data["offers"]["availability"]
+            second_result = product.structured_data["offers"]["availability"]
+
+            expect(first_result).to eq(Product::StructuredData::AVAILABILITY_LIMITED)
+            expect(second_result).to eq(Product::StructuredData::AVAILABILITY_LIMITED)
+            expect(product).to have_received(:remaining_for_sale_count).once
           end
         end
       end

@@ -88,7 +88,11 @@ module Product::StructuredData
     def availability_for_schema_org
       return AVAILABILITY_IN_STOCK unless max_purchase_count?
 
-      if remaining_for_sale_count&.zero?
+      cached_remaining = Rails.cache.fetch("product/#{id}/structured_data_remaining_for_sale_count", expires_in: 5.minutes) do
+        remaining_for_sale_count
+      end
+
+      if cached_remaining&.zero?
         AVAILABILITY_SOLD_OUT
       else
         AVAILABILITY_LIMITED
