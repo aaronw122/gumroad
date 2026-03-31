@@ -2,7 +2,7 @@ import { loadConnectAndInitialize, StripeConnectInstance } from "@stripe/connect
 import { loadStripe, Stripe, StripeConstructorOptions } from "@stripe/stripe-js";
 import { cast } from "ts-safe-cast";
 
-import { createAccountSession } from "$app/data/stripe_connect";
+import { createAccountSession, createOnboardingAccountSession } from "$app/data/stripe_connect";
 import { getCssVariable } from "$app/utils/styles";
 
 import { readDesignSettings } from "$app/components/DesignSettings";
@@ -33,14 +33,21 @@ const loadStripeInstance = async (stripeAccount?: string) => {
 };
 
 let stripeConnectInstance: StripeConnectInstance | undefined;
+let stripeConnectOnboardingInstance: StripeConnectInstance | undefined;
 
 export const getStripeConnectInstance = () => {
   if (stripeConnectInstance) return stripeConnectInstance;
-  stripeConnectInstance = loadStripeConnectInstance();
+  stripeConnectInstance = loadStripeConnectInstance(createAccountSession, "dialog");
   return stripeConnectInstance;
 };
 
-const loadStripeConnectInstance = () => {
+export const getStripeConnectOnboardingInstance = () => {
+  if (stripeConnectOnboardingInstance) return stripeConnectOnboardingInstance;
+  stripeConnectOnboardingInstance = loadStripeConnectInstance(createOnboardingAccountSession, undefined);
+  return stripeConnectOnboardingInstance;
+};
+
+const loadStripeConnectInstance = (fetchSecret: () => Promise<string> = createAccountSession, overlays?: "dialog" | "drawer") => {
   const publicKeyTag = document.querySelector<HTMLElement>("meta[property='stripe:pk']");
   const publicKey = cast<string>(publicKeyTag?.getAttribute("value"));
 
@@ -48,7 +55,7 @@ const loadStripeConnectInstance = () => {
 
   const instance = loadConnectAndInitialize({
     publishableKey: publicKey,
-    fetchClientSecret: createAccountSession,
+    fetchClientSecret: fetchSecret,
     fonts: [
       {
         family: designSettings.font.name,
@@ -56,7 +63,7 @@ const loadStripeConnectInstance = () => {
       },
     ],
     appearance: {
-      overlays: "dialog",
+      ...(overlays ? { overlays } : {}),
       variables: {
         actionPrimaryColorText: getRgbCssVariable("color"),
         colorText: getRgbCssVariable("color"),

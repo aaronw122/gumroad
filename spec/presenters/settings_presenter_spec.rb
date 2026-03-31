@@ -463,6 +463,7 @@ describe SettingsPresenter do
         },
         paypal_address: seller.payment_address,
         show_verification_section: false,
+        show_stripe_embedded_onboarding: false,
         paypal_connect: {
           show_paypal_connect: false,
           allow_paypal_connect: false,
@@ -887,6 +888,60 @@ describe SettingsPresenter do
         seller.update!(payment_address: nil)
 
         expect(presenter.payments_props[:bank_account_details][:show_paypal]).to eq(true)
+      end
+    end
+
+    describe "show_stripe_embedded_onboarding" do
+      before do
+        Feature.activate(:stripe_embedded_onboarding)
+      end
+
+      after do
+        Feature.deactivate(:stripe_embedded_onboarding)
+      end
+
+      it "returns true for a Canadian seller with the feature flag and no verified Stripe account" do
+        create(:user_compliance_info, user: seller, country: "Canada")
+        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(true)
+      end
+
+      it "returns false when feature flag is disabled" do
+        Feature.deactivate(:stripe_embedded_onboarding)
+        create(:user_compliance_info, user: seller, country: "Canada")
+        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(false)
+      end
+
+      it "returns false for non-Canadian countries" do
+        create(:user_compliance_info, user: seller, country: "United States")
+        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(false)
+      end
+
+      it "returns false when seller has a verified Stripe account" do
+        create(:user_compliance_info, user: seller, country: "Canada")
+        create(:merchant_account, user: seller, charge_processor_verified_at: Time.current)
+        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(false)
+      end
+
+      it "returns false when seller has a Stripe Connect account" do
+        create(:user_compliance_info, user: seller, country: "Canada")
+        create(:merchant_account_stripe_connect, user: seller)
+        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(false)
+      end
+
+      it "returns false when seller has no compliance info" do
+        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(false)
+      end
+
+      it "returns true for a seller who already completed embedded onboarding" do
+        create(:merchant_account, user: seller, charge_processor_verified_at: Time.current,
+          json_data: { "stripe_embedded_onboarding" => true })
+        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(true)
+      end
+
+      it "returns true for a seller with an unverified embedded onboarding account" do
+        create(:merchant_account, user: seller, charge_processor_verified_at: nil,
+          json_data: { "stripe_embedded_onboarding" => true })
+        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(true)
       end
     end
 

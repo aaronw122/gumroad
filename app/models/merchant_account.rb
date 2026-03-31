@@ -15,6 +15,7 @@ class MerchantAccount < ApplicationRecord
 
   attr_json_data_accessor :meta
   attr_json_data_accessor :unclaimed_balance_collection_transfer_id
+  attr_json_data_accessor :stripe_embedded_onboarding
 
   validates :charge_processor_id, presence: true
   validates :charge_processor_merchant_id, presence: true, if: -> { user && charge_processor_alive? }
@@ -64,6 +65,10 @@ class MerchantAccount < ApplicationRecord
 
   def is_a_gumroad_managed_stripe_account?
     stripe_charge_processor? && json_data.dig("meta", "stripe_connect") != "true"
+  end
+
+  def is_stripe_embedded_onboarding_account?
+    stripe_charge_processor? && stripe_embedded_onboarding
   end
 
   # Public: Returns who holds the funds for charges created for this merchant account.

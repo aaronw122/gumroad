@@ -11138,6 +11138,172 @@ describe StripeMerchantAccountManager, :vcr do
           expect(user.reload.suspended_for_tos_violation?).to be true
         end
       end
+
+      describe "syncing external accounts from Stripe" do
+        let(:merchant_account) { create(:merchant_account, user:) }
+
+        let(:base_stripe_event) do
+          {
+            "api_version" => API_VERSION,
+            "type" => "account.updated",
+            "id" => "stripe-event-id",
+            "data" => {
+              "object" => {
+                "object" => "account",
+                "id" => merchant_account.charge_processor_merchant_id,
+                "business_type" => "individual",
+                "individual" => { "verification" => { "status" => "pending" } },
+                "charges_enabled" => true,
+                "payouts_enabled" => true,
+                "country" => "US",
+                "default_currency" => "usd",
+                "requirements" => { "currently_due" => [], "eventually_due" => [], "past_due" => [], "errors" => [] },
+                "future_requirements" => { "currently_due" => [], "eventually_due" => [], "past_due" => [], "errors" => [] },
+                "external_accounts" => {
+                  "object" => "list",
+                  "data" => [],
+                  "has_more" => false,
+                  "total_count" => 0
+                }
+              },
+              "previous_attributes" => {}
+            }
+          }
+        end
+
+        context "when a bank account is added via embedded onboarding" do
+          let(:stripe_event) do
+            event = base_stripe_event.deep_dup
+            event["data"]["object"]["external_accounts"]["data"] = [
+              {
+                "id" => "ba_new_123",
+                "object" => "bank_account",
+                "account_holder_name" => "Jane Doe",
+                "country" => "US",
+                "currency" => "usd",
+                "last4" => "6789",
+                "routing_number" => "110000000",
+                "fingerprint" => "fp_bank_abc",
+                "status" => "new"
+              }
+            ]
+            event["data"]["object"]["external_accounts"]["total_count"] = 1
+            event
+          end
+
+          it "creates a local BankAccount record" do
+            expect { described_class.handle_stripe_event(stripe_event) }.to change { user.bank_accounts.alive.count }.by(1)
+
+            bank_account = user.bank_accounts.alive.last
+            expect(bank_account.account_holder_full_name).to eq("Jane Doe")
+            expect(bank_account.account_number_last_four).to eq("6789")
+            expect(bank_account.bank_number).to eq("110000000")
+            expect(bank_account.country).to eq("US")
+            expect(bank_account.stripe_connect_account_id).to eq(merchant_account.charge_processor_merchant_id)
+            expect(bank_account.stripe_external_account_id).to eq("ba_new_123")
+            expect(bank_account.stripe_fingerprint).to eq("fp_bank_abc")
+          end
+
+          it "does not create a duplicate if the external account already exists locally" do
+            described_class.handle_stripe_event(stripe_event)
+            expect { described_class.handle_stripe_event(stripe_event) }.not_to change { user.bank_accounts.alive.count }
+          end
+
+          it "enqueues CheckPaymentAddressWorker" do
+            described_class.handle_stripe_event(stripe_event)
+            expect(CheckPaymentAddressWorker.jobs.size).to eq(1)
+          end
+        end
+
+        context "when a debit card is added via embedded onboarding" do
+          let(:stripe_event) do
+            event = base_stripe_event.deep_dup
+            event["data"]["object"]["external_accounts"]["data"] = [
+              {
+                "id" => "card_new_456",
+                "object" => "card",
+                "brand" => "Visa",
+                "last4" => "5556",
+                "exp_month" => 12,
+                "exp_year" => 2028,
+                "country" => "US",
+                "funding" => "debit",
+                "fingerprint" => "fp_card_xyz"
+              }
+            ]
+            event["data"]["object"]["external_accounts"]["total_count"] = 1
+            event
+          end
+
+          it "creates a CreditCard and CardBankAccount record" do
+            expect { described_class.handle_stripe_event(stripe_event) }
+              .to change { CreditCard.count }.by(1)
+              .and change { user.bank_accounts.alive.count }.by(1)
+
+            credit_card = CreditCard.last
+            expect(credit_card.card_type).to eq("visa")
+            expect(credit_card.visual).to eq("**** **** **** 5556")
+            expect(credit_card.expiry_month).to eq(12)
+            expect(credit_card.expiry_year).to eq(2028)
+            expect(credit_card.card_country).to eq("US")
+            expect(credit_card.funding_type).to eq("debit")
+            expect(credit_card.stripe_fingerprint).to eq("fp_card_xyz")
+
+            bank_account = user.bank_accounts.alive.last
+            expect(bank_account).to be_a(CardBankAccount)
+            expect(bank_account.credit_card).to eq(credit_card)
+            expect(bank_account.stripe_connect_account_id).to eq(merchant_account.charge_processor_merchant_id)
+            expect(bank_account.stripe_external_account_id).to eq("card_new_456")
+          end
+        end
+
+        context "when an external account is removed from Stripe" do
+          it "deletes the local bank account that is no longer on Stripe" do
+            described_class.handle_stripe_event(base_stripe_event.deep_dup.tap { |e|
+              e["data"]["object"]["external_accounts"]["data"] = [
+                { "id" => "ba_old_111", "object" => "bank_account", "account_holder_name" => "Old Account",
+                  "country" => "US", "currency" => "usd", "last4" => "1111", "routing_number" => "110000000",
+                  "fingerprint" => "fp_old", "status" => "new" }
+              ]
+              e["data"]["object"]["external_accounts"]["total_count"] = 1
+            })
+            expect(user.bank_accounts.alive.count).to eq(1)
+
+            described_class.handle_stripe_event(base_stripe_event.deep_dup.tap { |e|
+              e["data"]["object"]["external_accounts"]["data"] = []
+              e["data"]["object"]["external_accounts"]["total_count"] = 0
+            })
+            expect(user.bank_accounts.alive.count).to eq(0)
+          end
+        end
+
+        context "when an external account is replaced" do
+          it "deletes the old and creates the new bank account" do
+            described_class.handle_stripe_event(base_stripe_event.deep_dup.tap { |e|
+              e["data"]["object"]["external_accounts"]["data"] = [
+                { "id" => "ba_old_222", "object" => "bank_account", "account_holder_name" => "Old",
+                  "country" => "US", "currency" => "usd", "last4" => "2222", "routing_number" => "110000000",
+                  "fingerprint" => "fp_old2", "status" => "new" }
+              ]
+              e["data"]["object"]["external_accounts"]["total_count"] = 1
+            })
+            old_bank_account = user.bank_accounts.alive.last
+
+            described_class.handle_stripe_event(base_stripe_event.deep_dup.tap { |e|
+              e["data"]["object"]["external_accounts"]["data"] = [
+                { "id" => "ba_new_333", "object" => "bank_account", "account_holder_name" => "New",
+                  "country" => "US", "currency" => "usd", "last4" => "3333", "routing_number" => "110000000",
+                  "fingerprint" => "fp_new3", "status" => "new" }
+              ]
+              e["data"]["object"]["external_accounts"]["total_count"] = 1
+            })
+
+            expect(user.bank_accounts.alive.count).to eq(1)
+            expect(old_bank_account.reload.deleted_at).to be_present
+            expect(user.bank_accounts.alive.last.stripe_external_account_id).to eq("ba_new_333")
+          end
+        end
+      end
     end
 
     describe "event: account.application.deauthorized" do

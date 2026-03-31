@@ -92,6 +92,7 @@ class BankAccount < ApplicationRecord
 
   private
     def handle_stripe_bank_account
+      return if stripe_bank_account_id.present?
       HandleNewBankAccountWorker.perform_in(5.seconds, id)
     end
 

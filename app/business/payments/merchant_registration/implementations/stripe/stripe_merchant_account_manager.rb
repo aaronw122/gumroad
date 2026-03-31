@@ -755,6 +755,8 @@ module StripeMerchantAccountManager
 
     ContactingCreatorMailer.stripe_remediation(user.id).deliver_later if new_risk_requirement_added
 
+    sync_external_accounts_from_stripe(user, merchant_account, stripe_account)
+
     is_charges_disabled = !stripe_account["charges_enabled"]
     charges_newly_disabled = stripe_account["charges_enabled"] == false && stripe_previous_attributes["charges_enabled"] == true
 
@@ -832,6 +834,74 @@ module StripeMerchantAccountManager
     end
   end
 
+  def self.sync_external_accounts_from_stripe(user, merchant_account, stripe_account)
+    external_accounts = stripe_account.external_accounts.data
+
+    stripe_account_id = stripe_account["id"]
+    current_stripe_external_ids = user.bank_accounts.alive.where(stripe_connect_account_id: stripe_account_id).pluck(:stripe_bank_account_id)
+    incoming_external_ids = external_accounts.map { |ea| ea["0"]["id"] }
+
+    user.bank_accounts.alive
+      .where(stripe_connect_account_id: stripe_account_id)
+      .where.not(stripe_bank_account_id: incoming_external_ids)
+      .find_each(&:mark_deleted!)
+
+    external_accounts.each do |external_account|
+      next if current_stripe_external_ids.include?(external_account["0"]["id"])
+
+      if external_account["0"]["object"] == "card"
+        StripeMerchantAccountManager.sync_card_external_account(user, stripe_account_id, external_account)
+      else
+        StripeMerchantAccountManager.sync_bank_external_account(user, stripe_account_id, external_account)
+      end
+    end
+  rescue => e
+    ErrorNotifier.notify("Failed to sync external accounts from Stripe for user #{user.id}: #{e.message}")
+  end
+
+  private_class_method
+  def self.sync_bank_external_account(user, stripe_account_id, external_account)
+    bank_account = BankAccount.new
+    bank_account.type = "BankAccount"
+    bank_account.user = user
+    bank_account.account_holder_full_name = external_account["0"]["account_holder_name"].presence || user.name.presence || "Account holder"
+    bank_account.account_number_last_four = external_account["0"]["last4"]
+    bank_account.bank_number = external_account["0"]["routing_number"]
+    bank_account.country = external_account["0"]["country"]
+    bank_account.stripe_connect_account_id = stripe_account_id
+    bank_account.stripe_bank_account_id = external_account["0"]["id"]
+    bank_account.stripe_fingerprint = external_account["0"]["fingerprint"]
+    bank_account.account_number = "******#{external_account["0"]["last4"]}"
+    bank_account.save!(validate: false)
+
+    CheckPaymentAddressWorker.perform_async(user.id)
+  end
+
+  private_class_method
+  def self.sync_card_external_account(user, stripe_account_id, external_account)
+    credit_card = CreditCard.new
+    credit_card.card_type = external_account["0"]["brand"]&.downcase
+    credit_card.visual = "**** **** **** #{external_account["0"]["last4"]}"
+    credit_card.expiry_month = external_account["0"]["exp_month"]
+    credit_card.expiry_year = external_account["0"]["exp_year"]
+    credit_card.card_country = external_account["0"]["country"]
+    credit_card.funding_type = external_account["0"]["funding"]
+    credit_card.stripe_fingerprint = external_account["0"]["fingerprint"]
+    credit_card.charge_processor_id = StripeChargeProcessor.charge_processor_id
+    credit_card.save!
+
+    bank_account = CardBankAccount.new
+    bank_account.user = user
+    bank_account.credit_card = credit_card
+    bank_account.stripe_connect_account_id = stripe_account_id
+    bank_account.stripe_bank_account_id = external_account["0"]["id"]
+    bank_account.stripe_fingerprint = external_account["0"]["fingerprint"]
+    bank_account.save!(validate: false)
+
+    CheckPaymentAddressWorker.perform_async(user.id)
+  end
+
+  private_class_method
   def self.prefecture_kana(kanji)
     Compliance::Countries.japan_prefecture_kana(kanji)
   end

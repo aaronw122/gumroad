@@ -15,6 +15,7 @@ import { Button } from "$app/components/Button";
 import { ConfirmBalanceForfeitOnPayoutMethodChangeModal } from "$app/components/ConfirmBalanceForfeitOnPayoutMethodChangeModal";
 import { CountrySelectionModal } from "$app/components/CountrySelectionModal";
 import { StripeConnectEmbeddedNotificationBanner } from "$app/components/PayoutPage/StripeConnectEmbeddedNotificationBanner";
+import { StripeEmbeddedOnboarding } from "$app/components/Settings/PaymentsPage/StripeEmbeddedOnboarding";
 import { PriceInput } from "$app/components/PriceInput";
 import { CreditCardForm } from "$app/components/Settings/AdvancedPage/CreditCardForm";
 import { Layout } from "$app/components/Settings/Layout";
@@ -100,6 +101,7 @@ type PaymentsPageProps = {
   payout_country_name: string | null;
   payout_frequency: PayoutFrequency;
   payout_frequency_daily_supported: boolean;
+  show_stripe_embedded_onboarding: boolean;
   errors?: {
     base?: string[];
   };
@@ -905,28 +907,30 @@ export default function PaymentsPage() {
           </Alert>
         ) : null}
 
-        <FormSection header={<h2>Verification</h2>}>
-          {props.show_verification_section ? (
-            <StripeConnectEmbeddedNotificationBanner />
-          ) : (
-            <div className="flex flex-col">
-              <Alert role="status" variant="success">
-                Your identity has been verified!
-              </Alert>
-              <div className="mt-4 flex items-center">
-                <img src={logo} alt="Gum Coin" className="mr-2 h-5 w-5" />
-                <span className="text-sm text-muted">
-                  Creator since{" "}
-                  {new Date(props.user.joined_at).toLocaleDateString(userAgentInfo.locale, {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </span>
+        {props.show_stripe_embedded_onboarding ? null : (
+          <FormSection header={<h2>Verification</h2>}>
+            {props.show_verification_section ? (
+              <StripeConnectEmbeddedNotificationBanner />
+            ) : (
+              <div className="flex flex-col">
+                <Alert role="status" variant="success">
+                  Your identity has been verified!
+                </Alert>
+                <div className="mt-4 flex items-center">
+                  <img src={logo} alt="Gum Coin" className="mr-2 h-5 w-5" />
+                  <span className="text-sm text-muted">
+                    Creator since{" "}
+                    {new Date(props.user.joined_at).toLocaleDateString(userAgentInfo.locale, {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
+                </div>
               </div>
-            </div>
-          )}
-        </FormSection>
+            )}
+          </FormSection>
+        )}
 
         {props.aus_backtax_details.show_au_backtax_prompt ? (
           <AusBackTaxesSection
@@ -1035,6 +1039,21 @@ export default function PaymentsPage() {
           </section>
         </FormSection>
 
+        {props.show_stripe_embedded_onboarding ? (
+          <FormSection
+            header={
+              <>
+                <h2>Payout method</h2>
+                <p>
+                  Complete your account setup to start receiving payouts. Stripe will collect your identity, bank
+                  account, and tax information securely.
+                </p>
+              </>
+            }
+          >
+            <StripeEmbeddedOnboarding onOnboardingComplete={() => window.location.reload()} />
+          </FormSection>
+        ) : (
         <FormSection
           header={
             <>
@@ -1176,6 +1195,7 @@ export default function PaymentsPage() {
             )}
           </section>
         </FormSection>
+        )}
         {props.paypal_connect.show_paypal_connect ? (
           <PayPalConnectSection
             paypalConnect={props.paypal_connect}
