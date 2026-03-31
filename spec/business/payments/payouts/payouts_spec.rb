@@ -276,6 +276,32 @@ describe Payouts do
     end
   end
 
+  describe ".create_payment" do
+    let(:payout_date) { Date.yesterday }
+    let(:seller) { create(:compliant_user) }
+
+    before do
+      create(:ach_account, user: seller, stripe_bank_account_id: "ba_bankaccountid")
+      create(:balance, user: seller, amount_cents: 100_00, date: payout_date - 3)
+    end
+
+    context "when prepare_payment_and_set_amount marks the payment as failed" do
+      before do
+        allow(StripePayoutProcessor).to receive(:prepare_payment_and_set_amount).and_wrap_original do |_method, payment, _balances|
+          payment.mark_failed!(Payment::FailureReason::CANNOT_PAY)
+          ["needs to have at least one of the following capabilities"]
+        end
+      end
+
+      it "does not raise StateMachines::InvalidTransition" do
+        payment, errors = described_class.create_payment(payout_date, PayoutProcessorType::STRIPE, seller)
+
+        expect(payment).to be_failed
+        expect(errors).to include(/capabilities/)
+      end
+    end
+  end
+
   describe "create_payments_for_balances_up_to_date" do
     let(:payout_date) { Date.yesterday }
     let(:payout_processor_type) { PayoutProcessorType::PAYPAL }
