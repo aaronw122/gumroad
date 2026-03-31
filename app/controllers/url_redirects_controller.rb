@@ -136,7 +136,7 @@ class UrlRedirectsController < ApplicationController
         archive.mark_in_progress!
         archive.generate_zip_archive!
         flash[:warning] = "We are preparing the file for download. Please try again shortly."
-        redirect_to(@url_redirect.download_page_url)
+        redirect_to(@url_redirect.download_page_url, allow_other_host: true)
       end
     end
   end
