@@ -2,9 +2,11 @@
 
 class AddProductAndSellerNamesToPurchaseMapping < ActiveRecord::Migration[6.1]
   def up
-    EsClient.indices.close(index: Purchase.index_name)
+    concrete_index = resolve_concrete_index(Purchase.index_name)
+
+    EsClient.indices.close(index: concrete_index)
     EsClient.indices.put_settings(
-      index: Purchase.index_name,
+      index: concrete_index,
       body: {
         settings: {
           index: {
@@ -31,7 +33,7 @@ class AddProductAndSellerNamesToPurchaseMapping < ActiveRecord::Migration[6.1]
         }
       }
     )
-    EsClient.indices.open(index: Purchase.index_name)
+    EsClient.indices.open(index: concrete_index)
 
     EsClient.indices.put_mapping(
       index: Purchase.index_name,
@@ -54,4 +56,12 @@ class AddProductAndSellerNamesToPurchaseMapping < ActiveRecord::Migration[6.1]
       }
     )
   end
+
+  private
+    def resolve_concrete_index(name)
+      aliases = EsClient.indices.get_alias(name: name)
+      aliases.keys.first
+    rescue Elasticsearch::Transport::Transport::Errors::NotFound
+      name
+    end
 end
