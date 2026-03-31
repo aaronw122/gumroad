@@ -28,12 +28,14 @@ class SaveInstallmentService
         installment.message = SaveContentUpsellsService.new(seller:, content: installment.message, old_content: installment.message_was).from_html
         save_installment
 
-        if params[:to_be_published_at].present?
-          schedule_installment
-        elsif params[:publish].present?
-          publish_installment
-        elsif params[:send_preview_email].present?
-          installment.send_preview_email(preview_email_recipient)
+        if error.blank?
+          if params[:to_be_published_at].present?
+            schedule_installment
+          elsif params[:publish].present?
+            publish_installment
+          elsif params[:send_preview_email].present?
+            installment.send_preview_email(preview_email_recipient)
+          end
         end
 
         raise ActiveRecord::Rollback if error.present?

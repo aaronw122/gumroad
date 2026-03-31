@@ -263,6 +263,19 @@ describe SaveInstallmentService do
       expect(service.error).to eq("Please include a message as part of the update.")
     end
 
+    it "does not send preview email when installment save fails" do
+      service = described_class.new(
+        seller:,
+        installment:,
+        params: params.deep_merge(send_preview_email: true, installment: { message: nil }),
+        preview_email_recipient:,
+      )
+
+      expect_any_instance_of(Installment).not_to receive(:send_preview_email)
+      expect(service.process).to be(false)
+      expect(service.error).to eq("Please include a message as part of the update.")
+    end
+
     it "invokes SaveContentUpsellsService with correct arguments" do
       expect(SaveContentUpsellsService).to receive(:new).with(seller:, content: "<p>Hello, world!</p>", old_content: nil).and_call_original
 
