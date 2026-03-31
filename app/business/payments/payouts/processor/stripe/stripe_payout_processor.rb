@@ -182,7 +182,11 @@ class StripePayoutProcessor
     []
   rescue Stripe::InvalidRequestError => e
     failed = true
-    ErrorNotifier.notify(e)
+    if e.message["needs to have at least one of the following capabilities"]
+      failure_reason = Payment::FailureReason::CANNOT_PAY
+    else
+      ErrorNotifier.notify(e)
+    end
     [e.message]
   rescue Stripe::AuthenticationError, Stripe::APIConnectionError
     failed = true
@@ -192,7 +196,7 @@ class StripePayoutProcessor
     ErrorNotifier.notify(e)
     [e.message]
   ensure
-    payment.mark_failed! if failed
+    payment.mark_failed!(failure_reason) if failed
   end
 
   def self.enqueue_payments(user_ids, date_string, payout_type: Payouts::PAYOUT_TYPE_STANDARD)

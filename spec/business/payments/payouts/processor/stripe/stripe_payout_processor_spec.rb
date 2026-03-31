@@ -675,6 +675,34 @@ describe StripePayoutProcessor, :vcr do
         end
       end
 
+      describe "the internal transfer fails because the account lacks required capabilities" do
+        before do
+          allow(Stripe::Transfer).to receive(:create).once.and_raise(
+            Stripe::InvalidRequestError.new(
+              "Your destination account needs to have at least one of the following capabilities enabled: transfers, crypto_transfers, legacy_payments",
+              "destination"
+            )
+          )
+        end
+
+        it "does not notify error tracker" do
+          expect(ErrorNotifier).not_to receive(:notify)
+          described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+        end
+
+        it "returns the errors" do
+          errors = described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+          expect(errors).to be_present
+        end
+
+        it "marks the payment as failed with cannot_pay failure reason" do
+          described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+          payment.reload
+          expect(payment.state).to eq("failed")
+          expect(payment.failure_reason).to eq(Payment::FailureReason::CANNOT_PAY)
+        end
+      end
+
       describe "the external transfer fails" do
         describe "mocked" do
           let(:internal_transfer) do
