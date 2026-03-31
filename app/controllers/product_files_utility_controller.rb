@@ -26,10 +26,17 @@ class ProductFilesUtilityController < ApplicationController
 
     url_redirect = @product.url_redirects.build
     if request.format.json?
-      render(json: { files: product_files.map { { url: url_redirect.signed_location_for_file(_1), filename: _1.s3_filename } } })
+      files = product_files.filter_map do |product_file|
+        { url: url_redirect.signed_location_for_file(product_file), filename: product_file.s3_filename }
+      rescue Aws::S3::Errors::NotFound
+        nil
+      end
+      e404 if files.blank?
+      render(json: { files: })
     else
-      # Non-JSON requests to this controller route pass an array with a single product file ID for `product_file_ids`
       redirect_to(url_redirect.signed_location_for_file(product_files.first), allow_other_host: true)
+    rescue Aws::S3::Errors::NotFound
+      e404
     end
   end
 

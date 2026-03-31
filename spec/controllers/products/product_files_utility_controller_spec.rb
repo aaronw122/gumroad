@@ -83,6 +83,40 @@ describe ProductFilesUtilityController, :vcr do
 
       expect(response).to redirect_to("https://example.com/file.srt")
     end
+
+    context "when S3 objects are missing" do
+      it "skips files with missing S3 objects in JSON response" do
+        file1 = create(:readable_document, link: product, display_name: "file1")
+        file2 = create(:streamable_video, link: product, display_name: "file2")
+
+        allow_any_instance_of(UrlRedirect).to receive(:signed_location_for_file).with(file1).and_raise(Aws::S3::Errors::NotFound.new(nil, "Not Found"))
+        allow_any_instance_of(UrlRedirect).to receive(:signed_location_for_file).with(file2).and_return("https://example.com/file2.pdf")
+        get :download_product_files, format: :json, params: { product_file_ids: [file1.external_id, file2.external_id], product_id: product.external_id }
+
+        expect(response).to have_http_status(:success)
+        expect(response.parsed_body["files"]).to eq([{ "url" => "https://example.com/file2.pdf", "filename" => file2.s3_filename }])
+      end
+
+      it "returns 404 when all files have missing S3 objects in JSON response" do
+        file1 = create(:readable_document, link: product, display_name: "file1")
+        file2 = create(:streamable_video, link: product, display_name: "file2")
+
+        allow_any_instance_of(UrlRedirect).to receive(:signed_location_for_file).and_raise(Aws::S3::Errors::NotFound.new(nil, "Not Found"))
+
+        expect {
+          get :download_product_files, format: :json, params: { product_file_ids: [file1.external_id, file2.external_id], product_id: product.external_id }
+        }.to raise_error(ActionController::RoutingError)
+      end
+
+      it "returns 404 when the file has a missing S3 object in HTML response" do
+        file = create(:product_file, link: product)
+        allow_any_instance_of(UrlRedirect).to receive(:signed_location_for_file).with(file).and_raise(Aws::S3::Errors::NotFound.new(nil, "Not Found"))
+
+        expect {
+          get :download_product_files, format: :html, params: { product_id: product.external_id, product_file_ids: [file.external_id] }
+        }.to raise_error(ActionController::RoutingError)
+      end
+    end
   end
 
   describe "GET download_folder_archive" do
