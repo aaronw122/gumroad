@@ -890,6 +890,48 @@ describe SettingsPresenter do
       end
     end
 
+    describe "show_stripe_embedded_onboarding" do
+      before do
+        Feature.activate(:stripe_embedded_onboarding)
+      end
+
+      after do
+        Feature.deactivate(:stripe_embedded_onboarding)
+      end
+
+      it "returns true for a Canadian seller with the feature flag and no verified Stripe account" do
+        create(:user_compliance_info, user: seller, country: "Canada")
+        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(true)
+      end
+
+      it "returns false when feature flag is disabled" do
+        Feature.deactivate(:stripe_embedded_onboarding)
+        create(:user_compliance_info, user: seller, country: "Canada")
+        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(false)
+      end
+
+      it "returns false for non-Canadian countries" do
+        create(:user_compliance_info, user: seller, country: "United States")
+        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(false)
+      end
+
+      it "returns false when seller has a verified Stripe account" do
+        create(:user_compliance_info, user: seller, country: "Canada")
+        create(:merchant_account, user: seller, charge_processor_verified_at: Time.current)
+        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(false)
+      end
+
+      it "returns false when seller has a Stripe Connect account" do
+        create(:user_compliance_info, user: seller, country: "Canada")
+        create(:merchant_account_stripe_connect, user: seller)
+        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(false)
+      end
+
+      it "returns false when seller has no compliance info" do
+        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(false)
+      end
+    end
+
     context "when seller's payouts are paused" do
       it "returns the payout pause source and reason if present" do
         seller.update!(payouts_paused_internally: true)

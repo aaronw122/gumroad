@@ -204,6 +204,7 @@ class SettingsPresenter
       bank_account_details:,
       paypal_address: seller.payment_address,
       show_verification_section: seller.user_compliance_info_requests.requested.present? && seller.stripe_account.present? && Pundit.policy!(pundit_user, [:settings, :payments, seller]).update?,
+      show_stripe_embedded_onboarding: show_stripe_embedded_onboarding?,
       paypal_connect:,
       fee_info: fee_info(user_compliance_info),
       user: user_details(user_compliance_info),
@@ -358,6 +359,23 @@ class SettingsPresenter
         are_au_backtaxes_paid: seller.paid_for_austalia_backtaxes?,
         au_backtaxes_paid_date: seller.date_paid_australia_backtaxes,
       }
+    end
+
+    def show_stripe_embedded_onboarding?
+      return false if !Feature.active?(:stripe_embedded_onboarding, seller)
+      return false if !Pundit.policy!(pundit_user, [:settings, :payments, seller]).update?
+
+      compliance_info = seller.alive_user_compliance_info
+      return false if compliance_info.blank?
+
+      country_code = compliance_info.legal_entity_country_code
+      return false if country_code != Compliance::Countries::CAN.alpha2
+
+      return false if seller.stripe_connect_account.present?
+      return false if !seller.native_payouts_supported?
+
+      has_no_gumroad_managed_stripe = seller.merchant_accounts.alive.stripe.find { |ma| !ma.is_a_stripe_connect_account? && ma.charge_processor_verified? }.blank?
+      has_no_gumroad_managed_stripe
     end
 
     def stripe_connect
