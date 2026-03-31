@@ -11556,6 +11556,33 @@ describe StripeMerchantAccountManager, :vcr do
       expect(bank_account.account_number_last_four).to eq("6789")
     end
 
+    it "syncs bank accounts from a Stripe::Account object (from Stripe::Account.retrieve)" do
+      stripe_account = Stripe::Account.construct_from({
+        "id" => stripe_account_id,
+        "external_accounts" => {
+          "data" => [
+            {
+              "id" => "ba_ext2",
+              "object" => "bank_account",
+              "last4" => "4321",
+              "routing_number" => "110000000",
+              "country" => "US",
+              "account_holder_name" => "Test Holder",
+              "fingerprint" => "fp_bank2"
+            }
+          ]
+        }
+      })
+
+      expect {
+        StripeMerchantAccountManager.send(:sync_external_accounts_from_stripe, user, merchant_account, stripe_account)
+      }.to change { user.bank_accounts.alive.count }.by(1)
+
+      bank_account = user.bank_accounts.alive.last
+      expect(bank_account.stripe_bank_account_id).to eq("ba_ext2")
+      expect(bank_account.stripe_connect_account_id).to eq(stripe_account_id)
+    end
+
     it "does not raise when stripe_account is a Stripe::StripeObject with card external accounts" do
       stripe_account = Stripe::Util.convert_to_stripe_object({
         "id" => stripe_account_id,
