@@ -3,6 +3,7 @@
 module StripeMerchantAccountManager
   REQUESTED_CAPABILITIES = %w(card_payments transfers)
   CROSS_BORDER_PAYOUTS_ONLY_CAPABILITIES = %w(transfers)
+  STRIPE_EMBEDDED_ONBOARDING_COUNTRIES = %w[AZ].freeze
   COUNTRIES_SUPPORTED_BY_STRIPE_CONNECT = ["Australia", "Austria", "Belgium", "Brazil", "Bulgaria", "Canada", "Croatia",
                                            "Cyprus", "Czechia", "Denmark", "Estonia", "Finland", "France",
                                            "Germany", "Gibraltar", "Greece", "Hong Kong", "Hungary", "Ireland", "Italy",

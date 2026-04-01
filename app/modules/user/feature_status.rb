@@ -6,6 +6,13 @@
 
 class User
   module FeatureStatus
+    def stripe_embedded_onboarding_enabled?
+      Feature.active?(:stripe_embedded_onboarding, self) &&
+        StripeMerchantAccountManager::STRIPE_EMBEDDED_ONBOARDING_COUNTRIES.include?(
+          ::Compliance::Countries.find_by_name(alive_user_compliance_info&.country)&.alpha2
+        )
+    end
+
     def merchant_migration_enabled?
       check_merchant_account_is_linked || (Feature.active?(:merchant_migration, self) &&
           StripeMerchantAccountManager::COUNTRIES_SUPPORTED_BY_STRIPE_CONNECT.include?(::Compliance::Countries.find_by_name(alive_user_compliance_info&.country)&.alpha2))

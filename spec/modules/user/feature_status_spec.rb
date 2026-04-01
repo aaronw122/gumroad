@@ -3,6 +3,53 @@
 require "spec_helper"
 
 describe User::FeatureStatus do
+  describe "#stripe_embedded_onboarding_enabled?" do
+    it "returns false when feature flag is not enabled" do
+      seller = create(:user)
+      create(:user_compliance_info, user: seller, country: "Azerbaijan")
+
+      expect(seller.stripe_embedded_onboarding_enabled?).to eq false
+    end
+
+    it "returns true when feature flag is enabled and country is in the allowlist" do
+      seller = create(:user)
+      create(:user_compliance_info, user: seller, country: "Azerbaijan")
+
+      Feature.activate_user(:stripe_embedded_onboarding, seller)
+
+      expect(seller.stripe_embedded_onboarding_enabled?).to eq true
+    end
+
+    it "returns false when feature flag is enabled but country is not in the allowlist" do
+      seller = create(:user)
+      create(:user_compliance_info, user: seller, country: "United States")
+
+      Feature.activate_user(:stripe_embedded_onboarding, seller)
+
+      expect(seller.stripe_embedded_onboarding_enabled?).to eq false
+    end
+
+    it "returns false when user has no compliance info" do
+      seller = create(:user)
+
+      Feature.activate_user(:stripe_embedded_onboarding, seller)
+
+      expect(seller.stripe_embedded_onboarding_enabled?).to eq false
+    end
+
+    it "returns true for all countries in the allowlist" do
+      StripeMerchantAccountManager::STRIPE_EMBEDDED_ONBOARDING_COUNTRIES.each do |country_code|
+        seller = create(:user)
+        country_name = ISO3166::Country[country_code].common_name
+        create(:user_compliance_info, user: seller, country: country_name)
+
+        Feature.activate_user(:stripe_embedded_onboarding, seller)
+
+        expect(seller.stripe_embedded_onboarding_enabled?).to eq(true), "Expected true for #{country_name} (#{country_code})"
+      end
+    end
+  end
+
   describe "#merchant_migration_enabled?" do
     it "returns true if either feature flag is enabled of else false" do
       creator = create(:user)
