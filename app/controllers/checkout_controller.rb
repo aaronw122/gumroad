@@ -48,8 +48,8 @@ class CheckoutController < ApplicationController
         cart_product.recurrence = item[:recurrence]
         cart_product.recommended_by = item[:recommended_by]
         cart_product.rent = item[:rent]
-        cart_product.url_parameters = item[:url_parameters]
-        cart_product.referrer = item[:referrer]
+        cart_product.url_parameters = item[:url_parameters] || cart_product.url_parameters
+        cart_product.referrer = item[:referrer] || cart_product.referrer
         cart_product.recommender_model_name = item[:recommender_model_name]
         cart_product.call_start_time = item[:call_start_time].present? ? Time.zone.parse(item[:call_start_time]) : nil
         cart_product.pay_in_installments = !!item[:pay_in_installments] && product.allow_installment_plan?

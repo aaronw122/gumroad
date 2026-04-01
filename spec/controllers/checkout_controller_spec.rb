@@ -466,6 +466,57 @@ describe CheckoutController, type: :controller, inertia: true do
         expect(flash[:alert]).to eq("Sorry, something went wrong. Please try again.")
       end
 
+      it "preserves default referrer and url_parameters when not provided in params" do
+        product = create(:product)
+
+        patch :update, params: {
+          cart: {
+            items: [{
+              product: { id: product.external_id },
+              price: product.price_cents,
+              quantity: 1,
+              rent: false
+            }],
+            discountCodes: []
+          }
+        }, as: :json
+
+        expect(response).to have_http_status(:see_other)
+        expect(response).to redirect_to(checkout_path)
+
+        cart = controller.logged_in_user.alive_cart
+        cart_product = cart.cart_products.sole
+        expect(cart_product.referrer).to be_present
+        expect(cart_product.url_parameters).to eq({})
+      end
+
+      it "does not overwrite existing referrer and url_parameters with nil on update" do
+        product = create(:product)
+        cart = create(:cart, user: controller.logged_in_user)
+        create(:cart_product, cart: cart, product: product, referrer: "google.com", url_parameters: { "utm_source" => "google" })
+
+        patch :update, params: {
+          cart: {
+            items: [{
+              product: { id: product.external_id },
+              price: product.price_cents,
+              quantity: 1,
+              rent: false,
+              referrer: nil,
+              url_parameters: nil
+            }],
+            discountCodes: []
+          }
+        }, as: :json
+
+        expect(response).to have_http_status(:see_other)
+        expect(response).to redirect_to(checkout_path)
+
+        cart_product = cart.reload.cart_products.alive.sole
+        expect(cart_product.referrer).to eq("google.com")
+        expect(cart_product.url_parameters).to eq("utm_source" => "google")
+      end
+
       it "returns an error when cart contains more than allowed number of cart products" do
         items = (Cart::MAX_ALLOWED_CART_PRODUCTS + 1).times.map { { product: { id: _1 + 1 } }  }
         patch :update, params: { cart: { items: } }, as: :json
