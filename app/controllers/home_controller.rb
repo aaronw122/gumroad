@@ -37,10 +37,10 @@ class HomeController < ApplicationController
 
   def pricing
     set_meta_tag(title: "Gumroad pricing: progressive fees that reward growth")
-    set_meta_tag(name: "description", content: "The more you earn, the less you pay. Progressive fees from 30% to 4.9%, no monthly charges, no negotiations.")
+    set_meta_tag(name: "description", content: "The more you earn, the less you pay. Progressive fees from 30% to 4.9%, no monthly charges.")
     set_meta_tag(tag_name: "link", rel: "canonical", href: pricing_url, head_key: "canonical")
     set_meta_tag(property: "og:title", value: "Gumroad pricing: progressive fees that reward growth")
-    set_meta_tag(property: "og:description", value: "The more you earn, the less you pay. Progressive fees from 30% to 4.9%, no monthly charges, no negotiations.")
+    set_meta_tag(property: "og:description", value: "The more you earn, the less you pay. Progressive fees from 30% to 4.9%, no monthly charges.")
     set_meta_tag(property: "og:type", value: "website")
     set_meta_tag(property: "og:url", content: pricing_url)
   end
