@@ -130,7 +130,7 @@ module StripeMerchantAccountManager
 
       capabilities = country.stripe_capabilities
 
-      account_params = {
+      {
         type: "custom",
         country: country_code,
         capabilities: capabilities.index_with { |c| { requested: true } },
