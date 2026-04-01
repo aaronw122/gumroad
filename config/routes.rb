@@ -304,6 +304,7 @@ Rails.application.routes.draw do
     get "/features", to: "home#features"
     get "/features.md", to: "home#features_md"
     get "/pricing", to: "home#pricing"
+    get "/pricing.md", to: "home#pricing_md"
     get "/terms", to: "home#terms"
     get "/prohibited", to: "home#prohibited"
     get "/privacy", to: "home#privacy"

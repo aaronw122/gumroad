@@ -45,6 +45,58 @@ class HomeController < ApplicationController
     set_meta_tag(property: "og:url", content: pricing_url)
   end
 
+  def pricing_md
+    render plain: <<~MD, content_type: "text/markdown; charset=utf-8"
+      # Gumroad Pricing
+
+      Generated at: `#{Time.current.utc.iso8601}`
+
+      ## Progressive fees
+
+      Gumroad uses progressive pricing that rewards growth. You only pay each rate on the sales within that tier, plus $0.50 per transaction. Tiers reset at the start of every month.
+
+      | Monthly sales | Gumroad fee |
+      | --- | --- |
+      | First $100 | 30% |
+      | $100 – $1,000 | 12.5% |
+      | $1,000 – $5,000 | 8.5% |
+      | $5,000+ | 4.9% |
+
+      Plus $0.50 per transaction on all tiers.
+
+      ## Effective rates
+
+      | Monthly sales | Total fees | Effective rate |
+      | --- | --- | --- |
+      | $1,000 | $142.50 | 14.3% |
+      | $10,000 | $727.50 | 7.3% |
+      | $50,000 | $2,687.50 | 5.4% |
+      | $100,000 | $5,137.50 | 5.1% |
+
+      Effective rates above exclude the $0.50/transaction fee, which varies by average order value.
+
+      ## Discover marketplace
+
+      Sales made through Gumroad's Discover marketplace are subject to a flat **30%** fee. Discover fees are separate from progressive fees.
+
+      ## Tax handling
+
+      Gumroad is a Merchant of Record. We handle all sales tax collection and remittance worldwide. No action required from creators.
+
+      ## Payment processing
+
+      Credit card processing (2.9% + $0.30) and [PayPal fees](https://www.paypal.com/us/webapps/mpp/merchant-fees) are separate from Gumroad fees.
+
+      ## No monthly fee
+
+      There is no monthly subscription. Gumroad only charges fees on sales.
+
+      ---
+
+      Learn more: https://gumroad.com/pricing
+    MD
+  end
+
   def privacy
     set_meta_tag(title: "Gumroad privacy policy: how we protect your data")
     set_meta_tag(name: "description", content: "Learn how Gumroad collects, uses, and protects your personal information. Your privacy matters to us.")
