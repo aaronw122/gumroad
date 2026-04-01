@@ -838,13 +838,11 @@ class Link < ApplicationRecord
   def purchase_info_for_product_page(requested_user, browser_guid)
     return nil unless requested_user || browser_guid
 
-    eligible_purchases = Purchase.none
-    eligible_purchases = requested_user.purchases.where(link: self) if requested_user
+    eligible_purchases = requested_user&.purchases&.where(link: self)
 
-    # When a gift purchase is made, we set the same browser_guid for the gifter and giftee purchases.
-    # When fetching purchases using browser_guid, exclude gift receiver purchases so that we won't show
-    # the giftee purchase to gifter on the same browser.
-    eligible_purchases = sales.not_is_gift_receiver_purchase.where(browser_guid:, purchaser_id: nil) if browser_guid && eligible_purchases.blank?
+    if browser_guid && !eligible_purchases&.exists?
+      eligible_purchases = sales.not_is_gift_receiver_purchase.where(browser_guid:, purchaser_id: nil)
+    end
 
     eligible_purchases = if is_in_preorder_state
       eligible_purchases.preorder_authorization_successful_or_gift
