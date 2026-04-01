@@ -113,6 +113,10 @@ class Settings::PaymentsController < Settings::BaseController
         current_seller.save!
       end
     end
+
+    if current_seller.reload.stripe_embedded_onboarding_enabled? && current_seller.merchant_accounts.stripe.alive.empty?
+      StripeMerchantAccountManager.create_minimal_account(current_seller)
+    end
   end
 
   def opt_in_to_au_backtax_collection

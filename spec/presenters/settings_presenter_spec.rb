@@ -576,6 +576,8 @@ describe SettingsPresenter do
         payout_country_name: nil,
         payout_frequency: User::PayoutSchedule::WEEKLY,
         payout_frequency_daily_supported: false,
+        use_stripe_embedded_onboarding: false,
+        stripe_onboarding_complete: false,
       }
     end
 

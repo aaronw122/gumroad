@@ -225,6 +225,8 @@ class SettingsPresenter
       payout_country_name: Compliance::Countries.for_select.to_h[seller.alive_user_compliance_info&.legal_entity_country_code],
       payout_frequency: seller.payout_frequency,
       payout_frequency_daily_supported: seller.instant_payouts_supported?,
+      use_stripe_embedded_onboarding: seller.stripe_embedded_onboarding_enabled? && seller.stripe_account.present?,
+      stripe_onboarding_complete: seller.stripe_embedded_onboarding_enabled? && seller.stripe_account&.charge_processor_verified?,
     }
   end
 

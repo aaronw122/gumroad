@@ -112,6 +112,57 @@ module StripeMerchantAccountManager
     raise
   end
 
+  def self.create_minimal_account(user)
+    merchant_account = nil
+
+    ActiveRecord::Base.connection.stick_to_primary!
+    user.with_lock do
+      raise MerchantRegistrationUserNotReadyError.new(user.id, "is not supported yet") if !user.native_payouts_supported?
+      raise MerchantRegistrationUserAlreadyHasAccountError.new(user.id, StripeChargeProcessor.charge_processor_id) if user.merchant_accounts.alive.stripe.any?
+
+      user_compliance_info = user.alive_user_compliance_info
+      country_code = user_compliance_info.legal_entity_country_code
+      raise MerchantRegistrationUserNotReadyError.new(user.id, "does not have a legal entity country") if country_code.blank?
+
+      country = Country.new(country_code)
+      currency = country.payout_currency
+      raise MerchantRegistrationUserNotReadyError.new(user.id, "has no default currency defined for its legal entity's country") if currency.blank?
+
+      capabilities = country.stripe_capabilities
+
+      account_params = {
+        type: "custom",
+        country: country_code,
+        capabilities: capabilities.index_with { |c| { requested: true } },
+        business_profile: { url: user.business_profile_url },
+        metadata: { user_id: user.external_id },
+        controller: {
+          losses: { payments: "application" },
+          fees: { payer: "application" },
+          stripe_dashboard: { type: "none" },
+          requirement_collection: "stripe"
+        }
+      }
+
+      merchant_account = MerchantAccount.create!(
+        user:,
+        country: country_code,
+        currency:,
+        charge_processor_id: StripeChargeProcessor.charge_processor_id
+      )
+    end
+
+    stripe_account = Stripe::Account.create(account_params)
+    merchant_account.charge_processor_merchant_id = stripe_account.id
+    merchant_account.charge_processor_alive_at = Time.current
+    merchant_account.save!
+    merchant_account
+  rescue Stripe::StripeError => e
+    cleanup_failed_merchant_account(merchant_account) if merchant_account.present?
+    ErrorNotifier.notify(e)
+    raise
+  end
+
   def self.delete_account(merchant_account)
     stripe_account = Stripe::Account.retrieve(merchant_account.charge_processor_merchant_id)
     result = stripe_account.delete

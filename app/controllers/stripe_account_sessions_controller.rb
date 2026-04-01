@@ -10,15 +10,24 @@ class StripeAccountSessionsController < Sellers::BaseController
     end
 
     begin
+      components = {
+        notification_banner: {
+          enabled: true,
+          features: { external_account_collection: true }
+        }
+      }
+
+      if current_seller.stripe_embedded_onboarding_enabled?
+        components[:account_onboarding] = {
+          enabled: true,
+          features: { external_account_collection: true }
+        }
+      end
+
       session = Stripe::AccountSession.create(
         {
           account: connected_account_id,
-          components: {
-            notification_banner: {
-              enabled: true,
-              features: { external_account_collection: true }
-            }
-          }
+          components:
         }
       )
 
