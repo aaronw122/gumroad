@@ -114,6 +114,7 @@ module StripeMerchantAccountManager
 
   def self.create_minimal_account(user)
     merchant_account = nil
+    account_params = {}
 
     ActiveRecord::Base.connection.stick_to_primary!
     user.with_lock do
@@ -130,7 +131,7 @@ module StripeMerchantAccountManager
 
       capabilities = country.stripe_capabilities
 
-      {
+      account_params = {
         type: "custom",
         country: country_code,
         capabilities: capabilities.index_with { |c| { requested: true } },

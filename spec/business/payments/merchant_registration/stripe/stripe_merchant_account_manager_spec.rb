@@ -8601,6 +8601,104 @@ describe StripeMerchantAccountManager, :vcr do
     end
   end
 
+  describe ".create_minimal_account" do
+    describe "with valid setup for an embedded-onboarding country" do
+      let(:user_compliance_info) do
+        create(:user_compliance_info, user:, city: "Baku", street_address: "address_full_match",
+                                      state: nil, zip_code: "43200", country: "Azerbaijan", individual_tax_id: nil)
+      end
+      let(:fake_stripe_account) { Stripe::Account.construct_from(id: "acct_fake_minimal_123", object: "account") }
+
+      before do
+        user_compliance_info
+        Feature.activate_user(:stripe_embedded_onboarding, user)
+        allow(Stripe::Account).to receive(:create).and_return(fake_stripe_account)
+      end
+
+      it "creates a merchant account and calls Stripe with the correct params" do
+        merchant_account = subject.create_minimal_account(user)
+
+        expect(Stripe::Account).to have_received(:create).with(
+          type: "custom",
+          country: "AZ",
+          capabilities: { "transfers" => { requested: true } },
+          business_profile: { url: user.business_profile_url },
+          metadata: { user_id: user.external_id },
+          controller: {
+            losses: { payments: "application" },
+            fees: { payer: "application" },
+            stripe_dashboard: { type: "none" },
+            requirement_collection: "stripe"
+          }
+        )
+
+        expect(merchant_account).to be_persisted
+        expect(merchant_account.charge_processor_id).to eq(StripeChargeProcessor.charge_processor_id)
+        expect(merchant_account.charge_processor_merchant_id).to eq("acct_fake_minimal_123")
+        expect(merchant_account.charge_processor_alive_at).to be_present
+        expect(merchant_account.country).to eq("AZ")
+        expect(merchant_account.currency).to eq("azn")
+      end
+    end
+
+    describe "when user is not payouts-supported" do
+      it "raises a user not ready error" do
+        expect { subject.create_minimal_account(user) }.to raise_error(MerchantRegistrationUserNotReadyError)
+      end
+    end
+
+    describe "when user already has a stripe merchant account" do
+      let(:user_compliance_info) do
+        create(:user_compliance_info, user:, city: "Baku", street_address: "address_full_match",
+                                      state: nil, zip_code: "43200", country: "Azerbaijan", individual_tax_id: nil)
+      end
+      let(:fake_stripe_account) { Stripe::Account.construct_from(id: "acct_fake_minimal_456", object: "account") }
+
+      before do
+        user_compliance_info
+        Feature.activate_user(:stripe_embedded_onboarding, user)
+        allow(Stripe::Account).to receive(:create).and_return(fake_stripe_account)
+        subject.create_minimal_account(user)
+      end
+
+      it "raises an already has account error" do
+        expect { subject.create_minimal_account(user) }.to raise_error(MerchantRegistrationUserAlreadyHasAccountError)
+      end
+    end
+
+    describe "when user does not have a country" do
+      let(:user_compliance_info) { create(:user_compliance_info_empty, user:) }
+
+      before do
+        user_compliance_info
+      end
+
+      it "raises a user not ready error" do
+        expect { subject.create_minimal_account(user) }.to raise_error(MerchantRegistrationUserNotReadyError)
+      end
+    end
+
+    describe "when Stripe returns an error" do
+      let(:user_compliance_info) do
+        create(:user_compliance_info, user:, city: "Baku", street_address: "address_full_match",
+                                      state: nil, zip_code: "43200", country: "Azerbaijan", individual_tax_id: nil)
+      end
+
+      before do
+        user_compliance_info
+        Feature.activate_user(:stripe_embedded_onboarding, user)
+        allow(Stripe::Account).to receive(:create).and_raise(Stripe::InvalidRequestError.new("Invalid request", "param"))
+      end
+
+      it "cleans up the merchant account and re-raises" do
+        expect do
+          subject.create_minimal_account(user)
+        end.to raise_error(Stripe::InvalidRequestError)
+        expect(user.merchant_accounts.alive.count).to eq(0)
+      end
+    end
+  end
+
   describe "#update_account" do
     describe "all info provided" do
       let(:user_compliance_info_1) { create(:user_compliance_info, user:) }
