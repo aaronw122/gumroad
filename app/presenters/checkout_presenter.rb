@@ -330,17 +330,17 @@ class CheckoutPresenter
       end
     end
 
-    def purchases
-      @_purchases ||= logged_in_user&.purchases&.includes(:link, :variant_attributes)&.map { |purchase| { product: purchase.link, variant: purchase.variant_attributes.first } } || []
-    end
-
-    def purchased_product_variant_set
-      @_purchased_product_variant_set ||= purchases.each_with_object(Set.new) do |purchase, set|
-        set.add([purchase[:product]&.id, purchase[:variant]&.id])
+    def purchased_product_variant_pairs
+      @_purchased_product_variant_pairs ||= begin
+        return Set.new if logged_in_user.nil?
+        logged_in_user.purchases
+          .joins("LEFT JOIN base_variants_purchases ON base_variants_purchases.purchase_id = purchases.id")
+          .pluck(:link_id, "base_variants_purchases.base_variant_id")
+          .to_set
       end
     end
 
     def already_purchased?(product, variant)
-      purchased_product_variant_set.include?([product&.id, variant&.id])
+      purchased_product_variant_pairs.include?([product.id, variant&.id])
     end
 end

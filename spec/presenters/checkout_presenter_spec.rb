@@ -77,6 +77,34 @@ describe CheckoutPresenter do
       expect(@instance.checkout_props(params:, browser_guid:)[:add_products].first[:product][:cross_sells]).to be_empty
     end
 
+    it "excludes cross-sells for products the buyer already purchased" do
+      product = create(:product, user: create(:named_user))
+      offered_product = create(:product, user: product.user)
+      create(:upsell, selected_products: [product], seller: product.user, product: offered_product, cross_sell: true)
+      params = { product: product.unique_permalink }
+
+      expect(@instance.checkout_props(params:, browser_guid:)[:add_products].first[:product][:cross_sells]).to be_present
+
+      create(:purchase, link: offered_product, purchaser: @user)
+      instance = described_class.new(logged_in_user: @user, ip: "104.193.168.19")
+      expect(instance.checkout_props(params:, browser_guid:)[:add_products].first[:product][:cross_sells]).to be_empty
+    end
+
+    it "excludes upsell variant offers for variants the buyer already purchased" do
+      product = create(:product_with_digital_versions, user: create(:named_user))
+      upsell = create(:upsell, seller: product.user, product:)
+      offered_variant = product.alive_variants.second
+      create(:upsell_variant, upsell:, selected_variant: product.alive_variants.first, offered_variant:)
+      params = { product: product.unique_permalink, option: product.options.first[:id] }
+
+      expect(@instance.checkout_props(params:, browser_guid:)[:add_products].first[:product][:options].first[:upsell_offered_variant_id]).to be_present
+
+      purchase = create(:purchase, link: product, purchaser: @user)
+      purchase.variant_attributes << offered_variant
+      instance = described_class.new(logged_in_user: @user, ip: "104.193.168.19")
+      expect(instance.checkout_props(params:, browser_guid:)[:add_products].first[:product][:options].first[:upsell_offered_variant_id]).to be_nil
+    end
+
     it "does not accept paused upsells as accepted offers" do
       product = create(:product_with_digital_versions, user: create(:named_user))
       upsell = create(:upsell, seller: product.user, product:)

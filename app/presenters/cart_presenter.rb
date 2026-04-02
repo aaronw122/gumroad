@@ -13,7 +13,7 @@ class CartPresenter
   def cart_props
     return if cart.nil?
 
-    cart_products = cart.cart_products.alive.joins(:product).merge(Link.not_archived).order(created_at: :desc)
+    cart_products = cart.cart_products.alive.eager_load(:product).merge(Link.not_archived).includes(:option, :affiliate, accepted_offer: :offer_code).order(created_at: :desc)
 
     {
       email: cart.email.presence,
@@ -31,7 +31,7 @@ class CartPresenter
       end,
       items: cart_products.map do |cart_product|
         value = {
-          **checkout_product(cart_product),
+          **checkout_product(cart_product, checkout_presenter),
           url_parameters: cart_product.url_parameters,
           referrer: cart_product.referrer,
         }
@@ -52,7 +52,7 @@ class CartPresenter
   end
 
   private
-    def checkout_product(cart_product)
+    def checkout_product(cart_product, checkout_presenter)
       params = {
         recommended_by: cart_product.recommended_by,
         affiliate_id: cart_product.affiliate&.external_id_numeric&.to_s,
