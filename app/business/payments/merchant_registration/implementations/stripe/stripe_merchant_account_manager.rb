@@ -140,7 +140,7 @@ module StripeMerchantAccountManager
           losses: { payments: "application" },
           fees: { payer: "application" },
           stripe_dashboard: { type: "none" },
-          requirement_collection: "stripe"
+          requirement_collection: "application"
         }
       }
 
