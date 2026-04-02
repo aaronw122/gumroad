@@ -26,6 +26,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           metadata: {
             user_id: user.external_id,
             tos_agreement_id: tos_agreement.external_id,
@@ -187,6 +188,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           metadata: {
             user_id: user.external_id,
             tos_agreement_id: tos_agreement.external_id,
@@ -298,6 +300,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           metadata: {
             user_id: user.external_id,
             tos_agreement_id: tos_agreement.external_id,
@@ -400,6 +403,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           metadata: {
             user_id: user.external_id,
             tos_agreement_id: tos_agreement.external_id,
@@ -497,6 +501,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "CA",
           metadata: {
             user_id: user.external_id,
@@ -605,6 +610,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "CA",
           metadata: {
             user_id: user.external_id,
@@ -705,6 +711,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "GB",
           metadata: {
             user_id: user.external_id,
@@ -811,6 +818,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "GB",
           metadata: {
             user_id: user.external_id,
@@ -910,6 +918,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "FR",
           metadata: {
             user_id: user.external_id,
@@ -992,6 +1001,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "DE",
           metadata: {
             user_id: user.external_id,
@@ -1092,6 +1102,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "HK",
           metadata: {
             user_id: user.external_id,
@@ -1175,6 +1186,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "SG",
           metadata: {
             user_id: user.external_id,
@@ -1281,6 +1293,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "JP",
           metadata: {
             user_id: user.external_id,
@@ -1374,6 +1387,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "NZ",
           metadata: {
             user_id: user.external_id,
@@ -1456,6 +1470,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "CH",
           metadata: {
             user_id: user.external_id,
@@ -1556,6 +1571,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "KZ",
           metadata: {
             user_id: user.external_id,
@@ -1638,6 +1654,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "EC",
           metadata: {
             user_id: user.external_id,
@@ -1719,6 +1736,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "TH",
           metadata: {
             user_id: user.external_id,
@@ -1800,6 +1818,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "KR",
           metadata: {
             user_id: user.external_id,
@@ -1881,6 +1900,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "IN",
           metadata: {
             user_id: user.external_id,
@@ -1962,6 +1982,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "TW",
           metadata: {
             user_id: user.external_id,
@@ -2043,6 +2064,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "VN",
           metadata: {
             user_id: user.external_id,
@@ -2125,6 +2147,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "ZA",
           metadata: {
             user_id: user.external_id,
@@ -2206,6 +2229,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "KE",
           metadata: {
             user_id: user.external_id,
@@ -2287,6 +2311,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "EG",
           metadata: {
             user_id: user.external_id,
@@ -2368,6 +2393,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "UY",
           metadata: {
             user_id: user.external_id,
@@ -2449,6 +2475,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "MU",
           metadata: {
             user_id: user.external_id,
@@ -2530,6 +2557,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "JM",
           metadata: {
             user_id: user.external_id,
@@ -2611,6 +2639,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "CO",
           metadata: {
             user_id: user.external_id,
@@ -2694,6 +2723,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "ID",
           metadata: {
             user_id: user.external_id,
@@ -2776,6 +2806,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "CR",
           metadata: {
             user_id: user.external_id,
@@ -2856,6 +2887,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "MD",
           metadata: {
             user_id: user.external_id,
@@ -2938,6 +2970,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "PA",
           metadata: {
             user_id: user.external_id,
@@ -3020,6 +3053,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "SV",
           metadata: {
             user_id: user.external_id,
@@ -3101,6 +3135,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "CL",
           metadata: {
             user_id: user.external_id,
@@ -3184,6 +3219,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "SA",
           metadata: {
             user_id: user.external_id,
@@ -3265,6 +3301,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "PK",
           metadata: {
             user_id: user.external_id,
@@ -3347,6 +3384,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "TR",
           metadata: {
             user_id: user.external_id,
@@ -3428,6 +3466,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "TN",
           metadata: {
             user_id: user.external_id,
@@ -3510,6 +3549,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "MK",
           metadata: {
             user_id: user.external_id,
@@ -3591,6 +3631,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "MG",
           metadata: {
             user_id: user.external_id,
@@ -3672,6 +3713,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "SN",
           metadata: {
             user_id: user.external_id,
@@ -3750,6 +3792,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           metadata: {
             user_id: user.external_id,
             tos_agreement_id: tos_agreement.external_id,
@@ -3850,6 +3893,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "DO",
           metadata: {
             user_id: user.external_id,
@@ -3932,6 +3976,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "GA",
           metadata: {
             user_id: user.external_id,
@@ -4013,6 +4058,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "MC",
           metadata: {
             user_id: user.external_id,
@@ -4093,6 +4139,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "UZ",
           metadata: {
             user_id: user.external_id,
@@ -4174,6 +4221,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "ET",
           metadata: {
             user_id: user.external_id,
@@ -4255,6 +4303,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "BN",
           metadata: {
             user_id: user.external_id,
@@ -4336,6 +4385,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "GY",
           metadata: {
             user_id: user.external_id,
@@ -4417,6 +4467,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "GT",
           metadata: {
             user_id: user.external_id,
@@ -4498,6 +4549,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "BO",
           metadata: {
             user_id: user.external_id,
@@ -4578,6 +4630,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "IL",
           metadata: {
             user_id: user.external_id,
@@ -4658,6 +4711,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "TT",
           metadata: {
             user_id: user.external_id,
@@ -4739,6 +4793,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "PH",
           metadata: {
             user_id: user.external_id,
@@ -4821,6 +4876,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "GH",
           metadata: {
             user_id: user.external_id,
@@ -4902,6 +4958,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "RO",
           metadata: {
             user_id: user.external_id,
@@ -4983,6 +5040,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "GI",
           metadata: {
             user_id: user.external_id,
@@ -5065,6 +5123,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "SE",
           metadata: {
             user_id: user.external_id,
@@ -5144,6 +5203,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           metadata: {
             user_id: user.external_id,
             tos_agreement_id: tos_agreement.external_id,
@@ -5240,6 +5300,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "AR",
           metadata: {
             user_id: user.external_id,
@@ -5321,6 +5382,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "BA",
           metadata: {
             user_id: user.external_id,
@@ -5403,6 +5465,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "PE",
           metadata: {
             user_id: user.external_id,
@@ -5484,6 +5547,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "RW",
           metadata: {
             user_id: user.external_id,
@@ -5565,6 +5629,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "NO",
           metadata: {
             user_id: user.external_id,
@@ -5645,6 +5710,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "BW",
           metadata: {
             user_id: user.external_id,
@@ -5726,6 +5792,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "application" } },
           country: "LI",
           metadata: {
             user_id: user.external_id,
@@ -5806,6 +5873,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "AG",
           metadata: {
             user_id: user.external_id,
@@ -5887,6 +5955,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "TZ",
           metadata: {
             user_id: user.external_id,
@@ -5968,6 +6037,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "NA",
           metadata: {
             user_id: user.external_id,
@@ -6049,6 +6119,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "MA",
           metadata: {
             user_id: user.external_id,
@@ -6130,6 +6201,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "RS",
           metadata: {
             user_id: user.external_id,
@@ -6211,6 +6283,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "MY",
           metadata: {
             user_id: user.external_id,
@@ -6292,6 +6365,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "AL",
           metadata: {
             user_id: user.external_id,
@@ -6373,6 +6447,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "AO",
           metadata: {
             user_id: user.external_id,
@@ -6454,6 +6529,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "NE",
           metadata: {
             user_id: user.external_id,
@@ -6534,6 +6610,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "SM",
           metadata: {
             user_id: user.external_id,
@@ -6615,6 +6692,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "BH",
           metadata: {
             user_id: user.external_id,
@@ -6696,6 +6774,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "BD",
           metadata: {
             user_id: user.external_id,
@@ -6779,6 +6858,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "BT",
           metadata: {
             user_id: user.external_id,
@@ -6860,6 +6940,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "LA",
           metadata: {
             user_id: user.external_id,
@@ -6941,6 +7022,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "MZ",
           metadata: {
             user_id: user.external_id,
@@ -7023,6 +7105,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "NG",
           metadata: {
             user_id: user.external_id,
@@ -7104,6 +7187,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "JO",
           metadata: {
             user_id: user.external_id,
@@ -7185,6 +7269,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "AZ",
           metadata: {
             user_id: user.external_id,
@@ -7266,6 +7351,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "PY",
           metadata: {
             user_id: user.external_id,
@@ -7347,6 +7433,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "OM",
           metadata: {
             user_id: user.external_id,
@@ -7428,6 +7515,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "AM",
           metadata: {
             user_id: user.external_id,
@@ -7509,6 +7597,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "LK",
           metadata: {
             user_id: user.external_id,
@@ -7590,6 +7679,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "KW",
           metadata: {
             user_id: user.external_id,
@@ -7671,6 +7761,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "QA",
           metadata: {
             user_id: user.external_id,
@@ -7752,6 +7843,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "BS",
           metadata: {
             user_id: user.external_id,
@@ -7833,6 +7925,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "IS",
           metadata: {
             user_id: user.external_id,
@@ -7913,6 +8006,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "LC",
           metadata: {
             user_id: user.external_id,
@@ -7994,6 +8088,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "KH",
           metadata: {
             user_id: user.external_id,
@@ -8075,6 +8170,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "MN",
           metadata: {
             user_id: user.external_id,
@@ -8156,6 +8252,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "DZ",
           metadata: {
             user_id: user.external_id,
@@ -8237,6 +8334,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "MO",
           metadata: {
             user_id: user.external_id,
@@ -8318,6 +8416,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "BJ",
           metadata: {
             user_id: user.external_id,
@@ -8398,6 +8497,7 @@ describe StripeMerchantAccountManager, :vcr do
       let(:expected_account_params) do
         {
           type: "custom",
+          controller: { losses: { payments: "stripe" } },
           country: "CI",
           metadata: {
             user_id: user.external_id,

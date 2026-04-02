@@ -49,12 +49,16 @@ module StripeMerchantAccountManager
       raise MerchantRegistrationUserNotReadyError.new(user.id, "has #{bank_account.type} #{bank_account.currency} that != #{country_code} #{currency}.") if Rails.env.production? && bank_account && bank_account.currency != currency
 
       capabilities = country.stripe_capabilities
+      cross_border_payouts_only = country.supports_stripe_cross_border_payouts?
 
       account_params = {
         type: "custom",
         requested_capabilities: capabilities,
         country: country_code,
-        default_currency: currency
+        default_currency: currency,
+        controller: {
+          losses: { payments: cross_border_payouts_only ? "stripe" : "application" }
+        }
       }
       account_params.deep_merge!(account_hash(user, tos_agreement, user_compliance_info, passphrase:))
       account_params.deep_merge!(bank_account_hash(bank_account, passphrase:)) if bank_account && !bank_account.is_a?(CardBankAccount)
