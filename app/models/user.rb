@@ -894,6 +894,13 @@ class User < ApplicationRecord
     collaborating_products.where(id: product.id).exists?
   end
 
+  def mtd_successful_sales_total_cents
+    sales
+      .successful
+      .where(created_at: Time.current.utc.beginning_of_month..Time.current.utc)
+      .sum(:price_cents)
+  end
+
   def save_gumroad_day_timezone
     return unless waive_gumroad_fee_on_new_sales?
     return if gumroad_day_timezone.present?

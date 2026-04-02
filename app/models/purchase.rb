@@ -26,6 +26,13 @@ class Purchase < ApplicationRecord
   GUMROAD_FLAT_FEE_PER_THOUSAND = 100
   GUMROAD_DISCOVER_FEE_PER_THOUSAND = 300
   GUMROAD_FIXED_FEE_CENTS = 50
+
+  PROGRESSIVE_FEE_TIERS = [
+    { ceiling_cents: 100_00,   per_thousand: 300 },
+    { ceiling_cents: 1_000_00, per_thousand: 125 },
+    { ceiling_cents: 5_000_00, per_thousand: 85 },
+    { ceiling_cents: nil,      per_thousand: 49 },
+  ].freeze
   PROCESSOR_FEE_PER_THOUSAND = 29
   PROCESSOR_FIXED_FEE_CENTS = 30
 
@@ -3198,7 +3205,44 @@ class Purchase < ApplicationRecord
     end
 
     def gumroad_flat_fee_per_thousand
-      seller.waive_gumroad_fee_on_new_sales? && subscription.blank? && !is_preorder_charge? ? 0 : GUMROAD_FLAT_FEE_PER_THOUSAND
+      return 0 if seller.waive_gumroad_fee_on_new_sales? && subscription.blank? && !is_preorder_charge?
+      return progressive_fee_per_thousand if Feature.active?(:progressive_fee_tiers, seller)
+
+      GUMROAD_FLAT_FEE_PER_THOUSAND
+    end
+
+    def progressive_fee_per_thousand
+      return GUMROAD_FLAT_FEE_PER_THOUSAND if price_cents.blank? || price_cents <= 0
+
+      mtd_sales_cents = seller.mtd_successful_sales_total_cents
+      remaining = price_cents
+      weighted_fee_cents = 0
+      previous_ceiling = 0
+
+      PROGRESSIVE_FEE_TIERS.each do |tier|
+        tier_ceiling = tier[:ceiling_cents]
+        tier_rate = tier[:per_thousand]
+
+        if tier_ceiling.nil?
+          weighted_fee_cents += remaining * tier_rate
+          remaining = 0
+          break
+        end
+
+        tier_space = [tier_ceiling - [mtd_sales_cents, previous_ceiling].max, 0].max
+        applied = [remaining, tier_space].min
+
+        if applied > 0
+          weighted_fee_cents += applied * tier_rate
+          remaining -= applied
+          mtd_sales_cents += applied
+        end
+
+        previous_ceiling = tier_ceiling
+        break if remaining <= 0
+      end
+
+      (weighted_fee_cents.to_f / price_cents).round
     end
 
     def calculate_taxes
