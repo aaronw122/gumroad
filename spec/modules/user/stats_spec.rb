@@ -1054,6 +1054,18 @@ describe User::Stats, :vcr do
         expect(@user.sales_cents_total).to eq(expected_total)
       end
     end
+
+    context "when Elasticsearch is unavailable" do
+      it "returns 0 and notifies the error" do
+        allow(PurchaseSearchService).to receive(:search).and_raise(
+          Elasticsearch::Transport::Transport::Errors::NotFound.new("[404] index_not_found_exception")
+        )
+
+        expect(ErrorNotifier).to receive(:notify).twice
+
+        expect(@user.sales_cents_total).to eq(0)
+      end
+    end
   end
 
   describe "#gross_sales_cents_total_as_seller", :sidekiq_inline, :elasticsearch_wait_for_refresh do

@@ -787,6 +787,9 @@ module User::Stats
       total -= result.aggregations.affiliate_credit_amount_cents_total.value
       total += result.aggregations.affiliate_credit_amount_partially_refunded_cents_total.value
       total.to_i
+    rescue Elasticsearch::Transport::Transport::Error => e
+      ErrorNotifier.notify(e)
+      0
     end
 
     def revenue_as_affiliate(after: nil)
@@ -810,6 +813,9 @@ module User::Stats
       total += result.aggregations.affiliate_credit_amount_cents_total.value
       total -= result.aggregations.affiliate_credit_amount_partially_refunded_cents_total.value
       total.to_i
+    rescue Elasticsearch::Transport::Transport::Error => e
+      ErrorNotifier.notify(e)
+      0
     end
 
     def page_basis_points_floor(page_number:, total_page_count:)
