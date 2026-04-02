@@ -19,6 +19,15 @@ class UserBalanceStatsService
     end
   end
 
+  def fetch_overview
+    if should_use_cache?
+      UpdateUserBalanceStatsCacheWorker.perform_async(user.id)
+      cached = read_cache
+      return cached[:overview] if cached
+    end
+    generate_overview
+  end
+
   def write_cache
     data = generate
     $redis.setex(cache_key, 48.hours.to_i, data.to_json)
@@ -36,6 +45,18 @@ class UserBalanceStatsService
   end
 
   private
+    def generate_overview
+      balances_by_product_service = BalancesByProductService.new(user)
+      {
+        last_payout_period_data: payout_period_data(user, user.payments.completed.last),
+        balance: user.unpaid_balance_cents(via: :elasticsearch),
+        balances_by_product: balances_by_product_service.process,
+        last_seven_days_sales_total: user.sales_cents_total(after: 7.days.ago),
+        last_28_days_sales_total: user.sales_cents_total(after: 28.days.ago),
+        sales_cents_total: user.sales_cents_total,
+      }
+    end
+
     def generate
       balances_by_product_service = BalancesByProductService.new(user)
       result = {

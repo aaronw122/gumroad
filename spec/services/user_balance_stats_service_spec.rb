@@ -156,6 +156,59 @@ describe UserBalanceStatsService do
     end
   end
 
+  describe "#fetch_overview" do
+    let(:fetched) { instance.fetch_overview }
+    let(:overview_values) { { balance: 100, sales_cents_total: 200 } }
+    let(:cached_data) { { overview: overview_values, payout_period_data: { 1 => "expensive" } } }
+
+    context "when value should be retrieved from the cache" do
+      before do
+        expect(instance).to receive(:should_use_cache?).and_return(true)
+      end
+
+      after do
+        expect(UpdateUserBalanceStatsCacheWorker).to have_enqueued_sidekiq_job(user.id)
+      end
+
+      context "when cached value exists" do
+        it "returns the overview from cache without generating" do
+          $redis.setex(instance.send(:cache_key), 48.hours.to_i, cached_data.to_json)
+          expect(instance).not_to receive(:generate)
+          expect(instance).not_to receive(:generate_overview)
+          expect(fetched).to eq(overview_values)
+        end
+      end
+
+      context "when cached value does not exist" do
+        it "returns generated overview without computing full stats" do
+          expect(instance).not_to receive(:generate)
+          expect(instance).to receive(:generate_overview).and_return(overview_values)
+          expect(fetched).to eq(overview_values)
+        end
+      end
+    end
+
+    context "when value should not be retrieved from the cache" do
+      before do
+        expect(instance).to receive(:should_use_cache?).and_return(false)
+      end
+
+      it "returns generated overview" do
+        expect(instance).not_to receive(:generate)
+        expect(instance).to receive(:generate_overview).and_return(overview_values)
+        expect(fetched).to eq(overview_values)
+      end
+    end
+
+    it "returns a hash with overview keys" do
+      result = instance.fetch_overview
+      expect(result).to be_a(Hash)
+      expect(result.keys).to match_array(
+        [:last_payout_period_data, :balance, :balances_by_product, :last_seven_days_sales_total, :last_28_days_sales_total, :sales_cents_total]
+      )
+    end
+  end
+
   describe "#should_use_cache?" do
     context "when user is large seller" do
       before do
