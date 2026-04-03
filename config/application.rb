@@ -7,6 +7,7 @@ require "action_cable/engine"
 
 require "socket"
 require_relative "../lib/catch_bad_request_errors"
+require_relative "../lib/session_overflow_handler"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -72,6 +73,8 @@ module Gumroad
     config.logger = ActiveSupport::TaggedLogging.new(logger)
 
     config.middleware.insert 0, Rack::UTF8Sanitizer
+
+    config.middleware.use ::SessionOverflowHandler
 
     initializer "catch_bad_request_errors.middleware" do
       config.middleware.insert_after Rack::Attack, ::CatchBadRequestErrors
