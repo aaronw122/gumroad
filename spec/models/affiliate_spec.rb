@@ -139,19 +139,19 @@ describe Affiliate do
 
   describe "#total_cents_earned" do
     let(:affiliate) { create(:direct_affiliate, affiliate_basis_points: 1000) }
+    let(:balance) { create(:balance, user: affiliate.seller) }
 
-    it "sums the affiliate credits earned for all successful, paid purchases" do
-      create(:purchase, affiliate:, purchase_state: "successful", price_cents: 100)
-      create(:purchase, affiliate:, purchase_state: "failed", price_cents: 150)
-      create(:purchase, affiliate:, purchase_state: "successful", price_cents: 0).update!(affiliate_credit_cents: 8) # should not have affiliate credits > 0 - just for testing purposes
-      create(:purchase, affiliate:, purchase_state: "successful", price_cents: 1399)
+    it "sums paid affiliate credits" do
+      create(:affiliate_credit, affiliate:, affiliate_user: affiliate.affiliate_user, amount_cents: 50, affiliate_credit_success_balance: balance)
+      create(:affiliate_credit, affiliate:, affiliate_user: affiliate.affiliate_user, amount_cents: 63, affiliate_credit_success_balance: balance)
 
       expect(affiliate.total_cents_earned).to eq 113
     end
 
-    it "excludes refunded or chargedback purchases" do
-      create(:purchase, affiliate:, purchase_state: "successful", price_cents: 100, chargeback_date: 1.day.ago)
-      create(:purchase, affiliate:, purchase_state: "successful", price_cents: 150, stripe_refunded: true)
+    it "excludes refunded or chargedback credits" do
+      create(:affiliate_credit, affiliate:, affiliate_user: affiliate.affiliate_user, amount_cents: 50, affiliate_credit_success_balance: balance, affiliate_credit_chargeback_balance: balance)
+      create(:affiliate_credit, affiliate:, affiliate_user: affiliate.affiliate_user, amount_cents: 63, affiliate_credit_success_balance: balance, affiliate_credit_refund_balance: balance)
+      create(:affiliate_credit, affiliate:, affiliate_user: affiliate.affiliate_user, amount_cents: 10)
 
       expect(affiliate.total_cents_earned).to eq 0
     end
@@ -160,8 +160,9 @@ describe Affiliate do
   describe "#total_cents_earned_formatted" do
     it "returns the formatted amount earned" do
       affiliate = create(:direct_affiliate, affiliate_basis_points: 1000)
-      create(:purchase, affiliate:, purchase_state: "successful", price_cents: 100)
-      create(:purchase, affiliate:, purchase_state: "successful", price_cents: 1399)
+      balance = create(:balance, user: affiliate.seller)
+      create(:affiliate_credit, affiliate:, affiliate_user: affiliate.affiliate_user, amount_cents: 50, affiliate_credit_success_balance: balance)
+      create(:affiliate_credit, affiliate:, affiliate_user: affiliate.affiliate_user, amount_cents: 63, affiliate_credit_success_balance: balance)
 
       expect(affiliate.total_cents_earned_formatted).to eq "$1.13"
     end

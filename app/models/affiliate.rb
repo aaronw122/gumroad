@@ -110,7 +110,7 @@ class Affiliate < ApplicationRecord
   end
 
   def total_cents_earned
-    purchases.paid.not_chargedback_or_chargedback_reversed.sum(:affiliate_credit_cents)
+    affiliate_credits.paid.sum(:amount_cents)
   end
 
   def eligible_for_credit?
