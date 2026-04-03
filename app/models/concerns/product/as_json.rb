@@ -165,8 +165,8 @@ module Product::AsJson
 
       if (options[:api_scopes] & %w[view_sales account]).present?
         json["custom_delivery_url"] = nil # Deprecated
-        json["sales_count"] = successful_sales_count
-        json["sales_usd_cents"] = total_usd_cents
+        json["sales_count"] = options[:preloaded_sales_counts]&.fetch(id, 0) || successful_sales_count
+        json["sales_usd_cents"] = options[:preloaded_total_usd_cents]&.fetch(id, 0) || total_usd_cents
       end
 
       json

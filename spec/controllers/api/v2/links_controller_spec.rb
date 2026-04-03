@@ -63,6 +63,13 @@ describe Api::V2::LinksController do
         @product2.reload
         expect(response.parsed_body).to eq({ success: true, products: [@product2, @product1] }.as_json(api_scopes: ["view_sales"], slim: true))
       end
+
+      it "batch preloads sales stats instead of querying per product" do
+        expect(Link).to receive(:batch_successful_sales_counts).once.and_return({})
+        expect(Link).to receive(:batch_total_usd_cents).once.and_return({})
+        get @action, params: @params
+        expect(response).to be_successful
+      end
     end
 
     it "grants access with the account scope" do

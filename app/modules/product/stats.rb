@@ -19,6 +19,46 @@ module Product::Stats
       PurchaseSearchService.search(search_options).results.total
     end
 
+    def batch_successful_sales_counts(products:)
+      return {} if products.blank?
+
+      search_options = Purchase::ACTIVE_SALES_SEARCH_OPTIONS.merge(
+        product: products,
+        size: 0,
+        aggs: {
+          per_product: {
+            terms: { field: "product_id", size: Array.wrap(products).size }
+          }
+        }
+      )
+      result = PurchaseSearchService.search(search_options)
+      result.aggregations.per_product.buckets.each_with_object({}) do |bucket, hash|
+        hash[bucket[:key]] = bucket[:doc_count]
+      end
+    end
+
+    def batch_total_usd_cents(products:)
+      return {} if products.blank?
+
+      search_options = Purchase::CHARGED_SALES_SEARCH_OPTIONS.merge(
+        product: products,
+        size: 0,
+        aggs: {
+          per_product: {
+            terms: { field: "product_id", size: Array.wrap(products).size },
+            aggs: {
+              price_cents_total: { sum: { field: "price_cents" } },
+              amount_refunded_cents_total: { sum: { field: "amount_refunded_cents" } },
+            }
+          }
+        }
+      )
+      result = PurchaseSearchService.search(search_options)
+      result.aggregations.per_product.buckets.each_with_object({}) do |bucket, hash|
+        hash[bucket[:key]] = bucket.dig(:price_cents_total, :value) - bucket.dig(:amount_refunded_cents_total, :value)
+      end
+    end
+
     def monthly_recurring_revenue(products:)
       return 0 if products.blank?
 

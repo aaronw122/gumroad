@@ -56,6 +56,42 @@ describe Product::Stats do
     end
   end
 
+  describe ".batch_successful_sales_counts", :sidekiq_inline, :elasticsearch_wait_for_refresh do
+    it "returns per-product sales counts in a single query" do
+      product1 = create(:product, price_cents: 500)
+      product2 = create(:product, price_cents: 500)
+      create_list(:purchase, 2, link: product1)
+      create(:purchase, link: product1, stripe_refunded: true)
+      create(:purchase, link: product2)
+
+      counts = Link.batch_successful_sales_counts(products: [product1, product2])
+      expect(counts[product1.id]).to eq(2)
+      expect(counts[product2.id]).to eq(1)
+    end
+
+    it "returns an empty hash when products is blank" do
+      expect(Link.batch_successful_sales_counts(products: [])).to eq({})
+    end
+  end
+
+  describe ".batch_total_usd_cents", :sidekiq_inline, :elasticsearch_wait_for_refresh do
+    it "returns per-product net revenue in a single query" do
+      product1 = create(:product, price_cents: 500)
+      product2 = create(:product, price_cents: 300)
+      create_list(:purchase, 2, link: product1)
+      create(:purchase, link: product1, stripe_refunded: true)
+      create(:purchase, link: product2)
+
+      totals = Link.batch_total_usd_cents(products: [product1, product2])
+      expect(totals[product1.id]).to eq(1000)
+      expect(totals[product2.id]).to eq(300)
+    end
+
+    it "returns an empty hash when products is blank" do
+      expect(Link.batch_total_usd_cents(products: [])).to eq({})
+    end
+  end
+
   describe "#total_usd_cents", :sidekiq_inline, :elasticsearch_wait_for_refresh do
     it "returns net revenue" do
       product = create(:product)

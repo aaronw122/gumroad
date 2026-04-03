@@ -204,6 +204,18 @@ describe Product::AsJson, :vcr do
           expect(result["sales_count"]).to eq(1)
           expect(result["sales_usd_cents"]).to eq(100)
         end
+
+        it "uses preloaded sales data when provided" do
+          product = create(:product)
+
+          result = product.as_json(
+            api_scopes: %w[view_sales],
+            preloaded_sales_counts: { product.id => 42 },
+            preloaded_total_usd_cents: { product.id => 9900 }
+          )
+          expect(result["sales_count"]).to eq(42)
+          expect(result["sales_usd_cents"]).to eq(9900)
+        end
       end
     end
 

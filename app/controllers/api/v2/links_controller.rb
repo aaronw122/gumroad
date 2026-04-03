@@ -34,6 +34,11 @@ class Api::V2::LinksController < Api::V2::BaseController
       preloaded_ppp_factors: PurchasingPowerParityService.new.get_all_countries_factors(current_resource_owner)
     }
 
+    if (doorkeeper_token.scopes & %w[view_sales account]).present?
+      as_json_options[:preloaded_sales_counts] = Link.batch_successful_sales_counts(products: products)
+      as_json_options[:preloaded_total_usd_cents] = Link.batch_total_usd_cents(products: products)
+    end
+
     products_as_json = products.as_json(as_json_options)
 
     render json: { success: true, products: products_as_json }
