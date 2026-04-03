@@ -439,20 +439,11 @@ module User::Stats
   end
 
   def paypal_sales_data_for_duration(start_date:, end_date:)
-    {
-      sales_cents: paypal_sales_cents_for_duration(start_date:, end_date:),
-      refunds_cents: paypal_refunds_cents_for_duration(start_date:, end_date:),
-      chargebacks_cents: paypal_chargebacked_cents_for_duration(start_date:, end_date:),
-      credits_cents: 0,
-      fees_cents: paypal_fees_cents_for_duration(start_date:, end_date:),
-      discover_fees_cents: paypal_discover_fees_cents_for_duration(start_date:, end_date:),
-      direct_fees_cents: paypal_direct_fees_cents_for_duration(start_date:, end_date:),
-      discover_sales_count: paypal_discover_sales_count_for_duration(start_date:, end_date:),
-      direct_sales_count: paypal_direct_sales_count_for_duration(start_date:, end_date:),
-      taxes_cents: paypal_taxes_cents_for_duration(start_date:, end_date:),
-      affiliate_credits_cents: 0,
-      affiliate_fees_cents: paypal_affiliate_fee_cents_for_duration(start_date:, end_date:),
-    }
+    batched_sales_data_for_duration(
+      sales_scope: paypal_sales_in_duration(start_date:, end_date:),
+      refunds_scope: paypal_refunds_in_duration(start_date:, end_date:),
+      chargebacks_scope: paypal_sales_chargebacked_in_duration(start_date:, end_date:)
+    )
   end
 
   def paypal_payout_net_cents(paypal_sales_data)
@@ -597,20 +588,11 @@ module User::Stats
   end
 
   def stripe_connect_sales_data_for_duration(start_date:, end_date:)
-    {
-      sales_cents: stripe_connect_sales_cents_for_duration(start_date:, end_date:),
-      refunds_cents: stripe_connect_refunds_cents_for_duration(start_date:, end_date:),
-      chargebacks_cents: stripe_connect_chargebacked_cents_for_duration(start_date:, end_date:),
-      credits_cents: 0,
-      fees_cents: stripe_connect_fees_cents_for_duration(start_date:, end_date:),
-      discover_fees_cents: stripe_connect_discover_fees_cents_for_duration(start_date:, end_date:),
-      direct_fees_cents: stripe_connect_direct_fees_cents_for_duration(start_date:, end_date:),
-      discover_sales_count: stripe_connect_discover_sales_count_for_duration(start_date:, end_date:),
-      direct_sales_count: stripe_connect_direct_sales_count_for_duration(start_date:, end_date:),
-      taxes_cents: stripe_connect_taxes_cents_for_duration(start_date:, end_date:),
-      affiliate_credits_cents: 0,
-      affiliate_fees_cents: stripe_connect_affiliate_fee_cents_for_duration(start_date:, end_date:),
-    }
+    batched_sales_data_for_duration(
+      sales_scope: stripe_connect_sales_in_duration(start_date:, end_date:),
+      refunds_scope: stripe_connect_refunds_in_duration(start_date:, end_date:),
+      chargebacks_scope: stripe_connect_sales_chargebacked_in_duration(start_date:, end_date:)
+    )
   end
 
   def stripe_connect_payout_net_cents(stripe_connect_sales_data)
@@ -818,5 +800,60 @@ module User::Stats
 
     def page_basis_points_ceil(page_number:, total_page_count:)
       (page_number / total_page_count.to_f * 10_000).ceil
+    end
+
+    def batched_sales_data_for_duration(sales_scope:, refunds_scope:, chargebacks_scope:)
+      discover_flag = Purchase.flag_mapping["flags"][:was_discover_fee_charged]
+
+      sale_aggs = sales_scope.pick(
+        Arel.sql("COALESCE(SUM(price_cents), 0)"),
+        Arel.sql("COALESCE(SUM(fee_cents), 0)"),
+        Arel.sql("COALESCE(SUM(tax_cents), 0)"),
+        Arel.sql("COALESCE(SUM(affiliate_credit_cents), 0)"),
+        Arel.sql("COALESCE(SUM(CASE WHEN flags & #{discover_flag} > 0 THEN fee_cents ELSE 0 END), 0)"),
+        Arel.sql("COALESCE(SUM(CASE WHEN flags & #{discover_flag} = 0 THEN fee_cents ELSE 0 END), 0)"),
+        Arel.sql("COALESCE(SUM(CASE WHEN flags & #{discover_flag} > 0 THEN 1 ELSE 0 END), 0)"),
+        Arel.sql("COALESCE(SUM(CASE WHEN flags & #{discover_flag} = 0 THEN 1 ELSE 0 END), 0)")
+      )
+      sales_cents, revenue_fee_cents, revenue_tax_cents, revenue_aff_cents,
+        discover_fee_cents, direct_fee_cents, discover_count, direct_count = sale_aggs
+
+      refund_aggs = refunds_scope.pick(
+        Arel.sql("COALESCE(SUM(refunds.amount_cents), 0)"),
+        Arel.sql("COALESCE(SUM(refunds.fee_cents), 0)"),
+        Arel.sql("COALESCE(SUM(refunds.tax_cents), 0)"),
+        Arel.sql("COALESCE(SUM(CASE WHEN purchases.flags & #{discover_flag} > 0 THEN refunds.fee_cents ELSE 0 END), 0)"),
+        Arel.sql("COALESCE(SUM(CASE WHEN purchases.flags & #{discover_flag} = 0 THEN refunds.fee_cents ELSE 0 END), 0)"),
+        Arel.sql("COALESCE(SUM(purchases.affiliate_credit_cents * (refunds.amount_cents / purchases.price_cents)), 0)")
+      )
+      refunds_cents, refunded_fee_cents, refunded_tax_cents,
+        refunded_discover_fee_cents, refunded_direct_fee_cents, refunded_aff_cents = refund_aggs
+      refunded_aff_cents = refunded_aff_cents.round
+
+      chargeback_aggs = chargebacks_scope.pick(
+        Arel.sql("COALESCE(SUM(price_cents), 0)"),
+        Arel.sql("COALESCE(SUM(fee_cents), 0)"),
+        Arel.sql("COALESCE(SUM(tax_cents), 0)"),
+        Arel.sql("COALESCE(SUM(affiliate_credit_cents), 0)"),
+        Arel.sql("COALESCE(SUM(CASE WHEN flags & #{discover_flag} > 0 THEN fee_cents ELSE 0 END), 0)"),
+        Arel.sql("COALESCE(SUM(CASE WHEN flags & #{discover_flag} = 0 THEN fee_cents ELSE 0 END), 0)")
+      )
+      chargebacks_cents, disputed_fee_cents, disputed_tax_cents, disputed_aff_cents,
+        disputed_discover_fee_cents, disputed_direct_fee_cents = chargeback_aggs
+
+      {
+        sales_cents:,
+        refunds_cents:,
+        chargebacks_cents:,
+        credits_cents: 0,
+        fees_cents: revenue_fee_cents - (refunded_fee_cents + disputed_fee_cents),
+        discover_fees_cents: discover_fee_cents - (refunded_discover_fee_cents + disputed_discover_fee_cents),
+        direct_fees_cents: direct_fee_cents - (refunded_direct_fee_cents + disputed_direct_fee_cents),
+        discover_sales_count: discover_count,
+        direct_sales_count: direct_count,
+        taxes_cents: revenue_tax_cents - (refunded_tax_cents + disputed_tax_cents),
+        affiliate_credits_cents: 0,
+        affiliate_fees_cents: revenue_aff_cents - (refunded_aff_cents + disputed_aff_cents),
+      }
     end
 end
