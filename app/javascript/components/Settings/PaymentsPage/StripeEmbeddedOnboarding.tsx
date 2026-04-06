@@ -4,9 +4,9 @@ import * as React from "react";
 
 import { getStripeConnectOnboardingInstance } from "$app/utils/stripe_loader";
 
+import { showAlert } from "$app/components/server-components/Alert";
 import { Skeleton } from "$app/components/Skeleton";
 import { useRunOnce } from "$app/components/useRunOnce";
-import { showAlert } from "$app/components/server-components/Alert";
 
 export const StripeEmbeddedOnboarding = ({ onOnboardingComplete }: { onOnboardingComplete: () => void }) => {
   const [connectInstance, setConnectInstance] = React.useState<null | StripeConnectInstance>(null);

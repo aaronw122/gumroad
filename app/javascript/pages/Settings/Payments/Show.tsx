@@ -15,7 +15,6 @@ import { Button } from "$app/components/Button";
 import { ConfirmBalanceForfeitOnPayoutMethodChangeModal } from "$app/components/ConfirmBalanceForfeitOnPayoutMethodChangeModal";
 import { CountrySelectionModal } from "$app/components/CountrySelectionModal";
 import { StripeConnectEmbeddedNotificationBanner } from "$app/components/PayoutPage/StripeConnectEmbeddedNotificationBanner";
-import { StripeEmbeddedOnboarding } from "$app/components/Settings/PaymentsPage/StripeEmbeddedOnboarding";
 import { PriceInput } from "$app/components/PriceInput";
 import { CreditCardForm } from "$app/components/Settings/AdvancedPage/CreditCardForm";
 import { Layout } from "$app/components/Settings/Layout";
@@ -29,6 +28,7 @@ import DebitCardSection from "$app/components/Settings/PaymentsPage/DebitCardSec
 import PayPalConnectSection, { PayPalConnect } from "$app/components/Settings/PaymentsPage/PayPalConnectSection";
 import PayPalEmailSection from "$app/components/Settings/PaymentsPage/PayPalEmailSection";
 import StripeConnectSection, { StripeConnect } from "$app/components/Settings/PaymentsPage/StripeConnectSection";
+import { StripeEmbeddedOnboarding } from "$app/components/Settings/PaymentsPage/StripeEmbeddedOnboarding";
 import { TypeSafeOptionSelect } from "$app/components/TypeSafeOptionSelect";
 import { Alert } from "$app/components/ui/Alert";
 import { Fieldset, FieldsetDescription } from "$app/components/ui/Fieldset";
@@ -1054,147 +1054,147 @@ export default function PaymentsPage() {
             <StripeEmbeddedOnboarding onOnboardingComplete={() => window.location.reload()} />
           </FormSection>
         ) : (
-        <FormSection
-          header={
-            <>
-              <h2>Payout method</h2>
-              <div>
-                <a href="/help/article/260-your-payout-settings-page" target="_blank" rel="noreferrer">
-                  Any questions about these payout settings?
-                </a>
-              </div>
-            </>
-          }
-        >
-          <section className="grid gap-8">
-            <Tabs variant="buttons" className="gap-4" role="radiogroup">
-              {props.bank_account_details.show_bank_account ? (
-                <>
-                  <Tab key="bank" isSelected={selectedPayoutMethod === "bank"} asChild>
-                    <Button
-                      role="radio"
-                      aria-checked={selectedPayoutMethod === "bank"}
-                      onClick={() => updatePayoutMethod("bank")}
-                      disabled={props.is_form_disabled}
-                      className="items-start justify-start text-left"
-                    >
-                      <Bank className="size-5" />
-                      <div>
-                        <h4 className="font-bold">Bank Account</h4>
-                      </div>
-                    </Button>
-                  </Tab>
-                  {props.user.country_code === "US" ? (
-                    <Tab key="card" isSelected={selectedPayoutMethod === "card"} asChild>
+          <FormSection
+            header={
+              <>
+                <h2>Payout method</h2>
+                <div>
+                  <a href="/help/article/260-your-payout-settings-page" target="_blank" rel="noreferrer">
+                    Any questions about these payout settings?
+                  </a>
+                </div>
+              </>
+            }
+          >
+            <section className="grid gap-8">
+              <Tabs variant="buttons" className="gap-4" role="radiogroup">
+                {props.bank_account_details.show_bank_account ? (
+                  <>
+                    <Tab key="bank" isSelected={selectedPayoutMethod === "bank"} asChild>
                       <Button
                         role="radio"
-                        aria-checked={selectedPayoutMethod === "card"}
-                        onClick={() => updatePayoutMethod("card")}
+                        aria-checked={selectedPayoutMethod === "bank"}
+                        onClick={() => updatePayoutMethod("bank")}
                         disabled={props.is_form_disabled}
                         className="items-start justify-start text-left"
                       >
-                        <CreditCard className="size-5" />
+                        <Bank className="size-5" />
                         <div>
-                          <h4 className="font-bold">Debit Card</h4>
+                          <h4 className="font-bold">Bank Account</h4>
                         </div>
                       </Button>
                     </Tab>
-                  ) : null}
-                </>
+                    {props.user.country_code === "US" ? (
+                      <Tab key="card" isSelected={selectedPayoutMethod === "card"} asChild>
+                        <Button
+                          role="radio"
+                          aria-checked={selectedPayoutMethod === "card"}
+                          onClick={() => updatePayoutMethod("card")}
+                          disabled={props.is_form_disabled}
+                          className="items-start justify-start text-left"
+                        >
+                          <CreditCard className="size-5" />
+                          <div>
+                            <h4 className="font-bold">Debit Card</h4>
+                          </div>
+                        </Button>
+                      </Tab>
+                    ) : null}
+                  </>
+                ) : null}
+                {props.bank_account_details.show_paypal ? (
+                  <Tab key="paypal" isSelected={selectedPayoutMethod === "paypal"} asChild>
+                    <Button
+                      role="radio"
+                      aria-checked={selectedPayoutMethod === "paypal"}
+                      onClick={() => updatePayoutMethod("paypal")}
+                      disabled={props.is_form_disabled}
+                      className="items-start justify-start text-left"
+                    >
+                      <Paypal pack="brands" className="size-5" />
+                      <div>
+                        <h4 className="font-bold">PayPal</h4>
+                      </div>
+                    </Button>
+                  </Tab>
+                ) : null}
+                {props.user.country_code === "BR" ||
+                props.user.can_connect_stripe ||
+                props.stripe_connect.has_connected_stripe ? (
+                  <Tab key="stripe" isSelected={selectedPayoutMethod === "stripe"} asChild>
+                    <Button
+                      role="radio"
+                      aria-checked={selectedPayoutMethod === "stripe"}
+                      onClick={() => updatePayoutMethod("stripe")}
+                      disabled={props.is_form_disabled}
+                      className="items-start justify-start text-left"
+                    >
+                      <Stripe pack="brands" className="size-5" />
+                      <div>
+                        <h4 className="font-bold">Connect to Stripe</h4>
+                      </div>
+                    </Button>
+                  </Tab>
+                ) : null}
+              </Tabs>
+              {selectedPayoutMethod === "bank" ? (
+                <BankAccountSection
+                  bankAccountDetails={props.bank_account_details}
+                  bankAccount={form.data.bank_account}
+                  updateBankAccount={updateBankAccount}
+                  hasConnectedStripe={props.stripe_connect.has_connected_stripe}
+                  user={props.user}
+                  isFormDisabled={props.is_form_disabled}
+                  feeInfoText={props.fee_info.card_fee_info_text}
+                  showNewBankAccount={showNewBankAccount}
+                  setShowNewBankAccount={setShowNewBankAccount}
+                  errorFieldNames={errorFieldNames}
+                />
+              ) : selectedPayoutMethod === "card" ? (
+                <DebitCardSection
+                  isFormDisabled={props.is_form_disabled}
+                  hasConnectedStripe={props.stripe_connect.has_connected_stripe}
+                  feeInfoText={props.fee_info.card_fee_info_text}
+                  savedCard={props.bank_account_details.card}
+                  setDebitCard={setDebitCard}
+                />
+              ) : selectedPayoutMethod === "paypal" ? (
+                <PayPalEmailSection
+                  countrySupportsNativePayouts={props.user.country_supports_native_payouts}
+                  showPayPalPayoutsFeeNote={props.user.is_charged_paypal_payout_fee}
+                  isFormDisabled={props.is_form_disabled}
+                  paypalEmailAddress={form.data.payment_address}
+                  setPaypalEmailAddress={(value) => form.setData("payment_address", value)}
+                  hasConnectedStripe={props.stripe_connect.has_connected_stripe}
+                  feeInfoText={props.fee_info.paypal_fee_info_text}
+                  updatePayoutMethod={updatePayoutMethod}
+                  errorFieldNames={errorFieldNames}
+                  user={props.user}
+                />
               ) : null}
-              {props.bank_account_details.show_paypal ? (
-                <Tab key="paypal" isSelected={selectedPayoutMethod === "paypal"} asChild>
-                  <Button
-                    role="radio"
-                    aria-checked={selectedPayoutMethod === "paypal"}
-                    onClick={() => updatePayoutMethod("paypal")}
-                    disabled={props.is_form_disabled}
-                    className="items-start justify-start text-left"
-                  >
-                    <Paypal pack="brands" className="size-5" />
-                    <div>
-                      <h4 className="font-bold">PayPal</h4>
-                    </div>
-                  </Button>
-                </Tab>
-              ) : null}
-              {props.user.country_code === "BR" ||
-              props.user.can_connect_stripe ||
-              props.stripe_connect.has_connected_stripe ? (
-                <Tab key="stripe" isSelected={selectedPayoutMethod === "stripe"} asChild>
-                  <Button
-                    role="radio"
-                    aria-checked={selectedPayoutMethod === "stripe"}
-                    onClick={() => updatePayoutMethod("stripe")}
-                    disabled={props.is_form_disabled}
-                    className="items-start justify-start text-left"
-                  >
-                    <Stripe pack="brands" className="size-5" />
-                    <div>
-                      <h4 className="font-bold">Connect to Stripe</h4>
-                    </div>
-                  </Button>
-                </Tab>
-              ) : null}
-            </Tabs>
-            {selectedPayoutMethod === "bank" ? (
-              <BankAccountSection
-                bankAccountDetails={props.bank_account_details}
-                bankAccount={form.data.bank_account}
-                updateBankAccount={updateBankAccount}
-                hasConnectedStripe={props.stripe_connect.has_connected_stripe}
-                user={props.user}
-                isFormDisabled={props.is_form_disabled}
-                feeInfoText={props.fee_info.card_fee_info_text}
-                showNewBankAccount={showNewBankAccount}
-                setShowNewBankAccount={setShowNewBankAccount}
-                errorFieldNames={errorFieldNames}
-              />
-            ) : selectedPayoutMethod === "card" ? (
-              <DebitCardSection
-                isFormDisabled={props.is_form_disabled}
-                hasConnectedStripe={props.stripe_connect.has_connected_stripe}
-                feeInfoText={props.fee_info.card_fee_info_text}
-                savedCard={props.bank_account_details.card}
-                setDebitCard={setDebitCard}
-              />
-            ) : selectedPayoutMethod === "paypal" ? (
-              <PayPalEmailSection
-                countrySupportsNativePayouts={props.user.country_supports_native_payouts}
-                showPayPalPayoutsFeeNote={props.user.is_charged_paypal_payout_fee}
-                isFormDisabled={props.is_form_disabled}
-                paypalEmailAddress={form.data.payment_address}
-                setPaypalEmailAddress={(value) => form.setData("payment_address", value)}
-                hasConnectedStripe={props.stripe_connect.has_connected_stripe}
-                feeInfoText={props.fee_info.paypal_fee_info_text}
-                updatePayoutMethod={updatePayoutMethod}
-                errorFieldNames={errorFieldNames}
-                user={props.user}
-              />
-            ) : null}
-            {selectedPayoutMethod !== "stripe" ? (
-              <AccountDetailsSection
-                user={props.user}
-                complianceInfo={form.data.user}
-                updateComplianceInfo={updateComplianceInfo}
-                minDobYear={props.min_dob_year}
-                isFormDisabled={props.is_form_disabled}
-                countries={props.countries}
-                uaeBusinessTypes={props.uae_business_types}
-                indiaBusinessTypes={props.india_business_types}
-                canadaBusinessTypes={props.canada_business_types}
-                states={props.states}
-                errorFieldNames={errorFieldNames}
-              />
-            ) : (
-              <StripeConnectSection
-                stripeConnect={props.stripe_connect}
-                isFormDisabled={props.is_form_disabled}
-                connectAccountFeeInfoText={props.fee_info.connect_account_fee_info_text}
-              />
-            )}
-          </section>
-        </FormSection>
+              {selectedPayoutMethod !== "stripe" ? (
+                <AccountDetailsSection
+                  user={props.user}
+                  complianceInfo={form.data.user}
+                  updateComplianceInfo={updateComplianceInfo}
+                  minDobYear={props.min_dob_year}
+                  isFormDisabled={props.is_form_disabled}
+                  countries={props.countries}
+                  uaeBusinessTypes={props.uae_business_types}
+                  indiaBusinessTypes={props.india_business_types}
+                  canadaBusinessTypes={props.canada_business_types}
+                  states={props.states}
+                  errorFieldNames={errorFieldNames}
+                />
+              ) : (
+                <StripeConnectSection
+                  stripeConnect={props.stripe_connect}
+                  isFormDisabled={props.is_form_disabled}
+                  connectAccountFeeInfoText={props.fee_info.connect_account_fee_info_text}
+                />
+              )}
+            </section>
+          </FormSection>
         )}
         {props.paypal_connect.show_paypal_connect ? (
           <PayPalConnectSection

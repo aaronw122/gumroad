@@ -934,13 +934,13 @@ describe SettingsPresenter do
 
       it "returns true for a seller who already completed embedded onboarding" do
         create(:merchant_account, user: seller, charge_processor_verified_at: Time.current,
-          json_data: { "stripe_embedded_onboarding" => true })
+                                  json_data: { "stripe_embedded_onboarding" => true })
         expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(true)
       end
 
       it "returns true for a seller with an unverified embedded onboarding account" do
         create(:merchant_account, user: seller, charge_processor_verified_at: nil,
-          json_data: { "stripe_embedded_onboarding" => true })
+                                  json_data: { "stripe_embedded_onboarding" => true })
         expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(true)
       end
     end

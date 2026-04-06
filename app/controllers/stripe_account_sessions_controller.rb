@@ -88,7 +88,7 @@ class StripeAccountSessionsController < Sellers::BaseController
           settings: { payouts: { schedule: { interval: "manual" } } }
         )
 
-        merchant_account = MerchantAccount.create!(
+        MerchantAccount.create!(
           user: current_seller,
           country: country_code,
           currency: currency,

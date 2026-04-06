@@ -47,7 +47,10 @@ export const getStripeConnectOnboardingInstance = () => {
   return stripeConnectOnboardingInstance;
 };
 
-const loadStripeConnectInstance = (fetchSecret: () => Promise<string> = createAccountSession, overlays?: "dialog" | "drawer") => {
+const loadStripeConnectInstance = (
+  fetchSecret: () => Promise<string> = createAccountSession,
+  overlays?: "dialog" | "drawer",
+) => {
   const publicKeyTag = document.querySelector<HTMLElement>("meta[property='stripe:pk']");
   const publicKey = cast<string>(publicKeyTag?.getAttribute("value"));
 

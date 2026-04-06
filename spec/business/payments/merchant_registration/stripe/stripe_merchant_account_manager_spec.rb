@@ -11259,44 +11259,44 @@ describe StripeMerchantAccountManager, :vcr do
 
         context "when an external account is removed from Stripe" do
           it "deletes the local bank account that is no longer on Stripe" do
-            described_class.handle_stripe_event(base_stripe_event.deep_dup.tap { |e|
+            described_class.handle_stripe_event(base_stripe_event.deep_dup.tap do |e|
               e["data"]["object"]["external_accounts"]["data"] = [
                 { "id" => "ba_old_111", "object" => "bank_account", "account_holder_name" => "Old Account",
                   "country" => "US", "currency" => "usd", "last4" => "1111", "routing_number" => "110000000",
                   "fingerprint" => "fp_old", "status" => "new" }
               ]
               e["data"]["object"]["external_accounts"]["total_count"] = 1
-            })
+            end)
             expect(user.bank_accounts.alive.count).to eq(1)
 
-            described_class.handle_stripe_event(base_stripe_event.deep_dup.tap { |e|
+            described_class.handle_stripe_event(base_stripe_event.deep_dup.tap do |e|
               e["data"]["object"]["external_accounts"]["data"] = []
               e["data"]["object"]["external_accounts"]["total_count"] = 0
-            })
+            end)
             expect(user.bank_accounts.alive.count).to eq(0)
           end
         end
 
         context "when an external account is replaced" do
           it "deletes the old and creates the new bank account" do
-            described_class.handle_stripe_event(base_stripe_event.deep_dup.tap { |e|
+            described_class.handle_stripe_event(base_stripe_event.deep_dup.tap do |e|
               e["data"]["object"]["external_accounts"]["data"] = [
                 { "id" => "ba_old_222", "object" => "bank_account", "account_holder_name" => "Old",
                   "country" => "US", "currency" => "usd", "last4" => "2222", "routing_number" => "110000000",
                   "fingerprint" => "fp_old2", "status" => "new" }
               ]
               e["data"]["object"]["external_accounts"]["total_count"] = 1
-            })
+            end)
             old_bank_account = user.bank_accounts.alive.last
 
-            described_class.handle_stripe_event(base_stripe_event.deep_dup.tap { |e|
+            described_class.handle_stripe_event(base_stripe_event.deep_dup.tap do |e|
               e["data"]["object"]["external_accounts"]["data"] = [
                 { "id" => "ba_new_333", "object" => "bank_account", "account_holder_name" => "New",
                   "country" => "US", "currency" => "usd", "last4" => "3333", "routing_number" => "110000000",
                   "fingerprint" => "fp_new3", "status" => "new" }
               ]
               e["data"]["object"]["external_accounts"]["total_count"] = 1
-            })
+            end)
 
             expect(user.bank_accounts.alive.count).to eq(1)
             expect(old_bank_account.reload.deleted_at).to be_present

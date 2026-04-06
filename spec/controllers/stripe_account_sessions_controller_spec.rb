@@ -151,7 +151,7 @@ RSpec.describe StripeAccountSessionsController do
         end
 
         it "reuses existing Stripe account if one already exists" do
-          existing_merchant = create(:merchant_account, user: seller, charge_processor_merchant_id: "acct_existing")
+          create(:merchant_account, user: seller, charge_processor_merchant_id: "acct_existing")
           allow_any_instance_of(User).to receive(:stripe_account).and_return(nil)
           seller.reload
 
@@ -167,9 +167,9 @@ RSpec.describe StripeAccountSessionsController do
 
         it "resumes onboarding for an unverified embedded onboarding account" do
           create(:merchant_account, user: seller,
-            charge_processor_merchant_id: "acct_unverified",
-            charge_processor_verified_at: nil,
-            json_data: { "stripe_embedded_onboarding" => true })
+                                    charge_processor_merchant_id: "acct_unverified",
+                                    charge_processor_verified_at: nil,
+                                    json_data: { "stripe_embedded_onboarding" => true })
 
           stripe_session = double(client_secret: "secret_resume")
           expect(Stripe::Account).not_to receive(:create)
