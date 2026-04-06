@@ -13,14 +13,23 @@ class Api::Mobile::PurchasesController < Api::Mobile::BaseController
       )
     else
       media_locations_scope = MediaLocation.where(product_id: purchases.pluck(:link_id))
-      cache [purchases, media_locations_scope], expires_in: 10.minutes do
-        purchases_to_json(purchases)
-      rescue => e
-        # Cache empty array for requests that timeout to reduce the load on database.
-        # TODO: Remove this once we fix the bottleneck with the purchases_json generation
-        Rails.logger.info "Error generating purchases json for user: #{current_resource_owner.id}, #{e.class} => #{e.message}"
+      cache_key = [purchases, media_locations_scope]
+      zlib_retried = false
+      begin
+        cache cache_key, expires_in: 10.minutes do
+          purchases_to_json(purchases)
+        rescue => e
+          Rails.logger.info "Error generating purchases json for user: #{current_resource_owner.id}, #{e.class} => #{e.message}"
+          ErrorNotifier.notify(e)
+          []
+        end
+      rescue Zlib::DataError => e
+        raise if zlib_retried
+        zlib_retried = true
+        Rails.logger.info "Zlib::DataError reading cached purchases for user #{current_resource_owner.id}: #{e.message}"
         ErrorNotifier.notify(e)
-        []
+        cache_store.delete(combined_fragment_cache_key(cache_key))
+        retry
       end
     end
 

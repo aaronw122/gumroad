@@ -226,6 +226,46 @@ describe Api::Mobile::PurchasesController do
       }.as_json)
     end
 
+    context "when cache entry is corrupted with Zlib::DataError" do
+      it "deletes the corrupted cache key, logs the error, and retries successfully" do
+        create(:purchase, purchaser: @purchaser)
+
+        # First call raises Zlib::DataError (corrupted cache), retry should succeed
+        call_count = 0
+        allow(controller).to receive(:cache).and_wrap_original do |original, *args, **kwargs, &block|
+          call_count += 1
+          if call_count == 1
+            raise Zlib::DataError, "buffer error"
+          else
+            original.call(*args, **kwargs, &block)
+          end
+        end
+
+        allow(controller).to receive(:cache_store).and_return(ActiveSupport::Cache::NullStore.new)
+        allow(Rails.logger).to receive(:info)
+        allow(ErrorNotifier).to receive(:notify)
+
+        get :index, params: @params
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to eq(true)
+        expect(Rails.logger).to have_received(:info).with(/Zlib::DataError reading cached purchases/)
+        expect(ErrorNotifier).to have_received(:notify).with(instance_of(Zlib::DataError))
+        expect(call_count).to eq(2)
+      end
+
+      it "does not retry more than once" do
+        create(:purchase, purchaser: @purchaser)
+
+        allow(controller).to receive(:cache).and_raise(Zlib::DataError.new("buffer error"))
+        allow(controller).to receive(:cache_store).and_return(ActiveSupport::Cache::NullStore.new)
+        allow(Rails.logger).to receive(:info)
+        allow(ErrorNotifier).to receive(:notify)
+
+        expect { get :index, params: @params }.to raise_error(Zlib::DataError)
+      end
+    end
+
     describe "show all products" do
       it "displays products without files in the api" do
         created_at_minute_advance = 0
