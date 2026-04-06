@@ -734,6 +734,38 @@ describe Order::ChargeService, :vcr do
       expect { service.send(:ensure_all_purchases_processed, nil) }.not_to raise_error
     end
 
+    it "falls back to seller_purchases to process in-progress purchases when non_free_seller_purchases is not assigned" do
+      seller = create(:user)
+      product = create(:product, user: seller, price_cents: 10_00)
+      line_items = {
+        line_items: [
+          { uid: "uid-1", permalink: product.unique_permalink, perceived_price_cents: product.price_cents, quantity: 1 }
+        ]
+      }
+      params = line_items.merge(
+        email: "buyer@example.com",
+        cc_zipcode: "12345",
+        purchase: { full_name: "Test Buyer", street_address: "123 Test St", country: "US", state: "CA", city: "San Francisco", zip_code: "94117" },
+        browser_guid: SecureRandom.uuid,
+        ip_address: "0.0.0.0",
+        session_id: SecureRandom.hex,
+        is_mobile: false,
+      )
+
+      order, _ = Order::CreateService.new(params:).perform
+
+      # Force an error before non_free_seller_purchases is assigned
+      allow(order.charges).to receive(:create!).and_raise(ActiveRecord::RecordInvalid)
+
+      Order::ChargeService.new(order:, params:).perform
+
+      # The ensure block should still process purchases via the fallback,
+      # so no purchases should remain stranded in in_progress state
+      order.purchases.reload.each do |purchase|
+        expect(purchase).not_to be_in_progress
+      end
+    end
+
     it "does not raise NoMethodError when an error occurs before non_free_seller_purchases is assigned" do
       seller = create(:user)
       product = create(:product, user: seller, price_cents: 10_00)

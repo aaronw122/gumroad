@@ -76,8 +76,11 @@ class Order::ChargeService
       Rails.logger.error("Error charging order (#{order.id}):: #{e.class} => #{e.message} => #{e.backtrace}")
     ensure
       # Ensure all purchases of the charge are transitioned to a terminal state
-      # and each line item has a response
-      ensure_all_purchases_processed(non_free_seller_purchases)
+      # and each line item has a response.
+      # Fall back to seller_purchases if non_free_seller_purchases was not yet assigned
+      # (e.g. an exception occurred before that line), so cleanup still runs.
+      purchases_to_process = non_free_seller_purchases || seller_purchases.select(&:in_progress?)
+      ensure_all_purchases_processed(purchases_to_process)
     end
 
     charge_responses
