@@ -22,6 +22,7 @@ class Admin::MerchantAccountPresenter
       charge_processor_alive_at: merchant_account.charge_processor_alive_at,
       charge_processor_verified_at: merchant_account.charge_processor_verified_at,
       charge_processor_deleted_at: merchant_account.charge_processor_deleted_at,
+      stripe_embedded_onboarding: !!merchant_account.is_stripe_embedded_onboarding_account?,
       updated_at: merchant_account.updated_at,
       deleted_at: merchant_account.deleted_at,
       live_attributes: live_attributes || [],

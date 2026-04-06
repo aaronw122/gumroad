@@ -22,6 +22,7 @@ export type AdminMerchantAccountProps = {
   charge_processor_alive_at: string | null;
   charge_processor_verified_at: string | null;
   charge_processor_deleted_at: string | null;
+  stripe_embedded_onboarding: boolean;
   updated_at: string;
   deleted_at: string | null;
   live_attributes: { label: string; value: unknown }[];
@@ -69,6 +70,13 @@ const AdminMerchantAccountsShow = () => {
 
           <dt>Funds are held by</dt>
           <dd>{capitalize(merchant_account.holder_of_funds)}</dd>
+
+          {merchant_account.stripe_embedded_onboarding ? (
+            <>
+              <dt>Onboarding</dt>
+              <dd>Stripe Embedded Onboarding</dd>
+            </>
+          ) : null}
 
           <dt>Charge Processor</dt>
           <dd>

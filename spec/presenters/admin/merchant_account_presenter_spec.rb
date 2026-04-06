@@ -31,6 +31,7 @@ describe Admin::MerchantAccountPresenter do
             charge_processor_alive_at: merchant_account.charge_processor_alive_at,
             charge_processor_verified_at: merchant_account.charge_processor_verified_at,
             charge_processor_deleted_at: merchant_account.charge_processor_deleted_at,
+            stripe_embedded_onboarding: false,
             updated_at: merchant_account.updated_at,
             deleted_at: merchant_account.deleted_at,
             live_attributes: include({ label: "Charges enabled", value: false }),
@@ -80,6 +81,26 @@ describe Admin::MerchantAccountPresenter do
           it "returns nil for stripe_account_url" do
             expect(props[:stripe_account_url]).to be_nil
           end
+        end
+      end
+    end
+
+    describe "stripe_embedded_onboarding" do
+      before do
+        allow(Stripe::Account).to receive(:retrieve).and_return(double(:account, charges_enabled: false, payouts_enabled: false, requirements: double(:requirements, disabled_reason: nil, as_json: {})))
+      end
+
+      context "when the merchant account was created via embedded onboarding" do
+        let(:merchant_account) { create(:merchant_account, json_data: { "stripe_embedded_onboarding" => true }) }
+
+        it "returns true" do
+          expect(props[:stripe_embedded_onboarding]).to eq(true)
+        end
+      end
+
+      context "when the merchant account was created via legacy onboarding" do
+        it "returns false" do
+          expect(props[:stripe_embedded_onboarding]).to eq(false)
         end
       end
     end
