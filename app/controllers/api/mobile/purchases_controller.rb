@@ -2,7 +2,7 @@
 
 class Api::Mobile::PurchasesController < Api::Mobile::BaseController
   before_action { doorkeeper_authorize! :mobile_api }
-  before_action :fetch_purchase, only: [:purchase_attributes, :archive, :unarchive]
+  before_action :fetch_purchase, only: [:purchase_attributes, :archive, :unarchive, :destroy]
   DEFAULT_SEARCH_RESULTS_SIZE = 10
   DEFAULT_PER_PAGE = 100
   MAX_PER_PAGE = 100
@@ -56,6 +56,15 @@ class Api::Mobile::PurchasesController < Api::Mobile::BaseController
   def unarchive
     @purchase.is_archived = false
     @purchase.save!
+
+    render json: {
+      success: true,
+      product: @purchase.json_data_for_mobile
+    }
+  end
+
+  def destroy
+    @purchase.update!(is_deleted_by_buyer: true)
 
     render json: {
       success: true,
