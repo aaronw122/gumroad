@@ -739,4 +739,30 @@ describe Product::Prices do
       end
     end
   end
+
+  context "when a tiered membership has no alive default tier" do
+    let(:product) { create(:membership_product) }
+
+    before do
+      product.tiers.each(&:mark_deleted!)
+      product.reload
+      expect(product.default_tier).to be_nil
+    end
+
+    it "lowest_tier_price returns nil" do
+      expect(product.send(:lowest_tier_price)).to be_nil
+    end
+
+    it "display_price_cents returns 0" do
+      expect(product.display_price_cents).to eq 0
+    end
+
+    it "display_base_price_cents returns 0" do
+      expect(product.display_base_price_cents).to eq 0
+    end
+
+    it "display_recurrence falls back to subscription_duration" do
+      expect(product.send(:display_recurrence)).to eq product.subscription_duration
+    end
+  end
 end
