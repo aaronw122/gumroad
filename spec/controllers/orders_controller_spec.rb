@@ -1001,6 +1001,16 @@ describe OrdersController, :vcr do
           end.to change(Purchase.successful, :count).by(2)
         end
 
+        it "does not skip reCAPTCHA when a line item has a non-existent permalink" do
+          multiple_purchase_params[:line_items][0][:permalink] = "nonexistent-permalink"
+          multiple_purchase_params[:line_items][0][:perceived_price_cents] = "0"
+          multiple_purchase_params[:line_items][1][:perceived_price_cents] = "0"
+
+          expect_any_instance_of(OrdersController).to receive(:valid_recaptcha_response_and_hostname?).and_return(true)
+
+          post :create, params: multiple_purchase_params
+        end
+
         context "when payment is made using a wallet" do
           let(:payment_method) do
             payment_method = StripePaymentMethodHelper.success.to_stripejs_wallet_payment_method

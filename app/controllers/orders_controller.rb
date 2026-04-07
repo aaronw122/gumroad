@@ -94,7 +94,7 @@ class OrdersController < ApplicationController
       line_items = params.fetch(:line_items, {})
       line_items.all? do |product|
         product_link = Link.find_by(unique_permalink: product["permalink"])
-        !product_link.require_captcha? && product["perceived_price_cents"].to_s == "0"
+        product_link.present? && !product_link.require_captcha? && product["perceived_price_cents"].to_s == "0"
       end
     end
 
