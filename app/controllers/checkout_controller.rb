@@ -20,7 +20,12 @@ class CheckoutController < ApplicationController
 
     ActiveRecord::Base.transaction do
       browser_guid = cookies[:_gumroad_guid]
-      cart = Cart.fetch_by(user: logged_in_user, browser_guid:) || Cart.new(user: logged_in_user, browser_guid:)
+      cart = Cart.fetch_by(user: logged_in_user, browser_guid:)
+      if cart
+        cart.lock!
+      else
+        cart = Cart.new(user: logged_in_user, browser_guid:)
+      end
       cart.ip_address = request.remote_ip
       cart.browser_guid = browser_guid
       cart.email = update_permitted_params[:email].presence || logged_in_user&.email
@@ -61,6 +66,9 @@ class CheckoutController < ApplicationController
     end
 
     redirect_to checkout_path, status: :see_other
+  rescue ActiveRecord::Deadlocked => e
+    ErrorNotifier.notify(e)
+    redirect_to checkout_path, alert: "Sorry, something went wrong. Please try again."
   rescue ActiveRecord::RecordInvalid => e
     ErrorNotifier.notify(e)
     Rails.logger.error(e.full_message) if Rails.env.development?

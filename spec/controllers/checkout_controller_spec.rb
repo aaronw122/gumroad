@@ -476,6 +476,27 @@ describe CheckoutController, type: :controller, inertia: true do
         expect(flash[:alert]).to eq("Sorry, something went wrong. Please try again.")
       end
 
+      it "acquires a lock on an existing cart before updating" do
+        cart = create(:cart, user: seller)
+
+        expect(Cart).to receive(:fetch_by).and_return(cart)
+        expect(cart).to receive(:lock!).and_call_original
+
+        patch :update, params: { cart: { items: [], discountCodes: [] } }, as: :json
+
+        expect(response).to have_http_status(:see_other)
+      end
+
+      it "handles ActiveRecord::Deadlocked gracefully" do
+        allow(Cart).to receive(:fetch_by).and_raise(ActiveRecord::Deadlocked.new("Deadlock found"))
+
+        patch :update, params: { cart: { items: [], discountCodes: [] } }, as: :json
+
+        expect(response).to have_http_status(:found)
+        expect(response).to redirect_to(checkout_path)
+        expect(flash[:alert]).to eq("Sorry, something went wrong. Please try again.")
+      end
+
       it "returns an error when cart contains more than allowed number of cart products" do
         items = (Cart::MAX_ALLOWED_CART_PRODUCTS + 1).times.map { { product: { id: _1 + 1 } }  }
         patch :update, params: { cart: { items: } }, as: :json
