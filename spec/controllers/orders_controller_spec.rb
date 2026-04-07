@@ -2250,6 +2250,29 @@ describe OrdersController, :vcr do
         expect(user.reload.unconfirmed_email).to eq(nil)
       end
     end
+
+    context "when a post-payment side effect raises an error" do
+      let(:single_purchase_params) do
+        {
+          line_items: [{
+            uid: "unique-id-0",
+            permalink: product_1.unique_permalink,
+            perceived_price_cents: price_1,
+            quantity: 1
+          }]
+        }.merge(common_purchase_params)
+      end
+
+      it "returns success and reports the error to ErrorNotifier" do
+        allow_any_instance_of(Order).to receive(:send_charge_receipts).and_raise(RedisClient::CannotConnectError.new("Waited 3 seconds"))
+        expect(ErrorNotifier).to receive(:notify).with(instance_of(RedisClient::CannotConnectError))
+
+        post :create, params: single_purchase_params
+
+        expect(response.parsed_body["success"]).to be(true)
+        expect(Order.last).to be_present
+      end
+    end
   end
 
   describe "POST confirm" do
@@ -2379,6 +2402,17 @@ describe OrdersController, :vcr do
           post :confirm, params: { id: secure_id }
           expect(purchase.reload.successful?).to eq(true)
           expect(SendChargeReceiptJob).to have_enqueued_sidekiq_job(charge.id)
+        end
+      end
+
+      context "when a post-payment side effect raises an error" do
+        it "returns success and reports the error to ErrorNotifier" do
+          allow_any_instance_of(Order).to receive(:send_charge_receipts).and_raise(RedisClient::CannotConnectError.new("Waited 3 seconds"))
+          expect(ErrorNotifier).to receive(:notify).with(instance_of(RedisClient::CannotConnectError))
+
+          post :confirm, params: { id: secure_id }
+
+          expect(response.parsed_body["success"]).to be(true)
         end
       end
     end

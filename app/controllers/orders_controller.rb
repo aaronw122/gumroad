@@ -24,14 +24,9 @@ class OrdersController < ApplicationController
 
     charge_responses = Order::ChargeService.new(order:, params: order_params).perform
 
-    if order.persisted? && order.purchases.successful.any? && UtmLinkVisit.where(browser_guid: order_params[:browser_guid]).any?
-      UtmLinkSaleAttributionJob.perform_async(order.id, order_params[:browser_guid])
-    end
-
     purchase_responses.merge!(charge_responses)
 
-    order.purchases.each { create_purchase_event_and_recommendation_info(_1) }
-    order.send_charge_receipts unless purchase_responses.any? { |_k, v| v[:requires_card_action] || v[:requires_card_setup] }
+    enqueue_post_payment_side_effects(order, order_params, purchase_responses)
 
     render json: { success: true, line_items: purchase_responses, offer_codes:, can_buyer_sign_up: }
   end
@@ -44,13 +39,7 @@ class OrdersController < ApplicationController
 
     confirm_responses, offer_codes = Order::ConfirmService.new(order:, params:).perform
 
-    confirm_responses.each do |purchase_id, response|
-      next unless response[:success]
-
-      purchase = Purchase.find(purchase_id)
-      create_purchase_event_and_recommendation_info(purchase)
-    end
-    order.send_charge_receipts
+    enqueue_post_payment_side_effects_for_confirm(order, confirm_responses)
 
     render json: { success: true, line_items: confirm_responses, offer_codes:, can_buyer_sign_up: }
   end
@@ -136,6 +125,29 @@ class OrdersController < ApplicationController
         line_item_params.delete(:affiliate_id)
         line_item_params[:affiliate_id] = affiliate.id if affiliate&.eligible_for_purchase_credit?(product:, was_recommended: line_item_params[:was_product_recommended] && line_item_params[:recommended_by] != RecommendationType::GUMROAD_MORE_LIKE_THIS_RECOMMENDATION, purchaser_email: params[:email])
       end
+    end
+
+    def enqueue_post_payment_side_effects(order, order_params, purchase_responses)
+      if order.persisted? && order.purchases.successful.any? && UtmLinkVisit.where(browser_guid: order_params[:browser_guid]).any?
+        UtmLinkSaleAttributionJob.perform_async(order.id, order_params[:browser_guid])
+      end
+
+      order.purchases.each { create_purchase_event_and_recommendation_info(_1) }
+      order.send_charge_receipts if purchase_responses.none? { |_k, v| v[:requires_card_action] || v[:requires_card_setup] }
+    rescue StandardError => e
+      ErrorNotifier.notify(e)
+    end
+
+    def enqueue_post_payment_side_effects_for_confirm(order, confirm_responses)
+      confirm_responses.each do |purchase_id, response|
+        next if !response[:success]
+
+        purchase = Purchase.find(purchase_id)
+        create_purchase_event_and_recommendation_info(purchase)
+      end
+      order.send_charge_receipts
+    rescue StandardError => e
+      ErrorNotifier.notify(e)
     end
 
     def create_purchase_event_and_recommendation_info(purchase)
