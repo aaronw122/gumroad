@@ -62,4 +62,37 @@ describe User::Risk do
       end
     end
   end
+
+  describe "#remove_verified!" do
+    it "removes the verified badge when flagging a verified compliant user for tos violation" do
+      user = create(:user, verified: true)
+      user.mark_compliant!(author_name: "admin")
+      expect(user.user_risk_state).to eq("compliant")
+      expect(user.verified).to be(true)
+
+      user.flag_for_tos_violation!(author_name: "test", bulk: true)
+
+      expect(user.user_risk_state).to eq("flagged_for_tos_violation")
+      expect(user.verified).to be(false)
+    end
+
+    it "removes the verified badge when flagging a verified compliant user for fraud" do
+      user = create(:user, verified: true)
+      user.mark_compliant!(author_name: "admin")
+
+      user.flag_for_fraud!(author_name: "test")
+
+      expect(user.user_risk_state).to eq("flagged_for_fraud")
+      expect(user.verified).to be(false)
+    end
+
+    it "does not affect unverified users" do
+      user = create(:user, verified: false)
+
+      user.flag_for_tos_violation!(author_name: "test", bulk: true)
+
+      expect(user.user_risk_state).to eq("flagged_for_tos_violation")
+      expect(user.verified).to be(false)
+    end
+  end
 end

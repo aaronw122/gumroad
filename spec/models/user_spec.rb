@@ -1718,15 +1718,23 @@ describe User, :vcr do
       @admin_user = create(:user)
     end
 
-    it "does not suspend the user if the user is verified" do
+    it "removes verified badge when suspending a verified user" do
       @user.update_attribute(:verified, true)
-      expect(@user.suspend_for_fraud(author_id: @admin_user.id)).to be(false)
+      @user.flag_for_fraud!(author_id: @admin_user.id)
+      @user.suspend_for_fraud!(author_id: @admin_user.id)
+      expect(@user.reload.verified).to be(false)
     end
 
-    it "does not flag the user if the user is verified" do
+    it "removes verified badge when flagging a verified user" do
       @user.update_attribute(:verified, true)
-      expect(@user.flag_for_fraud(author_id: @admin_user.id)).to be(false)
-      expect(@user.flag_for_tos_violation(author_id: @admin_user.id, product_id: @product_1.id)).to be(false)
+      @user.flag_for_fraud!(author_id: @admin_user.id)
+      expect(@user.reload.verified).to be(false)
+    end
+
+    it "removes verified badge when flagging a verified user for tos violation" do
+      @user.update_attribute(:verified, true)
+      @user.flag_for_tos_violation!(author_id: @admin_user.id, product_id: @product_1.id)
+      expect(@user.reload.verified).to be(false)
     end
 
     it "suspends the user if the user is not verified, and was previously flagged for fraud" do

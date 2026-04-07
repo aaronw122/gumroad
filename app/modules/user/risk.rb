@@ -105,6 +105,11 @@ module User::Risk
     !verified
   end
 
+  def remove_verified!
+    self.verified = false if verified?
+    true
+  end
+
   def log_suspension_time_to_mongo
     Mongoer.async_write(MongoCollections::USER_SUSPENSION_TIME, "user_id" => id, "suspended_at" => Time.current.to_s)
   end
