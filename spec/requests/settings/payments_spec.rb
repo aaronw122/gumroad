@@ -135,6 +135,26 @@ describe("Payments Settings Scenario", type: :system, js: true) do
       user_compliance_info.country = "United States"
       user_compliance_info.save!
       login_as @user
+
+      # Stub Stripe API calls to avoid rate limiting and flaky failures in CI.
+      # StripeMerchantAccountManager.create_account makes multiple Stripe API calls
+      # (Account.create, create_person, list_persons, update_person) which can fail
+      # intermittently under load, causing the controller to redirect with an error
+      # instead of the expected success flash.
+      stripe_external_account = OpenStruct.new(id: "ba_test_#{SecureRandom.hex(8)}", fingerprint: "fp_test_#{SecureRandom.hex(8)}")
+      stripe_account = OpenStruct.new(
+        id: "acct_test_#{SecureRandom.hex(8)}",
+        charges_enabled: true,
+        external_accounts: OpenStruct.new(first: stripe_external_account)
+      )
+      stripe_account.define_singleton_method(:refresh) { self }
+      allow(Stripe::Account).to receive(:create).and_return(stripe_account)
+      allow(Stripe::Account).to receive(:update).and_return(stripe_account)
+      allow(Stripe::Account).to receive(:retrieve).and_return(stripe_account)
+      allow(Stripe::Account).to receive(:create_person).and_return(OpenStruct.new(id: "person_test_#{SecureRandom.hex(8)}"))
+      allow(Stripe::Account).to receive(:update_person).and_return(OpenStruct.new(id: "person_test_#{SecureRandom.hex(8)}"))
+      allow(Stripe::Account).to receive(:list_persons).and_return({ "data" => [OpenStruct.new(id: "person_test_#{SecureRandom.hex(8)}")] })
+      allow(Stripe::Account).to receive(:delete).and_return(true)
     end
 
     it "allows the (US based) creator to enter their kyc and ach information and it'll save it properly" do
@@ -4144,8 +4164,6 @@ describe("Payments Settings Scenario", type: :system, js: true) do
 
     describe "Ghanaian creator" do
       before do
-        allow(StripeMerchantAccountManager).to receive(:create_account)
-
         old_user_compliance_info = @user.alive_user_compliance_info
         new_user_compliance_info = old_user_compliance_info.dup
         new_user_compliance_info.country = "Ghana"
