@@ -834,6 +834,42 @@ describe "PurchaseRefunds", :vcr do
       end
     end
 
+    describe "refund blocked when purchase has an active chargeback" do
+      it "returns false and adds error when purchase is chargedback" do
+        purchase = create(:purchase)
+        purchase.update!(chargeback_date: Time.current, chargeback_reversed: false)
+
+        result = purchase.refund_and_save!(create(:admin_user).id)
+
+        expect(result).to eq(false)
+        expect(purchase.errors.full_messages).to include("This purchase has an active dispute. The funds have already been returned to the buyer.")
+        expect(purchase.stripe_refunded).to be(false)
+      end
+
+      it "allows refund when chargeback has been reversed" do
+        purchase = create(:purchase)
+        purchase.update!(chargeback_date: Time.current, chargeback_reversed: true)
+
+        expect(ChargeProcessor).to receive(:refund!).and_return(true)
+        result = purchase.refund_and_save!(create(:admin_user).id)
+        expect(result).not_to eq(false)
+      end
+
+      it "returns 0 for amount_refundable_cents when chargedback" do
+        purchase = create(:purchase, price_cents: 5000)
+        purchase.update!(chargeback_date: Time.current, chargeback_reversed: false)
+
+        expect(purchase.amount_refundable_cents).to eq(0)
+      end
+
+      it "returns normal amount for amount_refundable_cents when chargeback reversed" do
+        purchase = create(:purchase, price_cents: 5000)
+        purchase.update!(chargeback_date: Time.current, chargeback_reversed: true)
+
+        expect(purchase.amount_refundable_cents).to eq(5000)
+      end
+    end
+
     it "calls 'send_refunded_notification_webhook' to send sale refunded notification to the seller" do
       expect(ChargeProcessor).to receive(:refund!).with(@purchase.charge_processor_id, @purchase.stripe_transaction_id, anything).and_call_original
       expect(@purchase.stripe_refunded).to be(false)
