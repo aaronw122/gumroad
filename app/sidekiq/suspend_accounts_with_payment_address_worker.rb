@@ -40,10 +40,6 @@ class SuspendAccountsWithPaymentAddressWorker
     end
 
     def flag_and_suspend_user(user, suspended_user, identifier_type, identifier_value)
-      user.flag_for_fraud(
-        author_name: "suspend_sellers_other_accounts",
-        content: "Flagged for fraud automatically on #{Time.current.to_fs(:formatted_date_full_month)} because of usage of #{identifier_type} #{identifier_value} (from User##{suspended_user.id})"
-      )
       user.suspend_for_fraud(
         author_name: "suspend_sellers_other_accounts",
         content: "Suspended for fraud automatically on #{Time.current.to_fs(:formatted_date_full_month)} because of usage of #{identifier_type} #{identifier_value} (from User##{suspended_user.id})",
