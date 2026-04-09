@@ -28,6 +28,12 @@ class ScheduledPayout < ApplicationRecord
   def execute!
     raise "Cannot execute a #{status} scheduled payout" if status != "pending"
 
+    if user_has_active_chargebacks?
+      flag_for_review!
+      CreatorMailer.scheduled_payout_chargeback_hold(scheduled_payout_id: id).deliver_later
+      return
+    end
+
     if action == "payout" && payout_amount_cents.present? && payout_amount_cents > AUTO_PAYOUT_THRESHOLD_CENTS
       flag_for_review!
       return
@@ -74,6 +80,11 @@ class ScheduledPayout < ApplicationRecord
 
   def flagged?
     status == "flagged"
+  end
+
+  def user_has_active_chargebacks?
+    user.sales.chargedback.not_chargeback_reversed.exists? ||
+      Dispute.where(seller_id: user_id).with_state(:created, :initiated, :formalized).exists?
   end
 
   private

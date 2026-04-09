@@ -184,4 +184,54 @@ describe ScheduledPayout do
       expect { scheduled_payout.flag_for_review! }.to raise_error(RuntimeError, /Cannot flag/)
     end
   end
+
+  describe "#user_has_active_chargebacks?" do
+    let(:user) { create(:user) }
+    let(:product) { create(:product, user: user) }
+    let(:scheduled_payout) { create(:scheduled_payout, user: user) }
+
+    it "returns false when user has no chargebacks" do
+      expect(scheduled_payout.user_has_active_chargebacks?).to be false
+    end
+
+    it "returns true when user has unreversed chargebacks" do
+      create(:free_purchase, link: product, chargeback_date: 2.days.ago)
+      expect(scheduled_payout.user_has_active_chargebacks?).to be true
+    end
+
+    it "returns false when chargebacks are reversed" do
+      create(:free_purchase, link: product, chargeback_date: 2.days.ago, chargeback_reversed: true)
+      expect(scheduled_payout.user_has_active_chargebacks?).to be false
+    end
+
+    it "returns true when user has active disputes" do
+      purchase = create(:free_purchase, link: product)
+      create(:dispute, purchase: purchase, seller: user)
+      expect(scheduled_payout.user_has_active_chargebacks?).to be true
+    end
+
+    it "returns false when disputes are won" do
+      purchase = create(:free_purchase, link: product)
+      dispute = create(:dispute, purchase: purchase, seller: user)
+      dispute.mark_formalized!
+      dispute.mark_won!
+      expect(scheduled_payout.user_has_active_chargebacks?).to be false
+    end
+  end
+
+  describe "#execute! with chargebacks" do
+    let(:user) { create(:user) }
+    let(:product) { create(:product, user: user) }
+
+    it "flags for review and sends email when user has active chargebacks" do
+      scheduled_payout = create(:scheduled_payout, user: user, action: "payout", scheduled_at: 1.day.ago)
+      create(:free_purchase, link: product, chargeback_date: 2.days.ago)
+
+      expect { scheduled_payout.execute! }
+        .to have_enqueued_mail(CreatorMailer, :scheduled_payout_chargeback_hold)
+        .with(scheduled_payout_id: scheduled_payout.id)
+
+      expect(scheduled_payout.reload.status).to eq("flagged")
+    end
+  end
 end

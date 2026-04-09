@@ -280,6 +280,12 @@ export type PayoutsProps = {
   show_instant_payouts_notice: boolean;
   pagination: PaginationProps;
   tax_center_enabled: boolean;
+  scheduled_payout: {
+    action: "refund" | "payout" | "hold";
+    status: "pending" | "flagged";
+    scheduled_at: string;
+    payout_amount_cents: number | null;
+  } | null;
 };
 
 // TODO: move BankAccount|PaypalAccount out of CurrentPayoutsDataAndPaymentMethodWithUserPayable
