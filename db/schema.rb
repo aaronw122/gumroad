@@ -1912,6 +1912,23 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_19_011938) do
     t.index ["smaller_product_id", "sales_count"], name: "index_smaller_product_id_and_sales_count"
   end
 
+  create_table "scheduled_payouts", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "action", null: false
+    t.integer "delay_days", default: 21, null: false
+    t.datetime "scheduled_at", null: false
+    t.string "status", default: "pending", null: false
+    t.bigint "created_by_id"
+    t.datetime "executed_at"
+    t.integer "payout_amount_cents"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_scheduled_payouts_on_created_by_id"
+    t.index ["scheduled_at"], name: "index_scheduled_payouts_on_scheduled_at"
+    t.index ["status"], name: "index_scheduled_payouts_on_status"
+    t.index ["user_id"], name: "index_scheduled_payouts_on_user_id"
+  end
+
   create_table "self_service_affiliate_products", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.bigint "seller_id", null: false
     t.bigint "product_id", null: false
