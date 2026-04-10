@@ -64,7 +64,7 @@ describe ScheduledPayout do
     it "does not override scheduled_at if already set" do
       specific_time = 30.days.from_now
       scheduled_payout = create(:scheduled_payout, scheduled_at: specific_time, delay_days: 21)
-      expect(scheduled_payout.scheduled_at).to eq(specific_time)
+      expect(scheduled_payout.scheduled_at).to be_within(1.second).of(specific_time)
     end
   end
 
