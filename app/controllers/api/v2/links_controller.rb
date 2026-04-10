@@ -23,10 +23,25 @@ class Api::V2::LinksController < Api::V2::BaseController
   before_action :set_link_id_to_id, only: [:show, :update, :disable, :enable, :destroy]
   before_action :fetch_product, only: [:show, :update, :disable, :enable, :destroy]
 
+  RESULTS_PER_PAGE = 10
+
   def index
     products = current_resource_owner.products.visible.includes(
       *INDEX_PRODUCT_ASSOCIATIONS
-    ).order(created_at: :desc)
+    ).order(created_at: :desc, id: :desc)
+
+    if params[:page_key].present?
+      begin
+        last_created_at, last_id = decode_page_key(params[:page_key])
+      rescue ArgumentError
+        return error_400("Invalid page_key.")
+      end
+      products = products.where("links.created_at < :created_at OR (links.created_at = :created_at AND links.id < :id)", created_at: last_created_at, id: last_id)
+    end
+
+    products = products.limit(RESULTS_PER_PAGE + 1).to_a
+    has_next_page = products.size > RESULTS_PER_PAGE
+    products = products.first(RESULTS_PER_PAGE)
 
     as_json_options = {
       api_scopes: doorkeeper_token.scopes,
@@ -36,7 +51,10 @@ class Api::V2::LinksController < Api::V2::BaseController
 
     products_as_json = products.as_json(as_json_options)
 
-    render json: { success: true, products: products_as_json }
+    response_body = { success: true, products: products_as_json }
+    response_body.merge!(pagination_info(products.last)) if has_next_page
+
+    render json: response_body
   end
 
   def create

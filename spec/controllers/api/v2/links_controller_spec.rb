@@ -72,6 +72,68 @@ describe Api::V2::LinksController do
       expect(response.parsed_body["products"]).to be_present
     end
 
+    describe "pagination" do
+      before do
+        @token = create("doorkeeper/access_token", application: @app, resource_owner_id: @user.id, scopes: "view_public")
+        @params.merge!(format: :json, access_token: @token.token)
+      end
+
+      it "returns at most RESULTS_PER_PAGE products and includes next_page_key when there are more" do
+        products = (1..11).map do |i|
+          create(:product, user: @user, created_at: Time.current + i.hours)
+        end
+
+        get @action, params: @params
+        body = response.parsed_body
+
+        expect(body["success"]).to be true
+        expect(body["products"].size).to eq(Api::V2::LinksController::RESULTS_PER_PAGE)
+        expect(body["next_page_key"]).to be_present
+        expect(body["next_page_url"]).to be_present
+      end
+
+      it "does not include next_page_key when all results fit on one page" do
+        get @action, params: @params
+        body = response.parsed_body
+
+        expect(body["success"]).to be true
+        expect(body["products"].size).to eq(2)
+        expect(body).not_to have_key("next_page_key")
+        expect(body).not_to have_key("next_page_url")
+      end
+
+      it "returns the next page of results when page_key is provided" do
+        products = (1..12).map do |i|
+          create(:product, user: @user, created_at: Time.current + i.hours)
+        end
+        # All products sorted desc: products[11], products[10], ..., products[0], @product2, @product1
+        # First page should return the 10 newest
+
+        get @action, params: @params
+        first_page = response.parsed_body
+        expect(first_page["next_page_key"]).to be_present
+
+        get @action, params: @params.merge(page_key: first_page["next_page_key"])
+        second_page = response.parsed_body
+
+        expect(second_page["success"]).to be true
+        expect(second_page["products"].size).to eq(4) # 12 + 2 original - 10 = 4
+        expect(second_page).not_to have_key("next_page_key")
+
+        first_page_ids = first_page["products"].map { |p| p["id"] }
+        second_page_ids = second_page["products"].map { |p| p["id"] }
+        expect(first_page_ids & second_page_ids).to be_empty
+      end
+
+      it "returns error for invalid page_key" do
+        get @action, params: @params.merge(page_key: "invalid")
+        body = response.parsed_body
+
+        expect(response).to have_http_status(:bad_request)
+        expect(body["error"]).to include("Invalid page_key")
+      end
+    end
+
     describe "query count" do
       def count_sql_queries(&block)
         count = 0
