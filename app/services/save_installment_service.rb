@@ -19,6 +19,8 @@ class SaveInstallmentService
 
     build_installment_if_needed
 
+    send_preview = false
+
     begin
       unless installment.new_record?
         installment.assign_attributes(installment.published? ? published_installment_params : installment_attrs)
@@ -33,16 +35,26 @@ class SaveInstallmentService
         elsif params[:publish].present?
           publish_installment
         elsif params[:send_preview_email].present?
-          installment.send_preview_email(preview_email_recipient)
+          send_preview = true
         end
 
         raise ActiveRecord::Rollback if error.present?
       end
-    rescue Installment::InstallmentInvalid, Installment::PreviewEmailError => e
+    rescue Installment::InstallmentInvalid => e
       @error = e.message
     rescue => e
       @error ||= e.message
       ErrorNotifier.notify(e)
+    end
+
+    if send_preview && error.nil?
+      begin
+        installment.send_preview_email(preview_email_recipient)
+      rescue Net::ReadTimeout, Net::OpenTimeout, Timeout::Error, Errno::ECONNREFUSED, Errno::ECONNRESET, SocketError => e
+        @error = "Failed to send preview email due to a temporary network issue. Please try again."
+      rescue Installment::PreviewEmailError => e
+        @error = e.message
+      end
     end
 
     error.nil?

@@ -190,16 +190,27 @@ describe SaveInstallmentService do
       service.process
     end
 
-    it "returns an error while previewing an email if the logged-in user has uncofirmed email" do
+    it "returns an error while previewing an email if the logged-in user has unconfirmed email" do
       seller.update_attribute(:unconfirmed_email, "john@example.com")
       expect(PostSendgridApi).to_not receive(:process)
 
       service = described_class.new(seller:, installment:, params: params.merge(send_preview_email: true), preview_email_recipient:)
-      expect do
-        service.process
-      end.to_not change { Installment.count }
+      service.process
 
       expect(service.error).to eq("You have to confirm your email address before you can do that.")
+      expect(service.installment).to be_persisted
+    end
+
+    it "persists the installment even when preview email times out" do
+      allow_any_instance_of(Installment).to receive(:send_preview_email).and_raise(Net::ReadTimeout)
+
+      service = described_class.new(seller:, installment:, params: params.merge(send_preview_email: true), preview_email_recipient:)
+      expect do
+        service.process
+      end.to change { Installment.count }.by(1)
+
+      expect(service.error).to eq("Failed to send preview email due to a temporary network issue. Please try again.")
+      expect(service.installment).to be_persisted
     end
 
     it "creates and schedules the installment" do
@@ -450,6 +461,16 @@ describe SaveInstallmentService do
       end.to_not change { installment.reload }
 
       expect(service.error).to eq("You have to confirm your email address before you can do that.")
+    end
+
+    it "persists the installment even when preview email times out" do
+      allow_any_instance_of(Installment).to receive(:send_preview_email).and_raise(Net::ReadTimeout)
+
+      service = described_class.new(seller:, installment:, params: params.deep_merge(send_preview_email: true), preview_email_recipient:)
+      service.process
+
+      expect(service.error).to eq("Failed to send preview email due to a temporary network issue. Please try again.")
+      expect(installment.reload.name).to eq("Hello")
     end
 
     it "updates the installment and schedules the installment" do
