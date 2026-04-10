@@ -29,8 +29,8 @@ describe ScheduledPayout do
       expect(scheduled_payout).not_to be_valid
     end
 
-    it "requires status to be one of pending, executed, cancelled, flagged" do
-      %w[pending executed cancelled flagged].each do |status|
+    it "requires status to be one of pending, executed, cancelled, flagged, held" do
+      %w[pending executed cancelled flagged held].each do |status|
         scheduled_payout = build(:scheduled_payout, status: status)
         expect(scheduled_payout).to be_valid
       end
@@ -74,6 +74,7 @@ describe ScheduledPayout do
     let!(:executed_payout) { create(:scheduled_payout, status: "executed") }
     let!(:cancelled_payout) { create(:scheduled_payout, status: "cancelled") }
     let!(:flagged_payout) { create(:scheduled_payout, status: "flagged") }
+    let!(:held_payout) { create(:scheduled_payout, status: "held") }
 
     it "returns pending payouts" do
       expect(described_class.pending).to contain_exactly(pending_payout, future_payout)
@@ -94,13 +95,18 @@ describe ScheduledPayout do
     it "returns flagged payouts" do
       expect(described_class.flagged).to contain_exactly(flagged_payout)
     end
+
+    it "returns held payouts" do
+      expect(described_class.held).to contain_exactly(held_payout)
+    end
   end
 
   describe "#execute!" do
     let(:user) { create(:user) }
 
     context "when action is refund" do
-      let(:scheduled_payout) { create(:scheduled_payout, user: user, action: "refund", scheduled_at: 1.day.ago, created_by: create(:user)) }
+      let(:suspended_user) { create(:user, user_risk_state: "suspended_for_fraud") }
+      let(:scheduled_payout) { create(:scheduled_payout, user: suspended_user, action: "refund", scheduled_at: 1.day.ago, created_by: create(:user)) }
 
       it "enqueues RefundUnpaidPurchasesWorker and marks as executed" do
         scheduled_payout.execute!
@@ -108,6 +114,11 @@ describe ScheduledPayout do
         expect(RefundUnpaidPurchasesWorker.jobs.size).to eq(1)
         expect(scheduled_payout.reload.status).to eq("executed")
         expect(scheduled_payout.executed_at).to be_present
+      end
+
+      it "raises if user is not suspended" do
+        non_suspended_payout = create(:scheduled_payout, user: user, action: "refund", scheduled_at: 1.day.ago, created_by: create(:user))
+        expect { non_suspended_payout.execute! }.to raise_error(RuntimeError, /Cannot refund: user is not suspended/)
       end
     end
 
@@ -140,10 +151,10 @@ describe ScheduledPayout do
     context "when action is hold" do
       let(:scheduled_payout) { create(:scheduled_payout, user: user, action: "hold", scheduled_at: 1.day.ago) }
 
-      it "does nothing" do
+      it "transitions to held status" do
         scheduled_payout.execute!
 
-        expect(scheduled_payout.reload.status).to eq("pending")
+        expect(scheduled_payout.reload.status).to eq("held")
       end
     end
 

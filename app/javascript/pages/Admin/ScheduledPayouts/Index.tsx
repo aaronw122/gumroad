@@ -3,12 +3,10 @@ import React from "react";
 import { cast } from "ts-safe-cast";
 
 import { formatPriceCentsWithCurrencySymbol } from "$app/utils/currency";
-import { request, assertResponseError, ResponseError } from "$app/utils/request";
 
 import { AdminActionButton } from "$app/components/Admin/ActionButton";
 import AdminEmptyState from "$app/components/Admin/EmptyState";
 import { Button } from "$app/components/Button";
-import { showAlert } from "$app/components/server-components/Alert";
 import { Pagination, type PaginationProps } from "$app/components/Pagination";
 
 type ScheduledPayoutUser = {
@@ -20,7 +18,7 @@ type ScheduledPayoutUser = {
 type ScheduledPayout = {
   external_id: string;
   action: "refund" | "payout" | "hold";
-  status: "pending" | "executed" | "cancelled" | "flagged";
+  status: "pending" | "executed" | "cancelled" | "flagged" | "held";
   delay_days: number;
   scheduled_at: string;
   executed_at: string | null;
@@ -41,6 +39,7 @@ const STATUS_COLORS: Record<string, string> = {
   executed: "text-green-600",
   cancelled: "text-muted",
   flagged: "text-red-600",
+  held: "text-orange-600",
 };
 
 const AdminScheduledPayoutsIndex = () => {
@@ -59,7 +58,7 @@ const AdminScheduledPayoutsIndex = () => {
       <h1 className="text-2xl font-bold">Scheduled Payouts</h1>
 
       <div className="flex gap-2">
-        {[null, "pending", "flagged", "executed", "cancelled"].map((status) => (
+        {[null, "pending", "flagged", "executed", "cancelled", "held"].map((status) => (
           <Button
             key={status ?? "all"}
             size="sm"

@@ -47,8 +47,10 @@ describe Admin::ScheduledPayoutsController, type: :controller, inertia: true do
   end
 
   describe "POST execute" do
+    let(:suspended_user) { create(:user, user_risk_state: "suspended_for_fraud") }
+
     it "executes a pending scheduled payout" do
-      scheduled_payout = create(:scheduled_payout, user: user, action: "refund", status: "pending", created_by: admin_user)
+      scheduled_payout = create(:scheduled_payout, user: suspended_user, action: "refund", status: "pending", created_by: admin_user)
 
       post :execute, params: { external_id: scheduled_payout.external_id }
 
@@ -58,7 +60,7 @@ describe Admin::ScheduledPayoutsController, type: :controller, inertia: true do
     end
 
     it "executes a flagged scheduled payout" do
-      scheduled_payout = create(:scheduled_payout, user: user, action: "refund", status: "flagged", created_by: admin_user)
+      scheduled_payout = create(:scheduled_payout, user: suspended_user, action: "refund", status: "flagged", created_by: admin_user)
 
       post :execute, params: { external_id: scheduled_payout.external_id }
 

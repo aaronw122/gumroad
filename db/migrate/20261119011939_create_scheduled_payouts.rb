@@ -10,7 +10,7 @@ class CreateScheduledPayouts < ActiveRecord::Migration[7.1]
       t.string :status, null: false, default: "pending"
       t.bigint :created_by_id
       t.datetime :executed_at
-      t.integer :payout_amount_cents
+      t.bigint :payout_amount_cents
       t.timestamps
 
       t.index :status

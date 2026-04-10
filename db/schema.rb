@@ -1920,7 +1920,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_19_011939) do
     t.string "status", default: "pending", null: false
     t.bigint "created_by_id"
     t.datetime "executed_at"
-    t.integer "payout_amount_cents"
+    t.bigint "payout_amount_cents"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["created_by_id"], name: "index_scheduled_payouts_on_created_by_id"

@@ -4,7 +4,7 @@ class ScheduledPayout < ApplicationRecord
   include ExternalId
 
   ACTIONS = %w[refund payout hold].freeze
-  STATUSES = %w[pending executed cancelled flagged].freeze
+  STATUSES = %w[pending executed cancelled flagged held].freeze
 
   AUTO_PAYOUT_THRESHOLD_CENTS = 100_000
 
@@ -20,38 +20,41 @@ class ScheduledPayout < ApplicationRecord
   scope :executed, -> { where(status: "executed") }
   scope :cancelled, -> { where(status: "cancelled") }
   scope :flagged, -> { where(status: "flagged") }
+  scope :held, -> { where(status: "held") }
   scope :due, -> { pending.where(scheduled_at: ..Time.current) }
   scope :for_user, ->(user) { where(user: user) }
 
   before_validation :set_scheduled_at, on: :create
 
   def execute!
-    raise "Cannot execute a #{status} scheduled payout" if status != "pending"
+    with_lock do
+      raise "Cannot execute a #{status} scheduled payout" if status != "pending"
 
-    if user_has_active_chargebacks?
-      flag_for_review!
-      CreatorMailer.scheduled_payout_chargeback_hold(scheduled_payout_id: id).deliver_later
-      return
-    end
-
-    if action == "payout" && payout_amount_cents.present? && payout_amount_cents > AUTO_PAYOUT_THRESHOLD_CENTS
-      flag_for_review!
-      return
-    end
-
-    transaction do
-      case action
-      when "refund"
-        RefundUnpaidPurchasesWorker.perform_async(user_id, created_by_id)
-      when "payout"
-        payout_date = Date.yesterday
-        Payouts.create_instant_payouts_for_balances_up_to_date_for_users(payout_date, [user], from_admin: true)
-      when "hold"
+      if user_has_active_chargebacks?
+        update!(status: "flagged")
+        CreatorMailer.scheduled_payout_chargeback_hold(scheduled_payout_id: id).deliver_later
         return
       end
 
-      update!(status: "executed", executed_at: Time.current)
+      if action == "payout" && payout_amount_cents.present? && payout_amount_cents > AUTO_PAYOUT_THRESHOLD_CENTS
+        update!(status: "flagged")
+        return
+      end
+
+      case action
+      when "refund"
+        raise "Cannot refund: user is not suspended" if !user.suspended?
+        update!(status: "executed", executed_at: Time.current)
+      when "payout"
+        Payouts.create_instant_payouts_for_balances_up_to_date_for_users(Date.yesterday, [user], from_admin: true)
+        update!(status: "executed", executed_at: Time.current)
+      when "hold"
+        update!(status: "held")
+        return
+      end
     end
+
+    RefundUnpaidPurchasesWorker.perform_async(user_id, created_by_id) if action == "refund"
   end
 
   def cancel!
@@ -80,6 +83,10 @@ class ScheduledPayout < ApplicationRecord
 
   def flagged?
     status == "flagged"
+  end
+
+  def held?
+    status == "held"
   end
 
   def user_has_active_chargebacks?

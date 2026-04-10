@@ -7,7 +7,8 @@ describe ExecuteScheduledPayoutsJob do
     let(:user) { create(:user) }
 
     it "executes due scheduled payouts" do
-      scheduled_payout = create(:scheduled_payout, user: user, action: "refund", scheduled_at: 1.day.ago, created_by: create(:user))
+      suspended_user = create(:user, user_risk_state: "suspended_for_fraud")
+      scheduled_payout = create(:scheduled_payout, user: suspended_user, action: "refund", scheduled_at: 1.day.ago, created_by: create(:user))
 
       described_class.new.perform
 
@@ -42,8 +43,8 @@ describe ExecuteScheduledPayoutsJob do
 
     it "continues processing other payouts when one fails" do
       failing_payout = create(:scheduled_payout, user: user, action: "payout", scheduled_at: 1.day.ago)
-      other_user = create(:user)
-      succeeding_payout = create(:scheduled_payout, user: other_user, action: "refund", scheduled_at: 1.day.ago, created_by: create(:user))
+      suspended_user = create(:user, user_risk_state: "suspended_for_fraud")
+      succeeding_payout = create(:scheduled_payout, user: suspended_user, action: "refund", scheduled_at: 1.day.ago, created_by: create(:user))
 
       allow(Payouts).to receive(:create_instant_payouts_for_balances_up_to_date_for_users).and_raise(StandardError, "test error")
 
