@@ -658,6 +658,25 @@ describe Payouts do
       end
     end
 
+    describe "when a balance is already processing due to a concurrent payout" do
+      let(:payout_date) { Date.today - 1 }
+      let(:payout_processor_type) { PayoutProcessorType::PAYPAL }
+      let(:seller) { create(:compliant_user, payment_address: "seller@example.com") }
+
+      before do
+        create(:balance, user: seller, date: payout_date - 3, amount_cents: 10_00, state: "processing")
+        create(:balance, user: seller, date: payout_date - 2, amount_cents: 20_00)
+      end
+
+      it "skips the already-processing balance without raising an error" do
+        allow(Payouts).to receive(:is_user_payable).and_return(true)
+
+        expect do
+          described_class.create_payments_for_balances_up_to_date_for_users(payout_date, payout_processor_type, [seller])
+        end.not_to raise_error
+      end
+    end
+
     describe "a user is payable but balances are changed (e.g. by a chargeback) and will make for a negative payment" do
       let(:payout_date) { Date.today - 1 }
       let(:payout_processor_type) { PayoutProcessorType::PAYPAL }

@@ -192,9 +192,11 @@ class Payouts
       next if !::PayoutProcessorType.get(processor_type).is_balance_payable(balance)
 
       balance.with_lock do
-        balance.mark_processing!
+        if balance.unpaid?
+          balance.mark_processing!
+          true
+        end
       end
-      true
     end
   end
   private_class_method :mark_balances_processing
