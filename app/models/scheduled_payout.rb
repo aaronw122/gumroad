@@ -27,34 +27,29 @@ class ScheduledPayout < ApplicationRecord
   before_validation :set_scheduled_at, on: :create
 
   def execute!
+    enqueue_refund = false
+
     with_lock do
       raise "Cannot execute a #{status} scheduled payout" if status != "pending"
 
       if user_has_active_chargebacks?
         update!(status: "flagged")
         CreatorMailer.scheduled_payout_chargeback_hold(scheduled_payout_id: id).deliver_later
-        return
-      end
-
-      if action == "payout" && payout_amount_cents.present? && payout_amount_cents > AUTO_PAYOUT_THRESHOLD_CENTS
+      elsif action == "payout" && payout_amount_cents.present? && payout_amount_cents > AUTO_PAYOUT_THRESHOLD_CENTS
         update!(status: "flagged")
-        return
-      end
-
-      case action
-      when "refund"
+      elsif action == "refund"
         raise "Cannot refund: user is not suspended" if !user.suspended?
         update!(status: "executed", executed_at: Time.current)
-      when "payout"
+        enqueue_refund = true
+      elsif action == "payout"
         Payouts.create_instant_payouts_for_balances_up_to_date_for_users(Date.yesterday, [user], from_admin: true)
         update!(status: "executed", executed_at: Time.current)
-      when "hold"
+      elsif action == "hold"
         update!(status: "held")
-        return
       end
     end
 
-    RefundUnpaidPurchasesWorker.perform_async(user_id, created_by_id) if action == "refund"
+    RefundUnpaidPurchasesWorker.perform_async(user_id, created_by_id) if enqueue_refund
   end
 
   def cancel!
