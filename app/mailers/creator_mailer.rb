@@ -64,9 +64,7 @@ class CreatorMailer < ApplicationMailer
 
     mail(
       to: email,
-      from: "Gumroad <noreply@#{CREATOR_CONTACTING_CUSTOMERS_MAIL_DOMAIN}>",
-      subject: @subject,
-      delivery_method_options: MailerInfo.random_delivery_method_options(domain: :creators)
+      subject: @subject
     )
   end
 end
