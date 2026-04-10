@@ -192,7 +192,7 @@ describe Api::V2::SalesController do
       end
 
       it "returns empty result set when filtered by non-existing purchase ID" do
-        get :index, params: @params.merge(order_id: ObfuscateIds.decrypt_numeric(0))
+        get :index, params: @params.merge(order_id: 0)
 
         expect(response.parsed_body).to eq({
           success: true,
@@ -270,6 +270,15 @@ describe Api::V2::SalesController do
           success: true,
           sale: @purchase.as_json(version: 2)
         }.as_json)
+      end
+
+      it "includes license_uses in the response for a purchase with a license key" do
+        @product.update!(is_licensed: true)
+        purchase_with_license = create(:purchase, :with_license, purchaser: @purchaser, link: @product)
+        purchase_with_license.license.update!(uses: 5)
+
+        get :show, params: @params.merge(id: purchase_with_license.external_id)
+        expect(response.parsed_body["sale"]["license_uses"]).to eq 5
       end
 
       it "does not return a sale that does not belong to the seller" do
@@ -652,12 +661,12 @@ describe Api::V2::SalesController do
       context "when request for a full refund" do
         it "refunds a sale fully" do
           expect(@purchase.price_cents).to eq 100_00
-          expect(@purchase.refunded?).to be_falsey
+          expect(@purchase.refunded?).to be false
 
           put :refund, params: @params
 
           @purchase.reload
-          expect(@purchase.refunded?).to be_truthy
+          expect(@purchase.refunded?).to be true
           expect(@purchase.refunds.last.refunding_user_id).to eq @product.user.id
 
 

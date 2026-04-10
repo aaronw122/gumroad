@@ -161,6 +161,19 @@ describe LinksController, :vcr, inertia: true do
         let(:request_params) { { id: product.unique_permalink } }
       end
 
+      it "succeeds when the product has an expired default offer code" do
+        offer_code = create(:offer_code, user: seller, products: [product])
+        product.update_column(:default_offer_code_id, offer_code.id)
+        offer_code.update_column(:expires_at, 1.day.ago)
+
+        sections = create_list(:seller_profile_products_section, 2, seller:, product:)
+
+        put :update_sections, params: { id: product.unique_permalink, sections: sections.map(&:external_id), main_section_index: 0 }
+
+        expect(response).to have_http_status(:no_content)
+        expect(product.reload.sections).to eq(sections.map(&:id))
+      end
+
       it "updates the SellerProfileSections attached to the product and cleans up orphaned sections" do
         sections = create_list(:seller_profile_products_section, 2, seller:, product:)
         create(:seller_profile_posts_section, seller:, product:)
@@ -1337,6 +1350,23 @@ describe LinksController, :vcr, inertia: true do
 
           embed_ids = rich_content_node["content"].map { |node| node["attrs"]["id"] }
           expect(embed_ids).to eq(["placeholder_b", "real_b"])
+        end
+
+        it "handles nil nodes in rich content without crashing" do
+          rich_content_node = {
+            "type" => "doc",
+            "content" => [
+              { "type" => "fileEmbed", "attrs" => { "id" => "placeholder_a" } },
+              nil,
+              { "type" => "paragraph", "content" => nil },
+              { "type" => "paragraph", "content" => [nil, { "type" => "text", "text" => "hello" }] },
+              { "type" => "fileEmbed", "attrs" => nil },
+            ]
+          }
+          mappings = { "placeholder_a" => "real_a" }
+
+          expect { @product.send(:apply_rich_content_id_mappings, rich_content_node, mappings) }.not_to raise_error
+          expect(rich_content_node["content"][0]["attrs"]["id"]).to eq("real_a")
         end
 
         it "saves variant-level rich content containing file embeds with the persisted IDs" do
@@ -3982,11 +4012,11 @@ describe LinksController, :vcr, inertia: true do
     end
 
     describe "GET cart_items_count" do
-      it "renders the Inertia page" do
+      it "returns 0 when no cart exists" do
         get :cart_items_count
 
         expect(inertia.component).to eq("Products/CartItemsCount")
-        expect(inertia.props[:cart]).to be_nil
+        expect(inertia.props[:cart_items_count]).to eq(0)
 
         html = Nokogiri::HTML.parse(response.body)
         [
@@ -3998,7 +4028,7 @@ describe LinksController, :vcr, inertia: true do
         end
       end
 
-      it "returns cart props when the user has a cart with items" do
+      it "returns the count of alive cart products" do
         sign_in @user
         product = create(:product)
         cart = create(:cart, user: @user, email: @user.email)
@@ -4007,18 +4037,19 @@ describe LinksController, :vcr, inertia: true do
         get :cart_items_count
 
         expect(inertia.component).to eq("Products/CartItemsCount")
-        expect(inertia.props[:cart]).to match(
-          email: @user.email,
-          returnUrl: "",
-          rejectPppDiscount: false,
-          discountCodes: [],
-          items: [
-            a_hash_including(
-              product: a_hash_including(permalink: product.unique_permalink),
-              quantity: 1,
-            ),
-          ],
-        )
+        expect(inertia.props[:cart_items_count]).to eq(1)
+      end
+
+      it "does not count deleted cart products" do
+        sign_in @user
+        product = create(:product)
+        cart = create(:cart, user: @user, email: @user.email)
+        create(:cart_product, cart:, product:)
+        create(:cart_product, cart:, product: create(:product), deleted_at: Time.current)
+
+        get :cart_items_count
+
+        expect(inertia.props[:cart_items_count]).to eq(1)
       end
     end
 

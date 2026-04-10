@@ -64,6 +64,8 @@ Rails.application.routes.draw do
         resources :skus, only: [:index]
         resources :subscribers, only: [:index]
         put "bundle_contents", to: "bundle_contents#update"
+        resource :thumbnail, only: [:create, :destroy]
+        resources :covers, only: [:create, :destroy]
         member do
           put "disable"
           put "enable"
@@ -214,6 +216,7 @@ Rails.application.routes.draw do
         get "/purchases/purchase_attributes/:id", to: "purchases#purchase_attributes"
         post "/purchases/:id/archive", to: "purchases#archive"
         post "/purchases/:id/unarchive", to: "purchases#unarchive"
+        delete "/purchases/:id", to: "purchases#destroy"
         get "/url_redirects/get_url_redirect_attributes/:id", to: "url_redirects#url_redirect_attributes"
         get "/url_redirects/fetch_placeholder_products", to: "url_redirects#fetch_placeholder_products"
         get "/url_redirects/stream/:token/:product_file_id", to: "url_redirects#stream", as: :stream_video
@@ -572,6 +575,7 @@ Rails.application.routes.draw do
     get "/customers/sales", controller: "customers", action: "customers_paged", format: "json", as: :sales_paged
     get "/customers", controller: "customers", action: "index", format: "html", as: :customers
     get "/customers/paged", controller: "customers", action: "paged", format: "json"
+    get "/customers/sale/:purchase_id", controller: "customers", action: "show", format: "html", as: :customer_sale
     get "/customers/:link_id", controller: "customers", action: "index", format: "html", as: :customers_link_id
     post "/customers/import", to: "customers#customers_import", as: :customers_import
     post "/customers/import_manually_entered_emails", to: "customers#customers_import_manually_entered_emails", as: :customers_import_manually_entered_emails

@@ -474,6 +474,29 @@ describe Link, :vcr do
     end
 
 
+    describe "#purchase_type=" do
+      it "accepts valid purchase_type values" do
+        link.purchase_type = :buy_only
+        expect(link.purchase_type).to eq("buy_only")
+
+        link.purchase_type = :rent_only
+        expect(link.purchase_type).to eq("rent_only")
+
+        link.purchase_type = :buy_and_rent
+        expect(link.purchase_type).to eq("buy_and_rent")
+      end
+
+      it "defaults to buy_only when given an invalid value" do
+        link.purchase_type = "buy"
+        expect(link.purchase_type).to eq("buy_only")
+      end
+
+      it "does not raise ArgumentError for invalid values" do
+        expect { link.purchase_type = "invalid" }.not_to raise_error
+        expect(link.purchase_type).to eq("buy_only")
+      end
+    end
+
     describe "delete_unused_prices" do
       let!(:product) { create(:product, purchase_type: :buy_and_rent, price_cents: 500, rental_price_cents: 100) }
       let(:buy_price) { product.prices.is_buy.first }
@@ -2800,6 +2823,15 @@ describe Link, :vcr do
       expect(public_file2).to be_alive
       expect(public_file2.scheduled_for_deletion_at).to be_within(5.seconds).of(10.minutes.from_now)
       expect(_another_product_public_file.reload.scheduled_for_deletion_at).to be_nil
+    end
+
+    it "deletes a tiered membership even when tier categories are in an inconsistent state" do
+      product = create(:membership_product_with_preset_tiered_pricing)
+      product.tier_category.mark_deleted!
+      product.reload
+
+      expect { product.delete! }.not_to raise_error
+      expect(product.reload.deleted?).to be(true)
     end
   end
 

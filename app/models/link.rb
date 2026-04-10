@@ -223,6 +223,12 @@ class Link < ApplicationRecord
 
   enum subscription_duration: %i[monthly yearly quarterly biannually every_two_years]
   enum purchase_type: %i[buy_only rent_only buy_and_rent] # Indicates whether this product can be bought or rented or both.
+
+  def purchase_type=(value)
+    super(value)
+  rescue ArgumentError
+    super(:buy_only)
+  end
   enum free_trial_duration_unit: %i[week month]
 
   attr_json_data_accessor :excluded_sales_tax_regions, default: -> { [] }
@@ -1246,6 +1252,7 @@ class Link < ApplicationRecord
     def default_offer_code_must_be_valid
       return unless default_offer_code.present?
       return if being_marked_as_deleted?
+      return unless new_record? || default_offer_code_id_changed?
 
       if !user.offer_codes.alive.where(id: default_offer_code.id).exists?
         errors.add(:default_offer_code, "must belong to your offer codes")
@@ -1327,6 +1334,7 @@ class Link < ApplicationRecord
     end
 
     def valid_tier_version_structure
+      return if deleted_at.present?
       return if archived?
 
       if variant_categories.alive.size != 1

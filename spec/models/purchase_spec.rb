@@ -1744,7 +1744,7 @@ describe Purchase, :vcr do
     end
 
     {
-      user_suspended: ->(u, _l) { u.suspend_for_fraud },
+      user_suspended: ->(u, _l) { u.suspend_for_fraud(author_name: "Admin") },
       link_disabled: ->(_u, l) { l.purchase_disabled_at = Time.current },
       link_deleted: ->(_u, l) { l.deleted_at = Time.current }
     }.each do |k, v|
@@ -3255,6 +3255,7 @@ describe Purchase, :vcr do
           license_key: license.serial,
           license_id: license.external_id,
           license_disabled: false,
+          license_uses: 0,
           is_multiseat_license: false,
         })
       end
@@ -3268,6 +3269,7 @@ describe Purchase, :vcr do
             license_key: license.serial,
             license_id: license.external_id,
             license_disabled: false,
+            license_uses: 0,
             is_multiseat_license: false
           })
         end
@@ -3283,6 +3285,7 @@ describe Purchase, :vcr do
             license_key: license.serial,
             license_id: license.external_id,
             license_disabled: false,
+            license_uses: 0,
             is_multiseat_license: true
           })
         end

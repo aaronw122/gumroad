@@ -112,6 +112,16 @@ describe Api::Mobile::PurchasesController do
       expect(response.parsed_body[:products][0][:thumbnail_url]).to eq(thumbnail.url)
     end
 
+    it "falls back to asset preview for thumbnail url when no thumbnail exists" do
+      product = create(:product, user: @user)
+      asset_preview = create(:asset_preview, link: product)
+      create(:purchase_with_balance, link: product, purchaser: @purchaser, seller: @user)
+
+      get :index, params: @params
+
+      expect(response.parsed_body[:products][0][:thumbnail_url]).to eq(asset_preview.url)
+    end
+
     it "displays subscription products" do
       # Alive Subscription
       subscription = create(:subscription, link: @subscription_product, user: @purchaser)
@@ -443,6 +453,26 @@ describe Api::Mobile::PurchasesController do
         expect(response).to have_http_status :not_found
         expect(response.parsed_body).to eq({ success: false, message: "Could not find purchase" }.as_json)
       end
+    end
+  end
+
+  describe "DELETE destroy" do
+    it "marks a purchase as deleted by buyer" do
+      purchase = create(:purchase_with_balance, purchaser: @purchaser)
+
+      delete :destroy, params: @params.merge(id: purchase.external_id)
+
+      expect(response.parsed_body).to eq({ success: true, product: purchase.reload.json_data_for_mobile }.as_json)
+      expect(purchase.reload.is_deleted_by_buyer).to eq(true)
+    end
+
+    it "returns 404 for a purchase that doesn't belong to the purchaser" do
+      purchase = create(:purchase_with_balance, purchaser: create(:user))
+
+      delete :destroy, params: @params.merge(id: purchase.external_id)
+
+      expect(response).to have_http_status :not_found
+      expect(response.parsed_body).to eq({ success: false, message: "Could not find purchase" }.as_json)
     end
   end
 
