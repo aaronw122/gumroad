@@ -132,6 +132,20 @@ describe OrdersController, :vcr do
         end
       end
 
+      context "when Stripe times out during charge" do
+        it "returns an error without triggering Rack::Timeout" do
+          allow(Stripe::PaymentIntent).to receive(:create).and_raise(
+            Stripe::APIConnectionError.new("Connection to Stripe timed out")
+          )
+
+          post :create, params: single_purchase_params
+
+          expect(response.parsed_body["success"]).to be(true)
+          expect(response.parsed_body["line_items"]["unique-id-0"]["success"]).to be(false)
+          expect(response.parsed_body["line_items"]["unique-id-0"]["error_message"]).to include("temporary problem")
+        end
+      end
+
       context "when gifting a subscription" do
         let(:subscription_price) { 10_00 }
         let(:product) { create(:membership_product, price_cents: subscription_price) }
