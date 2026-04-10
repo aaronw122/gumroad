@@ -91,10 +91,7 @@ const AdminScheduledPayoutsIndex = () => {
               {scheduled_payouts.map((sp) => (
                 <tr key={sp.external_id} className="border-b border-border">
                   <td className="p-2">
-                    <a
-                      href={Routes.admin_user_path(sp.user.external_id)}
-                      className="text-link hover:underline"
-                    >
+                    <a href={Routes.admin_user_path(sp.user.external_id)} className="text-link hover:underline">
                       {sp.user.name || sp.user.email}
                     </a>
                   </td>
@@ -104,7 +101,7 @@ const AdminScheduledPayoutsIndex = () => {
                       ? formatPriceCentsWithCurrencySymbol("usd", sp.payout_amount_cents, { symbolFormat: "short" })
                       : "-"}
                   </td>
-                  <td className={`p-2 capitalize font-medium ${STATUS_COLORS[sp.status] ?? ""}`}>{sp.status}</td>
+                  <td className={`p-2 font-medium capitalize ${STATUS_COLORS[sp.status] ?? ""}`}>{sp.status}</td>
                   <td className="p-2">{new Date(sp.scheduled_at).toLocaleDateString()}</td>
                   <td className="p-2">{sp.created_by?.name ?? "-"}</td>
                   <td className="p-2">

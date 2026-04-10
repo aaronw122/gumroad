@@ -546,7 +546,8 @@ export default function PayoutsIndex() {
                     : ""}{" "}
                   is scheduled for payout on{" "}
                   <strong>{new Date(scheduled_payout.scheduled_at).toLocaleDateString()}</strong>.
-                  {scheduled_payout.status === "flagged" && " Your payout is under review. Please contact support for details."}
+                  {scheduled_payout.status === "flagged" &&
+                    " Your payout is under review. Please contact support for details."}
                 </>
               ) : scheduled_payout.action === "refund" ? (
                 <>
