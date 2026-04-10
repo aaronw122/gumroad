@@ -361,6 +361,34 @@ describe PostResendApi, :freeze_time do
     expect(node.text).to include("Powered by")
   end
 
+  describe "Resend API dispatch" do
+    before do
+      allow(Rails.env).to receive(:test?).and_return(false)
+      allow(Rails.application.config.action_mailer).to receive(:perform_deliveries).and_return(true)
+      allow(GlobalConfig).to receive(:get).and_call_original
+      allow(GlobalConfig).to receive(:get).with("RESEND_CREATORS_API_KEY").and_return("test-api-key")
+    end
+
+    it "uses Resend::Emails.send for a single recipient" do
+      response = instance_double("Response", success?: true)
+      expect(Resend::Emails).to receive(:send).with(a_hash_including(to: ["c1@example.com"])).and_return(response)
+      expect(Resend::Batch).not_to receive(:send)
+
+      send_emails(recipients: [{ email: "c1@example.com" }])
+    end
+
+    it "uses Resend::Batch.send for multiple recipients" do
+      response = instance_double("Response", success?: true)
+      expect(Resend::Batch).to receive(:send).with(an_instance_of(Array)).and_return(response)
+      expect(Resend::Emails).not_to receive(:send)
+
+      send_emails(recipients: [
+                    { email: "c1@example.com" },
+                    { email: "c2@example.com" }
+                  ])
+    end
+  end
+
   describe "Cache" do
     it "prevents the template from being rendered several times for the same post, across multiple calls" do
       cache = {}

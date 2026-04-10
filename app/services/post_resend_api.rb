@@ -29,7 +29,11 @@ class PostResendApi
     if Rails.application.config.action_mailer.perform_deliveries != false && !Rails.env.test?
       Resend.api_key = GlobalConfig.get("RESEND_CREATORS_API_KEY")
       duration = Benchmark.realtime do
-        response = Resend::Batch.send(emails)
+        if emails.size == 1
+          response = Resend::Emails.send(emails.first)
+        else
+          response = Resend::Batch.send(emails)
+        end
         unless response.success?
           raise ResendApiResponseError.new(response.body)
         end
