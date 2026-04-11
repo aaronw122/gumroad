@@ -59,16 +59,17 @@ module StripeRetryHelper
   end
 end
 
-# Patch Stripe::Account methods for test environment
-module Stripe
-  class Account
-    class << self
-      %w[create create_person].each do |method_name|
-        alias_method :"original_#{method_name}", method_name
+if LIVE_STRIPE
+  module Stripe
+    class Account
+      class << self
+        %w[create create_person].each do |method_name|
+          alias_method :"original_#{method_name}", method_name
 
-        define_method(method_name) do |*args, **kwargs|
-          StripeRetryHelper.with_retry_on_rate_limit do
-            send(:"original_#{method_name}", *args, **kwargs)
+          define_method(method_name) do |*args, **kwargs|
+            StripeRetryHelper.with_retry_on_rate_limit do
+              send(:"original_#{method_name}", *args, **kwargs)
+            end
           end
         end
       end

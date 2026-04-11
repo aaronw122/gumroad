@@ -129,8 +129,6 @@ describe("Payments Settings Scenario", type: :system, js: true) do
   end
 
   describe("Payout Information Collection", type: :system, js: true) do
-    include_context "with Stripe API stubs"
-
     before do
       @user = create(:named_user, payment_address: nil)
       user_compliance_info = @user.fetch_or_build_user_compliance_info
