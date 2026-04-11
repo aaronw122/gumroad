@@ -11,6 +11,8 @@ class Api::V2::LinksController < Api::V2::BaseController
     { variant_categories_alive: [:alive_variants] },
   ]).freeze
 
+  RESULTS_PER_PAGE = 10
+
   SHOW_PRODUCT_ASSOCIATIONS = (BASE_PRODUCT_ASSOCIATIONS + [
     :ordered_alive_product_files,
     :alive_rich_contents,
@@ -26,7 +28,20 @@ class Api::V2::LinksController < Api::V2::BaseController
   def index
     products = current_resource_owner.products.visible.includes(
       *INDEX_PRODUCT_ASSOCIATIONS
-    ).order(created_at: :desc)
+    ).order(created_at: :desc, id: :desc)
+
+    if params[:page_key].present?
+      begin
+        last_record_created_at, last_record_id = decode_page_key(params[:page_key])
+      rescue ArgumentError
+        return error_400("Invalid page_key.")
+      end
+      products = products.where("(created_at < ?) OR (created_at = ? AND id < ?)", last_record_created_at, last_record_created_at, last_record_id)
+    end
+
+    paginated_products = products.limit(RESULTS_PER_PAGE + 1).to_a
+    has_next_page = paginated_products.size > RESULTS_PER_PAGE
+    paginated_products = paginated_products.first(RESULTS_PER_PAGE)
 
     as_json_options = {
       api_scopes: doorkeeper_token.scopes,
@@ -35,13 +50,14 @@ class Api::V2::LinksController < Api::V2::BaseController
     }
 
     if (doorkeeper_token.scopes & %w[view_sales account]).present?
-      as_json_options[:preloaded_sales_counts] = Link.batch_successful_sales_counts(products: products)
-      as_json_options[:preloaded_total_usd_cents] = Link.batch_total_usd_cents(products: products)
+      as_json_options[:preloaded_sales_counts] = Link.batch_successful_sales_counts(products: paginated_products)
+      as_json_options[:preloaded_total_usd_cents] = Link.batch_total_usd_cents(products: paginated_products)
     end
 
-    products_as_json = products.as_json(as_json_options)
+    products_as_json = paginated_products.as_json(as_json_options)
+    additional_response = has_next_page ? pagination_info(paginated_products.last) : {}
 
-    render json: { success: true, products: products_as_json }
+    render json: { success: true, products: products_as_json }.merge(additional_response)
   end
 
   def create
