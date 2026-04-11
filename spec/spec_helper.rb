@@ -2,6 +2,7 @@
 
 ENV["RAILS_ENV"] = "test"
 BUILDING_ON_CI = !ENV["CI"].nil?
+LIVE_STRIPE = !ENV["LIVE_STRIPE"].nil?
 
 require File.expand_path("../config/environment", __dir__)
 
@@ -244,15 +245,25 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
-    examples = RSpec.world.filtered_examples.values.flatten
+    if LIVE_STRIPE
+      examples = RSpec.world.filtered_examples.values.flatten
 
-    if examples.any? { |ex| ex.metadata[:type] == :system }
-      begin
-        StripeBalanceEnforcer.ensure_sufficient_balance
-      rescue StandardError => e
-        warn "Stripe balance check failed: #{e.class} #{e.message}"
+      if examples.any? { |ex| ex.metadata[:type] == :system }
+        begin
+          StripeBalanceEnforcer.ensure_sufficient_balance
+        rescue StandardError => e
+          warn "Stripe balance check failed: #{e.class} #{e.message}"
+        end
       end
     end
+  end
+
+  config.before(:each) do
+    StripeMock.start unless LIVE_STRIPE
+  end
+
+  config.after(:each) do
+    StripeMock.stop unless LIVE_STRIPE
   end
 
   config.before(:suite) do

@@ -129,8 +129,6 @@ describe("Payments Settings Scenario", type: :system, js: true) do
   end
 
   describe("Payout Information Collection", type: :system, js: true) do
-    include_context "with Stripe API stubs"
-
     before do
       @user = create(:named_user, payment_address: nil)
       user_compliance_info = @user.fetch_or_build_user_compliance_info
@@ -1318,6 +1316,19 @@ describe("Payments Settings Scenario", type: :system, js: true) do
 
     describe "EU creator" do
       before do
+        allow(Stripe::Account).to receive(:create).and_wrap_original do |method, params, *args|
+          postal_code = params.dig(:individual, :address, :postal_code) || params.dig(:company, :address, :postal_code)
+          country_code = params[:country]
+          if country_code == "DE" && postal_code.present? && !postal_code.match?(/\A\d{5}\z/)
+            raise Stripe::InvalidRequestError.new(
+              "The postal code you entered is not valid.",
+              "postal_code",
+              code: "postal_code_invalid"
+            )
+          end
+          method.call(params, *args)
+        end
+
         old_user_compliance_info = @user.alive_user_compliance_info
         new_user_compliance_info = old_user_compliance_info.dup
         new_user_compliance_info.country = "Germany"
