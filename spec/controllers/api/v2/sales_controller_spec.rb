@@ -231,6 +231,17 @@ describe Api::V2::SalesController do
         sale_json = response.parsed_body["sales"].find { |s| s["id"] == @purchase.external_id }
         expect(sale_json).to include("disputed" => true, "dispute_won" => true)
       end
+
+      it "returns an error when page_key query times out" do
+        allow(WithMaxExecutionTime).to receive(:timeout_queries).and_raise(WithMaxExecutionTime::QueryTimeoutError)
+
+        get :index, params: @params
+
+        expect(response.parsed_body).to eq({
+          success: false,
+          message: "Request timed out. Please narrow your query with date filters or try again."
+        }.as_json)
+      end
     end
 
     describe "when logged in with public scope" do
