@@ -23,7 +23,7 @@ module User::SocialApple
           user.password = Devise.friendly_token[0, 20]
           apply_apple_data(user, data, new_user: true)
 
-          if user.email.present?
+          if user.persisted? && user.email.present?
             Purchase.where(email: user.email, purchaser_id: nil).each do |past_purchase|
               past_purchase.attach_to_user_and_card(user, nil, nil)
             end
@@ -58,7 +58,11 @@ module User::SocialApple
         end
 
         user.skip_confirmation_notification!
-        user.save!
+        if new_user
+          return user unless user.save
+        else
+          user.save!
+        end
         user.confirm if user.has_unconfirmed_email?
 
         if data["uid"].present?

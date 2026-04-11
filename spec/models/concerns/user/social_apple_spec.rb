@@ -79,6 +79,27 @@ describe User::SocialApple do
       end
     end
 
+    context "when a new user's email domain is blocked" do
+      before do
+        BlockedObject.block!(BLOCKED_OBJECT_TYPES[:email_domain], "example.com", nil)
+      end
+
+      it "returns an unpersisted user without raising an exception" do
+        result = User.find_or_create_for_apple_oauth(apple_data)
+
+        expect(result).to be_present
+        expect(result).not_to be_persisted
+      end
+
+      it "does not attach past purchases" do
+        purchase = create(:purchase, email: "apple-user@example.com")
+
+        User.find_or_create_for_apple_oauth(apple_data)
+
+        expect(purchase.reload.purchaser_id).to be_nil
+      end
+    end
+
     context "when name is nil" do
       it "creates a user without a name" do
         data = apple_data.merge("info" => { "email" => "apple-user@example.com", "name" => nil })
