@@ -72,26 +72,25 @@ module StripeMockPersonsHandler
   end
 
   private
+    def persons_store
+      @persons_store ||= {}
+    end
 
-  def persons_store
-    @persons_store ||= {}
-  end
-
-  def mock_person(person_id, account_id, params = {})
-    {
-      id: person_id,
-      object: "person",
-      account: account_id,
-      first_name: params[:first_name] || "Test",
-      last_name: params[:last_name] || "Person",
-      relationship: params[:relationship] || {},
-      verification: {
-        status: "verified",
-        document: { front: nil, back: nil, details: nil, details_code: nil }
-      },
-      metadata: params[:metadata] || {}
-    }
-  end
+    def mock_person(person_id, account_id, params = {})
+      {
+        id: person_id,
+        object: "person",
+        account: account_id,
+        first_name: params[:first_name] || "Test",
+        last_name: params[:last_name] || "Person",
+        relationship: params[:relationship] || {},
+        verification: {
+          status: "verified",
+          document: { front: nil, back: nil, details: nil, details_code: nil }
+        },
+        metadata: params[:metadata] || {}
+      }
+    end
 end
 
 StripeMock::Instance.include(StripeMockPersonsHandler)
