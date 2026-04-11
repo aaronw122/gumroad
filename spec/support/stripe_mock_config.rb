@@ -26,6 +26,59 @@ end
 
 StripeMock::Data.singleton_class.prepend(StripeMockAccountDefaults)
 
+module StripeMockChargeDefaults
+  def mock_charge(params = {})
+    super(params).merge(
+      outcome: {
+        network_status: "approved_by_network",
+        reason: nil,
+        risk_level: "normal",
+        risk_score: 10,
+        seller_message: "Payment complete.",
+        type: "authorized"
+      },
+      billing_details: {
+        address: {
+          city: nil,
+          country: nil,
+          line1: nil,
+          line2: nil,
+          postal_code: nil,
+          state: nil
+        },
+        email: nil,
+        name: nil,
+        phone: nil
+      }
+    )
+  end
+end
+
+StripeMock::Data.singleton_class.prepend(StripeMockChargeDefaults)
+
+module StripeMockAutoPersonOnAccountCreate
+  def new_account(route, method_url, params, headers)
+    result = super
+    account_id = result[:id]
+    person_id = new_id("person")
+    persons_store[account_id] ||= {}
+    persons_store[account_id][person_id] = {
+      id: person_id,
+      object: "person",
+      account: account_id,
+      first_name: params.dig(:individual, :first_name) || "Test",
+      last_name: params.dig(:individual, :last_name) || "Person",
+      relationship: {},
+      verification: {
+        status: "verified",
+        document: { front: nil, back: nil, details: nil, details_code: nil }
+      },
+      metadata: {}
+    }
+    result
+  end
+end
+
 module StripeMockPersonsHandler
   def create_person(route, method_url, params, headers)
     route =~ method_url
@@ -94,6 +147,7 @@ module StripeMockPersonsHandler
 end
 
 StripeMock::Instance.include(StripeMockPersonsHandler)
+StripeMock::Instance.prepend(StripeMockAutoPersonOnAccountCreate)
 
 persons_routes = [
   { route: %r{^post /v1/accounts/(.*)/persons$}, name: :create_person },

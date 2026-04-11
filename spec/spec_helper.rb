@@ -259,11 +259,11 @@ RSpec.configure do |config|
   end
 
   config.before(:each) do |example|
-    StripeMock.start unless LIVE_STRIPE || example.metadata[:vcr]
+    StripeMock.start unless LIVE_STRIPE || example.metadata[:vcr] || example.metadata[:live_stripe]
   end
 
   config.after(:each) do |example|
-    StripeMock.stop unless LIVE_STRIPE || example.metadata[:vcr]
+    StripeMock.stop unless LIVE_STRIPE || example.metadata[:vcr] || example.metadata[:live_stripe]
   end
 
   config.before(:suite) do
