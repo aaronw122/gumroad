@@ -210,6 +210,17 @@ describe Api::V2::SalesController do
         }.as_json)
       end
 
+      it "returns a 400 error when page_key query times out" do
+        allow(WithMaxExecutionTime).to receive(:timeout_queries).and_raise(WithMaxExecutionTime::QueryTimeoutError)
+
+        get :index, params: @params
+        expect(response.code).to eq "400"
+        expect(response.parsed_body).to eq({
+          status: 400,
+          error: "Query timed out. Try narrowing your date range or filtering by product_id."
+        }.as_json)
+      end
+
       it "returns the correct dispute information" do
         # We have a filter in the controller so the purchases for today are not added
         @params.merge!(before: 1.day.from_now)
