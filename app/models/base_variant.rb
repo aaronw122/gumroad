@@ -19,6 +19,8 @@ class BaseVariant < ApplicationRecord
   has_many :live_base_variant_integrations, -> { alive }, class_name: "BaseVariantIntegration"
   has_many :active_integrations, through: :live_base_variant_integrations, source: :integration
 
+  attr_accessor :cached_sales_count_for_inventory
+
   delegate :has_stampable_pdfs?, to: :link
 
   scope :in_order, -> { order(created_at: :asc) }
@@ -141,7 +143,26 @@ class BaseVariant < ApplicationRecord
   end
 
   def sales_count_for_inventory
+    return cached_sales_count_for_inventory if cached_sales_count_for_inventory
     purchases.counts_towards_inventory.sum(:quantity)
+  end
+
+  # Batch-loads sales_count_for_inventory for a collection of variants,
+  # avoiding N+1 queries when rendering multiple variants at once.
+  def self.preload_sales_counts_for_inventory(variants)
+    variant_ids = variants.filter_map(&:id)
+    return if variant_ids.empty?
+
+    counts = Purchase
+      .joins("INNER JOIN base_variants_purchases ON base_variants_purchases.purchase_id = purchases.id")
+      .where("base_variants_purchases.base_variant_id" => variant_ids)
+      .counts_towards_inventory
+      .group("base_variants_purchases.base_variant_id")
+      .sum(:quantity)
+
+    variants.each do |variant|
+      variant.cached_sales_count_for_inventory = counts[variant.id] || 0
+    end
   end
 
   def is_downloadable?

@@ -245,8 +245,14 @@ class CheckoutPresenter
       wishlist = Wishlist.alive.includes(wishlist_products: [:product, :variant]).find_by_external_id(params[:wishlist])
       return {} if wishlist.blank?
 
+      wishlist_products = wishlist.alive_wishlist_products.available_to_buy
+      products = wishlist_products.map(&:product).uniq
+      ActiveRecord::Associations::Preloader.new(records: products, associations: [:alive_variants, :skus_alive_not_default]).call
+      all_variants = products.flat_map { |p| p.alive_variants + p.skus_alive_not_default }
+      BaseVariant.preload_sales_counts_for_inventory(all_variants)
+
       {
-        add_products: wishlist.alive_wishlist_products.available_to_buy.map do |wishlist_product|
+        add_products: wishlist_products.map do |wishlist_product|
           checkout_wishlist_product(wishlist_product, params.reverse_merge(affiliate_id: wishlist_product.wishlist.user.global_affiliate.external_id_numeric.to_s))
         end
       }

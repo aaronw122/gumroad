@@ -303,6 +303,35 @@ describe Variant do
     end
   end
 
+  describe ".preload_sales_counts_for_inventory" do
+    it "batch-loads sales counts and caches them on variant instances" do
+      variant_a = create(:variant)
+      variant_b = create(:variant)
+      create(:purchase, link: variant_a.link, variant_attributes: [variant_a])
+      create(:purchase, link: variant_a.link, variant_attributes: [variant_a])
+      create(:purchase, link: variant_b.link, variant_attributes: [variant_b])
+
+      BaseVariant.preload_sales_counts_for_inventory([variant_a, variant_b])
+
+      expect(variant_a.cached_sales_count_for_inventory).to eq 2
+      expect(variant_b.cached_sales_count_for_inventory).to eq 1
+      expect(variant_a.sales_count_for_inventory).to eq 2
+      expect(variant_b.sales_count_for_inventory).to eq 1
+    end
+
+    it "sets zero for variants with no purchases" do
+      variant = create(:variant)
+
+      BaseVariant.preload_sales_counts_for_inventory([variant])
+
+      expect(variant.cached_sales_count_for_inventory).to eq 0
+    end
+
+    it "handles an empty collection" do
+      expect { BaseVariant.preload_sales_counts_for_inventory([]) }.not_to raise_error
+    end
+  end
+
   describe "quantity_left" do
     describe "has max_purchase_count" do
       before do

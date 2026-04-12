@@ -377,6 +377,32 @@ describe CheckoutPresenter do
       )
     end
 
+    it "batch-loads variant sales counts to avoid N+1 queries" do
+      wishlist = create(:wishlist)
+      products_with_variants = Array.new(3) do
+        product = create(:product_with_digital_versions)
+        create(:wishlist_product, wishlist:, product:, variant: product.alive_variants.first)
+        product
+      end
+
+      params = { wishlist: wishlist.external_id, recommended_by: "discover" }
+
+      inventory_queries = []
+      callback = lambda do |_name, _start, _finish, _id, payload|
+        inventory_queries << payload[:sql] if payload[:sql].include?("counts_towards_inventory") ||
+          (payload[:sql].include?("base_variants_purchases") && payload[:sql].include?("SUM"))
+      end
+
+      ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
+        @instance.checkout_props(params:, browser_guid:)
+      end
+
+      # Should be at most 1 batch query, not N queries (one per variant)
+      total_variants = products_with_variants.sum { |p| p.alive_variants.size }
+      expect(inventory_queries.size).to be <= 1
+      expect(total_variants).to be > 1 # sanity check that we actually have multiple variants
+    end
+
     it "respects single-unit currencies in exchange_rate" do
       $currency_namespace = Redis::Namespace.new(:currencies, redis: $redis)
       $currency_namespace.set("JPY", 149)
