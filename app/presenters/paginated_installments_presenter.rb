@@ -17,7 +17,7 @@ class PaginatedInstallmentsPresenter
 
   def props
     if query.blank?
-      installments = Installment.includes(:installment_rule).all
+      installments = Installment.includes(:installment_rule).preload(:link, :blasts).all
       installments = installments.ordered_updates(seller, type).public_send(type)
       installments = installments.unscope(:order).order("installment_rules.to_be_published_at ASC") if type == Installment::SCHEDULED
       pagination, installments = pagy(installments, page:, limit: PER_PAGE, overflow: :empty_page)

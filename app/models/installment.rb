@@ -115,11 +115,10 @@ class Installment < ApplicationRecord
     # The custom `ORDER BY` clause does the following:
     #   - Keep all unpublished updates at the top
     #   - Sort unpublished updates by `created_at DESC` and sort published updates by `published_at DESC`
-    by_seller_sql = where(seller: user).to_sql
-    by_product_sql = where(link_id: user.links.visible.select(:id)).to_sql
+    base = alive.not_workflow_installment
+    by_seller_sql = base.where(seller: user).to_sql
+    by_product_sql = base.where(link_id: user.links.visible.select(:id)).to_sql
     from("((#{by_seller_sql}) UNION (#{by_product_sql})) installments")
-      .alive
-      .not_workflow_installment
       .order(order_clause)
   }
 
