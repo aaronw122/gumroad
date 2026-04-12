@@ -20,15 +20,13 @@ class UserPresenter
   end
 
   def products_for_filter_box
-    user.links.visible.includes(:alive_variants).reject do |product|
-      product.archived? && !product.has_successful_sales?
-    end
+    products = user.links.visible.includes(:alive_variants)
+    reject_archived_without_sales(products)
   end
 
   def affiliate_products_for_filter_box
-    user.links.visible.order("created_at DESC").reject do |product|
-      product.archived? && !product.has_successful_sales?
-    end
+    products = user.links.visible.order("created_at DESC")
+    reject_archived_without_sales(products)
   end
 
   def as_current_seller
@@ -60,4 +58,27 @@ class UserPresenter
       is_verified: !!user.verified,
     }
   end
+
+  private
+    def reject_archived_without_sales(products)
+      archived_products = products.select(&:archived?)
+      return products.to_a if archived_products.empty?
+
+      archived_with_sales = archived_product_ids_with_sales(archived_products)
+      products.reject do |product|
+        product.archived? && !archived_with_sales.include?(product.id)
+      end
+    end
+
+    def archived_product_ids_with_sales(archived_products)
+      return Set.new if archived_products.empty?
+
+      search_options = Purchase::ACTIVE_SALES_SEARCH_OPTIONS.merge(
+        product: archived_products,
+        size: 0,
+        aggs: { product_ids: { terms: { field: "product_id", size: archived_products.size } } },
+      )
+      result = PurchaseSearchService.search(search_options)
+      Set.new(result.aggregations.product_ids.buckets.map { |b| b["key"] })
+    end
 end
