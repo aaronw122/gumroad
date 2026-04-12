@@ -3769,6 +3769,75 @@ describe User, :vcr do
     end
   end
 
+  describe "#has_accessible_communities?" do
+    let!(:user) { create(:user) }
+    let!(:product) { create(:product, user:) }
+    let!(:other_product) { create(:product) }
+
+    context "when user is a seller with accessible community" do
+      let!(:community) { create(:community, seller: user, resource: product) }
+
+      it "returns true when community is accessible" do
+        Feature.activate_user(:communities, user)
+        product.update!(community_chat_enabled: true)
+        expect(user.has_accessible_communities?).to eq(true)
+      end
+
+      it "returns false when resource is deleted" do
+        Feature.activate_user(:communities, user)
+        product.update!(community_chat_enabled: true)
+        product.mark_deleted!
+        expect(user.has_accessible_communities?).to eq(false)
+      end
+
+      it "returns false when feature flag is disabled" do
+        Feature.deactivate_user(:communities, user)
+        product.update!(community_chat_enabled: true)
+        expect(user.has_accessible_communities?).to eq(false)
+      end
+
+      it "returns false when community chat is disabled" do
+        Feature.activate_user(:communities, user)
+        product.update!(community_chat_enabled: false)
+        expect(user.has_accessible_communities?).to eq(false)
+      end
+    end
+
+    context "when user is a buyer" do
+      let!(:other_community) { create(:community, seller: other_product.user, resource: other_product) }
+      let!(:purchase) { create(:purchase, purchaser: user, link: other_product) }
+
+      it "returns true when community is accessible via purchase" do
+        Feature.activate_user(:communities, other_product.user)
+        other_product.update!(community_chat_enabled: true)
+        expect(user.has_accessible_communities?).to eq(true)
+      end
+
+      it "returns false when resource is deleted" do
+        Feature.activate_user(:communities, other_product.user)
+        other_product.update!(community_chat_enabled: true)
+        other_product.mark_deleted!
+        expect(user.has_accessible_communities?).to eq(false)
+      end
+
+      context "when purchase is made with email" do
+        let!(:purchase) { create(:purchase, purchaser: nil, email: user.email, link: other_product) }
+
+        it "returns true when community is accessible" do
+          Feature.activate_user(:communities, other_product.user)
+          other_product.update!(community_chat_enabled: true)
+          expect(user.has_accessible_communities?).to eq(true)
+        end
+      end
+    end
+
+    context "when user has no communities" do
+      it "returns false" do
+        expect(user.has_accessible_communities?).to eq(false)
+      end
+    end
+  end
+
   describe "#purchased_small_bets?" do
     let(:user) { create(:user) }
     let(:small_bets_product) { create(:product) }

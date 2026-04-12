@@ -1017,6 +1017,34 @@ class User < ApplicationRecord
     end
   end
 
+  def has_accessible_communities?
+    seller_communities.alive.find_each do |community|
+      return true if community.resource.alive? && Feature.active?(:communities, community.seller) && community.resource.community_chat_enabled?
+    end
+
+    buyer_community_ids_query = Community.alive.joins(
+      "INNER JOIN links ON communities.resource_type = 'Link' AND communities.resource_id = links.id"
+    ).joins(
+      "INNER JOIN purchases ON purchases.link_id = links.id"
+    ).where(
+      "purchases.purchase_state = 'successful' AND purchases.purchaser_id = ?", id
+    )
+
+    buyer_community_email_query = Community.alive.joins(
+      "INNER JOIN links ON communities.resource_type = 'Link' AND communities.resource_id = links.id"
+    ).joins(
+      "INNER JOIN purchases ON purchases.link_id = links.id"
+    ).where(
+      "purchases.purchase_state = 'successful' AND purchases.email = ?", email
+    )
+
+    buyer_community_ids_query.or(buyer_community_email_query).find_each do |community|
+      return true if community.resource.alive? && Feature.active?(:communities, community.seller) && community.resource.community_chat_enabled?
+    end
+
+    false
+  end
+
   def accessible_communities_ids
     # Communities owned by the seller
     seller_communities = self.seller_communities.alive.includes(:resource).to_a
