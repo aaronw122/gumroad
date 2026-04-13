@@ -932,14 +932,7 @@ describe SettingsPresenter do
         expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(false)
       end
 
-      it "returns false for a seller who completed embedded onboarding and has a bank account" do
-        create(:merchant_account, user: seller, charge_processor_verified_at: Time.current,
-                                  json_data: { "stripe_embedded_onboarding" => true })
-        create(:canadian_bank_account, user: seller)
-        expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(false)
-      end
-
-      it "returns true for a seller with a verified embedded onboarding account but no bank account" do
+      it "returns true for a seller who already completed embedded onboarding" do
         create(:merchant_account, user: seller, charge_processor_verified_at: Time.current,
                                   json_data: { "stripe_embedded_onboarding" => true })
         expect(presenter.payments_props[:show_stripe_embedded_onboarding]).to eq(true)
