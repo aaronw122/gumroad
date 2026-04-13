@@ -49,6 +49,78 @@ describe Settings::PaymentsController, :vcr, type: :controller, inertia: true do
       actual_props[:countries] = actual_props[:countries].transform_keys(&:to_s) if actual_props[:countries] && actual_props[:countries].keys.first.is_a?(Symbol)
       expect(actual_props).to eq(expected_props)
     end
+
+    describe "account_status prop" do
+      it "does not show section for compliant user with no issues" do
+        seller.mark_compliant!(author_name: "test")
+
+        get :show
+
+        account_status = inertia.props[:account_status]
+        expect(account_status[:show_section]).to be false
+        expect(account_status[:is_suspended]).to be false
+        expect(account_status[:suspension_reason]).to be_nil
+        expect(account_status).not_to have_key(:is_under_review)
+      end
+
+      it "shows section for user on probation" do
+        seller.put_on_probation!(author_name: "test")
+
+        get :show
+
+        account_status = inertia.props[:account_status]
+        expect(account_status[:show_section]).to be true
+        expect(account_status[:is_suspended]).to be false
+        expect(account_status[:suspension_reason]).to be_nil
+        expect(account_status[:gumroad_status]).to include("under review")
+        expect(account_status).not_to have_key(:is_under_review)
+      end
+
+      it "shows section for suspended user with reason" do
+        seller.flag_for_tos_violation!(author_name: "test", bulk: true)
+        seller.suspend_for_tos_violation!(author_name: "test", bulk: true)
+
+        get :show
+
+        account_status = inertia.props[:account_status]
+        expect(account_status[:show_section]).to be true
+        expect(account_status[:is_suspended]).to be true
+        expect(account_status[:suspension_reason]).to eq("Your account has been suspended for a policy violation.")
+      end
+
+      it "shows section for user with fraud suspension" do
+        seller.flag_for_fraud!(author_name: "test")
+        seller.suspend_for_fraud!(author_name: "test")
+
+        get :show
+
+        account_status = inertia.props[:account_status]
+        expect(account_status[:show_section]).to be true
+        expect(account_status[:is_suspended]).to be true
+        expect(account_status[:suspension_reason]).to eq("Your account has been suspended due to fraudulent activity.")
+      end
+
+      it "shows section when payouts are paused internally" do
+        seller.update!(payouts_paused_internally: true, payouts_paused_by: "admin")
+
+        get :show
+
+        account_status = inertia.props[:account_status]
+        expect(account_status[:show_section]).to be true
+      end
+
+      it "shows section with compliance actions when there are pending requests" do
+        request = create(:user_compliance_info_request, user: seller, field_needed: UserComplianceInfoFields::Individual::TAX_ID)
+        request.verification_error = { "message" => "Please provide your tax ID" }
+        request.save!
+
+        get :show
+
+        account_status = inertia.props[:account_status]
+        expect(account_status[:show_section]).to be true
+        expect(account_status[:compliance_actions]).to include(message: "Please provide your tax ID.", href: nil)
+      end
+    end
   end
 
   describe "PUT update" do

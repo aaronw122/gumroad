@@ -568,9 +568,15 @@ describe SettingsPresenter do
         saved_card: nil,
         formatted_balance_to_forfeit_on_country_change: nil,
         formatted_balance_to_forfeit_on_payout_method_change: nil,
+        account_status: {
+          show_section: false,
+          is_suspended: false,
+          suspension_reason: nil,
+          compliance_actions: [],
+          gumroad_status: nil,
+        },
         payouts_paused_internally: false,
         payouts_paused_by: nil,
-        payouts_paused_for_reason: nil,
         payouts_paused_by_user: false,
         payout_threshold_cents: Payouts::MIN_AMOUNT_CENTS,
         minimum_payout_threshold_cents: Payouts::MIN_AMOUNT_CENTS,
@@ -680,6 +686,32 @@ describe SettingsPresenter do
         expect(presenter.payments_props).to eq(@base_us_props)
       end
 
+      it "includes the suspension reason when the seller is suspended for a policy violation" do
+        seller.flag_for_tos_violation!(author_name: "test", bulk: true)
+        seller.suspend_for_tos_violation!(author_name: "test", bulk: true)
+
+        expect(presenter.payments_props).to eq(@base_us_props.merge!({
+                                                                       account_status: @base_us_props[:account_status].merge(
+                                                                         show_section: true,
+                                                                         is_suspended: true,
+                                                                         suspension_reason: "Your account has been suspended for a policy violation.",
+                                                                       ),
+                                                                     }))
+      end
+
+      it "includes the suspension reason when the seller is suspended for fraud" do
+        seller.flag_for_fraud!(author_name: "test")
+        seller.suspend_for_fraud!(author_name: "test")
+
+        expect(presenter.payments_props).to eq(@base_us_props.merge!({
+                                                                       account_status: @base_us_props[:account_status].merge(
+                                                                         show_section: true,
+                                                                         is_suspended: true,
+                                                                         suspension_reason: "Your account has been suspended due to fraudulent activity.",
+                                                                       ),
+                                                                     }))
+      end
+
       it "returns correct props when seller is eligible for PayPal Connect" do
         expect(presenter.payments_props).to eq(@base_us_props)
         expect(presenter.payments_props[:paypal_connect][:allow_paypal_connect]).to be false
@@ -759,6 +791,59 @@ describe SettingsPresenter do
         expect(presenter.payments_props).to eq(@base_us_props.merge!({
                                                                        user: @base_us_props[:user].merge({ need_full_ssn: true }),
                                                                        show_verification_section: true,
+                                                                       account_status: @base_us_props[:account_status].merge(
+                                                                         show_section: true,
+                                                                         compliance_actions: [{ message: "Complete pending verification requirements via Stripe", href: "/settings/payments/remediation" }],
+                                                                       ),
+                                                                     }))
+      end
+
+      it "keeps the under review status alongside Stripe verification requirements" do
+        create(:merchant_account, user: seller)
+        create(:user_compliance_info_request, user: seller, field_needed: UserComplianceInfoFields::Individual::STRIPE_IDENTITY_DOCUMENT_ID)
+        seller.put_on_probation!(author_name: "test")
+
+        expect(presenter.payments_props).to eq(@base_us_props.merge!({
+                                                                       show_verification_section: true,
+                                                                       account_status: @base_us_props[:account_status].merge(
+                                                                         show_section: true,
+                                                                         compliance_actions: [{ message: "Complete pending verification requirements via Stripe", href: "/settings/payments/remediation" }],
+                                                                         gumroad_status: "Your account is under review and payouts are on hold until it's resolved.",
+                                                                       ),
+                                                                     }))
+      end
+
+      it "keeps the admin pause source alongside Stripe verification requirements" do
+        create(:merchant_account, user: seller)
+        create(:user_compliance_info_request, user: seller, field_needed: UserComplianceInfoFields::Individual::STRIPE_IDENTITY_DOCUMENT_ID)
+        seller.update!(payouts_paused_internally: true)
+
+        expect(presenter.payments_props).to eq(@base_us_props.merge!({
+                                                                       show_verification_section: true,
+                                                                       payouts_paused_internally: true,
+                                                                       payouts_paused_by: User::PAYOUT_PAUSE_SOURCE_ADMIN,
+                                                                       account_status: @base_us_props[:account_status].merge(
+                                                                         show_section: true,
+                                                                         compliance_actions: [{ message: "Complete pending verification requirements via Stripe", href: "/settings/payments/remediation" }],
+                                                                       ),
+                                                                     }))
+      end
+
+      it "keeps both the under review status and admin pause source when Stripe verification is also required" do
+        create(:merchant_account, user: seller)
+        create(:user_compliance_info_request, user: seller, field_needed: UserComplianceInfoFields::Individual::STRIPE_IDENTITY_DOCUMENT_ID)
+        seller.put_on_probation!(author_name: "test")
+        seller.update!(payouts_paused_internally: true)
+
+        expect(presenter.payments_props).to eq(@base_us_props.merge!({
+                                                                       show_verification_section: true,
+                                                                       payouts_paused_internally: true,
+                                                                       payouts_paused_by: User::PAYOUT_PAUSE_SOURCE_ADMIN,
+                                                                       account_status: @base_us_props[:account_status].merge(
+                                                                         show_section: true,
+                                                                         compliance_actions: [{ message: "Complete pending verification requirements via Stripe", href: "/settings/payments/remediation" }],
+                                                                         gumroad_status: "Your account is under review and payouts are on hold until it's resolved.",
+                                                                       ),
                                                                      }))
       end
     end
@@ -946,47 +1031,31 @@ describe SettingsPresenter do
     end
 
     context "when seller's payouts are paused" do
-      it "returns the payout pause source and reason if present" do
+      it "returns the payout pause source" do
         seller.update!(payouts_paused_internally: true)
         expect(presenter.payments_props[:payouts_paused_internally]).to be(true)
         expect(presenter.payments_props[:payouts_paused_by_user]).to be(false)
         expect(presenter.payments_props[:payouts_paused_by]).to eq(User::PAYOUT_PAUSE_SOURCE_ADMIN)
-        expect(presenter.payments_props[:payouts_paused_for_reason]).to eq(nil)
-
-        seller.update!(payouts_paused_internally: true, payouts_paused_by: User.last.id)
-        seller.comments.create!(
-          author_id: User.last.id,
-          content: "Chargeback rate too high.",
-          comment_type: Comment::COMMENT_TYPE_PAYOUTS_PAUSED
-        )
-        expect(presenter.payments_props[:payouts_paused_internally]).to be(true)
-        expect(presenter.payments_props[:payouts_paused_by_user]).to be(false)
-        expect(presenter.payments_props[:payouts_paused_by]).to eq(User::PAYOUT_PAUSE_SOURCE_ADMIN)
-        expect(presenter.payments_props[:payouts_paused_for_reason]).to eq("Chargeback rate too high.")
 
         seller.update!(payouts_paused_internally: true, payouts_paused_by: User::PAYOUT_PAUSE_SOURCE_STRIPE)
         expect(presenter.payments_props[:payouts_paused_internally]).to be(true)
         expect(presenter.payments_props[:payouts_paused_by_user]).to be(false)
         expect(presenter.payments_props[:payouts_paused_by]).to eq(User::PAYOUT_PAUSE_SOURCE_STRIPE)
-        expect(presenter.payments_props[:payouts_paused_for_reason]).to eq(nil)
 
         seller.update!(payouts_paused_internally: true, payouts_paused_by: User::PAYOUT_PAUSE_SOURCE_SYSTEM)
         expect(presenter.payments_props[:payouts_paused_by]).to eq(User::PAYOUT_PAUSE_SOURCE_SYSTEM)
         expect(presenter.payments_props[:payouts_paused_internally]).to be(true)
         expect(presenter.payments_props[:payouts_paused_by_user]).to be(false)
-        expect(presenter.payments_props[:payouts_paused_for_reason]).to eq(nil)
 
         seller.update!(payouts_paused_internally: false, payouts_paused_by_user: true, payouts_paused_by: User::PAYOUT_PAUSE_SOURCE_USER)
         expect(presenter.payments_props[:payouts_paused_by]).to eq(User::PAYOUT_PAUSE_SOURCE_USER)
         expect(presenter.payments_props[:payouts_paused_internally]).to be(false)
         expect(presenter.payments_props[:payouts_paused_by_user]).to be(true)
-        expect(presenter.payments_props[:payouts_paused_for_reason]).to eq(nil)
 
         seller.update!(payouts_paused_internally: false, payouts_paused_by_user: false, payouts_paused_by: nil)
         expect(presenter.payments_props[:payouts_paused_internally]).to be(false)
         expect(presenter.payments_props[:payouts_paused_by_user]).to be(false)
         expect(presenter.payments_props[:payouts_paused_by]).to eq(nil)
-        expect(presenter.payments_props[:payouts_paused_for_reason]).to eq(nil)
       end
     end
   end
