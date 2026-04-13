@@ -525,6 +525,23 @@ describe ReceiptPresenter::ItemInfo do
         end
       end
 
+      context "when the purchase is a gift receiver purchase with no gifter purchase" do
+        let(:gift) { create(:gift, gift_note: "Hope you like it!", giftee_email: "giftee@example.com") }
+        let(:purchase) { create(:purchase, link: gift.link, gift_received: gift, is_gift_receiver_purchase: true) }
+
+        before do
+          gift.update_column(:gifter_purchase_id, nil)
+        end
+
+        it "does not raise an error" do
+          expect(props[:general_attributes]).to eq(
+            [
+              { label: "Product price", value: "$1" },
+            ]
+          )
+        end
+      end
+
       context "when the purchase is a bundle product purchase" do
         let(:bundle) { create(:product, user: seller, is_bundle: true, name: "Bundle product") }
         let(:purchase) { create(:purchase, link: bundle, seller:) }
