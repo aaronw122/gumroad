@@ -366,7 +366,10 @@ class SettingsPresenter
       return false if !Pundit.policy!(pundit_user, [:settings, :payments, seller]).update?
 
       embedded_onboarding_account = seller.merchant_accounts.alive.stripe.find(&:is_stripe_embedded_onboarding_account?)
-      return true if embedded_onboarding_account.present?
+      if embedded_onboarding_account.present?
+        return false if embedded_onboarding_account.charge_processor_verified? && seller.active_bank_account.present?
+        return true
+      end
 
       compliance_info = seller.alive_user_compliance_info
       return false if compliance_info.blank?
