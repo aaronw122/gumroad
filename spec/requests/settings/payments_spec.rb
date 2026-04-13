@@ -556,11 +556,11 @@ describe("Payments Settings Scenario", type: :system, js: true) do
 
         login_as user
         visit settings_payments_path
-        expect(page).to have_section("Verification")
+        expect(page).to have_section("Account status")
         expect(page).not_to have_status(text: "Your identity has been verified!")
       end
 
-      it "always shows the verification section with success message when verification is not needed" do
+      it "hides the account status section when verification is not needed" do
         user = create(:user, username: nil, payment_address: nil)
         create(:user_compliance_info, user:, birthday: Date.new(1901, 1, 2))
         create(:ach_account_stripe_succeed, user:)
@@ -573,9 +573,9 @@ describe("Payments Settings Scenario", type: :system, js: true) do
         login_as user
         visit settings_payments_path
 
-        expect(page).to have_section("Verification")
+        expect(page).not_to have_section("Account status")
 
-        expect(page).to have_status(text: "Your identity has been verified!")
+        expect(page).not_to have_status(text: "Your identity has been verified!")
       end
 
       it "does not show the verification section if Stripe account is not active" do
@@ -592,12 +592,12 @@ describe("Payments Settings Scenario", type: :system, js: true) do
 
         login_as user
         visit settings_payments_path
-        expect(page).to have_section("Verification")
+        expect(page).to have_section("Account status")
         expect(page).not_to have_status(text: "Your identity has been verified!")
 
         merchant_account.mark_deleted!
         visit settings_payments_path
-        expect(page).to have_status(text: "Your identity has been verified!")
+        expect(page).not_to have_status(text: "Your identity has been verified!")
       end
 
       context "when the creator has a business account" do
@@ -861,7 +861,7 @@ describe("Payments Settings Scenario", type: :system, js: true) do
         create(:user_compliance_info_request, user: @user, field_needed: UserComplianceInfoFields::Business::COMPANY_REGISTRATION_VERIFICATION)
 
         visit settings_payments_path
-        expect(page).to have_section("Verification")
+        expect(page).to have_section("Account status")
         expect(page).not_to have_status(text: "Your identity has been verified!")
       end
     end
@@ -1871,7 +1871,7 @@ describe("Payments Settings Scenario", type: :system, js: true) do
 
         login_as user
         visit settings_payments_path
-        expect(page).to have_section("Verification")
+        expect(page).to have_section("Account status")
         expect(page).not_to have_status(text: "Your identity has been verified!")
       end
 
@@ -6336,10 +6336,10 @@ describe("Payments Settings Scenario", type: :system, js: true) do
         user.update!(payouts_paused_internally: true)
         visit settings_payments_path
 
-        expect(page).to have_status(text: "Your payouts have been paused by Gumroad admin.")
+        expect(page).to have_status(text: "Your payouts have been paused by Gumroad.")
       end
 
-      it "shows the warning notice when payouts are paused internally by admin with a reason" do
+      it "does not expose the admin pause reason in the warning notice" do
         user.update!(payouts_paused_internally: true, payouts_paused_by: User.last.id)
         user.comments.create!(
           author_id: User.last.id,
@@ -6349,21 +6349,22 @@ describe("Payments Settings Scenario", type: :system, js: true) do
 
         visit settings_payments_path
 
-        expect(page).to have_status(text: "Your payouts have been paused by Gumroad admin. Reason for pause: Chargeback rate is too high.")
+        expect(page).to have_status(text: "Your payouts have been paused by Gumroad.")
+        expect(page).not_to have_text("Chargeback rate is too high")
       end
 
       it "shows the warning notice when payouts are paused internally by Stripe" do
         user.update!(payouts_paused_internally: true, payouts_paused_by: User::PAYOUT_PAUSE_SOURCE_STRIPE)
         visit settings_payments_path
 
-        expect(page).to have_status(text: "Your payouts are currently paused by our payment processor. Please check for any pending verification requirements below.")
+        expect(page).to have_status(text: "Your payouts have been paused by Stripe.")
       end
 
       it "shows the warning notice when payouts are paused internally by the system" do
         user.update!(payouts_paused_internally: true, payouts_paused_by: User::PAYOUT_PAUSE_SOURCE_SYSTEM)
         visit settings_payments_path
 
-        expect(page).to have_status(text: "Your payouts have been automatically paused for a security review and will be resumed once the review completes.")
+        expect(page).to have_status(text: "Your payouts have been paused for a security review.")
       end
 
       it "shows the warning notice when payouts are paused by the user" do
@@ -6371,6 +6372,31 @@ describe("Payments Settings Scenario", type: :system, js: true) do
         visit settings_payments_path
 
         expect(page).to have_status(text: "You have paused your payouts.")
+      end
+
+      it "does not suggest the pause toggle will resume payouts while the account is under review" do
+        user.put_on_probation!(author_name: "test")
+        user.update!(payouts_paused_by_user: true)
+        visit settings_payments_path
+
+        expect(page).to have_status(text: "You have paused your payouts.")
+        expect(page).to have_status(text: "Your account is under review and payouts are on hold until it's resolved.")
+        expect(page).not_to have_text("Use the pause payouts toggle below to resume.")
+      end
+    end
+
+    describe "account status" do
+      it "renders compliance actions as direct linked instructions" do
+        request = create(:user_compliance_info_request, user:, field_needed: UserComplianceInfoFields::Individual::TAX_ID)
+        request.verification_error = { "message" => "Please provide your tax ID" }
+        request.save!
+        visit settings_payments_path
+
+        within_section "Account status", section_element: :section do
+          expect(page).to have_text("Please provide your tax ID.")
+          expect(page).to have_link("contact support", href: "https://help.gumroad.com")
+          expect(page).not_to have_text("Action needed")
+        end
       end
     end
 
@@ -6404,11 +6430,11 @@ describe("Payments Settings Scenario", type: :system, js: true) do
         within_section "Payout schedule", section_element: :section do
           toggle = find_field("Pause payouts", disabled: true, checked: true)
           toggle.hover
-          expect(toggle).to have_tooltip(text: "Your payouts have been paused by Gumroad admin.")
+          expect(toggle).to have_tooltip(text: "Your payouts have been paused by Gumroad.")
         end
       end
 
-      it "disables the toggle when payouts are paused internally by admin with a reason" do
+      it "does not expose the admin pause reason in the toggle tooltip" do
         user.update!(payouts_paused_internally: true, payouts_paused_by: User.last.id)
         user.comments.create!(
           author_id: User.last.id,
@@ -6421,7 +6447,8 @@ describe("Payments Settings Scenario", type: :system, js: true) do
         within_section "Payout schedule", section_element: :section do
           toggle = find_field("Pause payouts", disabled: true, checked: true)
           toggle.hover
-          expect(toggle).to have_tooltip(text: "Your payouts have been paused by Gumroad admin. Reason for pause: Chargeback rate is too high.")
+          expect(toggle).to have_tooltip(text: "Your payouts have been paused by Gumroad.")
+          expect(toggle).not_to have_tooltip(text: "Chargeback rate is too high")
         end
       end
 
@@ -6432,7 +6459,7 @@ describe("Payments Settings Scenario", type: :system, js: true) do
         within_section "Payout schedule", section_element: :section do
           toggle = find_field("Pause payouts", disabled: true, checked: true)
           toggle.hover
-          expect(toggle).to have_tooltip(text: "Your payouts are currently paused by our payment processor. Please check for any pending verification requirements above.")
+          expect(toggle).to have_tooltip(text: "Your payouts have been paused by Stripe.")
         end
       end
 
@@ -6443,7 +6470,7 @@ describe("Payments Settings Scenario", type: :system, js: true) do
         within_section "Payout schedule", section_element: :section do
           toggle = find_field("Pause payouts", disabled: true, checked: true)
           toggle.hover
-          expect(toggle).to have_tooltip(text: "Your payouts have been automatically paused for a security review and will be resumed once the review completes.")
+          expect(toggle).to have_tooltip(text: "Your payouts have been paused for a security review.")
         end
       end
     end
