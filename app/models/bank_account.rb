@@ -84,6 +84,9 @@ class BankAccount < ApplicationRecord
       )
 
       external_account.available_payout_methods.include?("instant")
+    rescue Stripe::InvalidRequestError => e
+      ErrorNotifier.notify(e) unless e.message.include?("has been deleted")
+      false
     rescue Stripe::StripeError => e
       ErrorNotifier.notify(e)
       false

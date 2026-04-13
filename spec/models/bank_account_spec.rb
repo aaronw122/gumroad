@@ -60,7 +60,23 @@ describe BankAccount do
             .and_raise(Stripe::StripeError.new)
         end
 
-        it "returns false" do
+        it "returns false and notifies error" do
+          expect(ErrorNotifier).to receive(:notify)
+          expect(bank_account.supports_instant_payouts?).to be false
+        end
+      end
+
+      context "when the bank account has been deleted on Stripe" do
+        before do
+          allow(Stripe::Account).to receive(:retrieve_external_account)
+            .and_raise(Stripe::InvalidRequestError.new(
+              "The bank account ba_xxx has been deleted and can no longer be used.",
+              :bank_account
+            ))
+        end
+
+        it "returns false without notifying Sentry" do
+          expect(ErrorNotifier).not_to receive(:notify)
           expect(bank_account.supports_instant_payouts?).to be false
         end
       end
