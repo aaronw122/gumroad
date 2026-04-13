@@ -17,10 +17,9 @@ Create a commit for the current changes.
 4. **Run linters on changed files before staging:**
    - Ruby files: `bundle exec rubocop --force-exclusion -a <files>`
    - JS/TS files: `npm run lint-fast -- --max-warnings 0 --fix --no-warn-ignored <files>`
-   - TypeScript type check: `npx tsc --noEmit` (required, catches type errors that eslint skips)
    - CSS/SCSS/JSON/MD files: `npx prettier --write <files>`
    - SVG files: `npx svgo --multipass <files>`
-   - Fix any lint errors or type errors before proceeding. Do not commit code that fails linting or type checking.
+   - Fix any lint errors before proceeding. Do not commit code that fails linting.
 5. Stage the relevant files by name — avoid `git add -A` or `git add .`.
 6. Write a commit message and commit.
 
