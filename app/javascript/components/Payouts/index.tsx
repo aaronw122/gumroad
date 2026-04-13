@@ -288,13 +288,12 @@ export type PayoutsProps = {
   } | null;
 };
 
-// TODO: move BankAccount|PaypalAccount out of CurrentPayoutsDataAndPaymentMethodWithUserPayable
-export type CurrentPayoutsDataAndPaymentMethodWithUserPayable = CurrentPeriodPayoutData &
-  (NoPayoutAccount | BankAccount | PaypalAccount | StripeConnectAccount);
+export type PaymentMethod = NoPayoutAccount | BankAccount | PaypalAccount | StripeConnectAccount;
+type LegacyPaymentMethod = LegacyNotAvailableAccount | BankAccount | PaypalAccount | StripeConnectAccount;
 
-// TODO: move BankAccount|PaypalAccount out of PastPayoutsDataAndPaymentMethod
-export type PastPayoutsDataAndPaymentMethod = PastPeriodPayoutsData &
-  (LegacyNotAvailableAccount | BankAccount | PaypalAccount | StripeConnectAccount);
+export type CurrentPayoutsDataAndPaymentMethodWithUserPayable = CurrentPeriodPayoutData & PaymentMethod;
+
+export type PastPayoutsDataAndPaymentMethod = PastPeriodPayoutsData & LegacyPaymentMethod;
 
 type PayoutPeriodData = CurrentPayoutsDataAndPaymentMethodWithUserPayable | PastPayoutsDataAndPaymentMethod;
 const Period = ({ payoutPeriodData }: { payoutPeriodData: PayoutPeriodData }) => {
