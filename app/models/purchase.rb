@@ -3392,8 +3392,10 @@ class Purchase < ApplicationRecord
       string_to_price_cents(link.price_currency_type.to_sym, clean)
     end
 
+    PERCEIVED_PRICE_TOLERANCE_CENTS = 1
+
     def perceived_price_equals_link_price?
-      [minimum_paid_price_cents, minimum_paid_price_cents - 1].include?(perceived_price_cents.to_i)
+      (perceived_price_cents.to_i - minimum_paid_price_cents).abs <= PERCEIVED_PRICE_TOLERANCE_CENTS
     end
 
     def customizable_price_that_has_not_changed?

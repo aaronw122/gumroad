@@ -527,6 +527,27 @@ describe Purchase, :vcr do
 
         expect(purchase.errors.full_messages).to be_empty
       end
+
+      it "allows perceived price 1 cent above the computed price" do
+        purchase.perceived_price_cents = product.price_cents + 1
+        purchase.save
+
+        expect(purchase.errors.full_messages).not_to include "Price cents The price just changed! Refresh the page for the updated price."
+      end
+
+      it "allows perceived price 1 cent below the computed price" do
+        purchase.perceived_price_cents = product.price_cents - 1
+        purchase.save
+
+        expect(purchase.errors.full_messages).not_to include "Price cents The price just changed! Refresh the page for the updated price."
+      end
+
+      it "rejects perceived price more than 1 cent away from the computed price" do
+        purchase.perceived_price_cents = product.price_cents + 2
+        purchase.save
+
+        expect(purchase.errors.full_messages).to include "Price cents The price just changed! Refresh the page for the updated price."
+      end
     end
   end
 
