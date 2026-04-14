@@ -109,6 +109,21 @@ describe SearchProducts do
         get :index, params: { size: "20" }
         expect(JSON.parse(response.body)["size"]).to eq(20)
       end
+
+      it "clamps size to MAX_SEARCH_SIZE when exceeding limit" do
+        get :index, params: { size: "10000" }
+        expect(JSON.parse(response.body)["size"]).to eq(SearchProducts::MAX_SEARCH_SIZE)
+      end
+
+      it "clamps size to minimum of 1" do
+        get :index, params: { size: "0" }
+        expect(JSON.parse(response.body)["size"]).to eq(1)
+      end
+
+      it "clamps negative size to 1" do
+        get :index, params: { size: "-5" }
+        expect(JSON.parse(response.body)["size"]).to eq(1)
+      end
     end
   end
 end

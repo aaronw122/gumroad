@@ -3,6 +3,7 @@
 module SearchProducts
   BLACK_FRIDAY_CODE = "BLACKFRIDAY2025"
   ALLOWED_OFFER_CODES = [BLACK_FRIDAY_CODE].freeze
+  MAX_SEARCH_SIZE = 100
 
   private
     def search_products(params)
@@ -30,8 +31,8 @@ module SearchProducts
 
       params[:offer_code] = "__no_match__" if params[:offer_code].present? && !offer_codes_search_feature_active?(params)
 
-      if params[:size].is_a?(String)
-        params[:size] = params[:size].to_i
+      if params[:size].present?
+        params[:size] = [[params[:size].to_i, 1].max, MAX_SEARCH_SIZE].min
       end
 
       params.delete(:search) unless params[:search].is_a?(Hash)
