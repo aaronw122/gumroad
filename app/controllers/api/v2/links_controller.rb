@@ -213,6 +213,48 @@ class Api::V2::LinksController < Api::V2::BaseController
       return render_response(false, message: "Price cannot be updated for tiered membership products. Use the variant endpoints to manage tier pricing.")
     end
 
+    if params.key?(:tags)
+      if !params[:tags].is_a?(Array) || params[:tags].any? { |t| !t.respond_to?(:to_str) }
+        return render_response(false, message: "tags must be an array of strings.")
+      end
+    end
+
+    if params.key?(:rich_content)
+      if !params[:rich_content].is_a?(Array) || params[:rich_content].any? { |p| !p.respond_to?(:key?) }
+        return render_response(false, message: "rich_content must be an array of content page objects.")
+      end
+      params[:rich_content].each do |p|
+        desc = p[:description]
+        next if desc.blank?
+        if !desc.respond_to?(:key?) && !desc.is_a?(Array)
+          return render_response(false, message: "Each rich_content page description must be a JSON object or array.")
+        end
+        content_nodes = if desc.respond_to?(:key?)
+          if desc[:content].present? && !desc[:content].is_a?(Array)
+            return render_response(false, message: "rich_content description content must be an array.")
+          end
+          desc[:content]
+        else
+          desc
+        end
+        if content_nodes.is_a?(Array) && content_nodes.any? { |n| !n.respond_to?(:key?) }
+          return render_response(false, message: "Each rich_content content node must be a JSON object.")
+        end
+      end
+    end
+
+    if params.key?(:files)
+      if !params[:files].is_a?(Array) || params[:files].any? { |f| !f.respond_to?(:key?) }
+        return render_response(false, message: "files must be an array of file objects.")
+      end
+    end
+
+    if params.key?(:cover_ids)
+      if !params[:cover_ids].is_a?(Array)
+        return render_response(false, message: "cover_ids must be an array.")
+      end
+    end
+
     @normalized_files = normalize_params_recursively(params[:files]) if params.key?(:files)
     @normalized_rich_content = normalize_params_recursively(params[:rich_content]) if params.key?(:rich_content)
 
