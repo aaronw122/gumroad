@@ -22,12 +22,10 @@ module ElasticsearchModelAsyncCallbacks
         ElasticsearchIndexerWorker.perform_in(delay, action, options)
 
         # Mitigation of small replica lag issues:
-        ElasticsearchIndexerWorker.perform_in(3.minutes, action, options) if action.in?(%w[index update])
-
-        # Extra safety net for balance records — a stale ES balance causes visible dashboard drift
-        if self.class.name == "Balance" && action.in?(%w[index update])
-          ElasticsearchIndexerWorker.perform_in(30.minutes, action, options)
-          ReconcileBalanceElasticsearchWorker.perform_in(10.minutes, self.user_id)
+        if action.in?(%w[index update])
+          ElasticsearchIndexerWorker.perform_in(3.minutes, action, options)
+          # Balance records get extra retries — stale ES balance causes visible dashboard drift
+          ElasticsearchIndexerWorker.perform_in(30.minutes, action, options) if self.class.name == "Balance"
         end
       end
   end
