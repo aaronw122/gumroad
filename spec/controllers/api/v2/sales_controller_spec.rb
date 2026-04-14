@@ -615,7 +615,7 @@ describe Api::V2::SalesController do
 
         expect(response.parsed_body).to eq({
           success: false,
-          message: "The sale was unable to be modified."
+          message: "This purchase has an active dispute. The funds have already been returned to the buyer."
         }.as_json)
       end
 
