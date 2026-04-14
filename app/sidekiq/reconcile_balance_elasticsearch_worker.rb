@@ -10,7 +10,7 @@ class ReconcileBalanceElasticsearchWorker
     user = User.find(user_id)
 
     sql_sum = user.balances.unpaid.sum(:amount_cents)
-    es_sum = Balance::Searchable.amount_cents_sum_for(user)
+    es_sum = Balance.amount_cents_sum_for(user)
 
     return if sql_sum == es_sum
 
