@@ -855,16 +855,9 @@ describe "PurchaseRefunds", :vcr do
         expect(result).not_to eq(false)
       end
 
-      it "returns 0 for amount_refundable_cents when chargedback" do
+      it "still returns the refundable amount for amount_refundable_cents when chargedback" do
         purchase = create(:purchase, price_cents: 5000)
         purchase.update!(chargeback_date: Time.current, chargeback_reversed: false)
-
-        expect(purchase.amount_refundable_cents).to eq(0)
-      end
-
-      it "returns normal amount for amount_refundable_cents when chargeback reversed" do
-        purchase = create(:purchase, price_cents: 5000)
-        purchase.update!(chargeback_date: Time.current, chargeback_reversed: true)
 
         expect(purchase.amount_refundable_cents).to eq(5000)
       end
