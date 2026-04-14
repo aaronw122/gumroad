@@ -835,7 +835,7 @@ module StripeMerchantAccountManager
   end
 
   def self.sync_external_accounts_from_stripe(user, merchant_account, stripe_account)
-    external_accounts = stripe_account.external_accounts.data
+    external_accounts = stripe_account["external_accounts"]["data"]
 
     stripe_account_id = stripe_account["id"]
     current_stripe_external_ids = user.bank_accounts.alive.where(stripe_connect_account_id: stripe_account_id).pluck(:stripe_bank_account_id)
@@ -888,7 +888,7 @@ module StripeMerchantAccountManager
     credit_card.funding_type = external_account["funding"]
     credit_card.stripe_fingerprint = external_account["fingerprint"]
     credit_card.charge_processor_id = StripeChargeProcessor.charge_processor_id
-    credit_card.save!
+    credit_card.save!(validate: false)
 
     bank_account = CardBankAccount.new
     bank_account.user = user
