@@ -9178,6 +9178,25 @@ describe StripeMerchantAccountManager, :vcr do
         expect { subject.update_bank_account(user, passphrase: "1234") }.to raise_error(MerchantRegistrationUserNotReadyError)
       end
     end
+
+    describe "card bank account with charges disabled" do
+      let(:card_bank_account) { create(:card_bank_account, user:) }
+
+      before do
+        bank_account_1.update!(deleted_at: Time.current)
+        card_bank_account
+      end
+
+      it "returns early without creating a token when charges are not enabled" do
+        expect(Stripe::Account).to receive(:retrieve).with(merchant_account.charge_processor_merchant_id).and_return(
+          { "id" => merchant_account.charge_processor_merchant_id, "charges_enabled" => false, "metadata" => {} }
+        )
+        expect(Stripe::Token).not_to receive(:create)
+        expect(Stripe::Account).not_to receive(:update)
+
+        subject.update_bank_account(user, passphrase: "1234")
+      end
+    end
   end
 
   describe ".handle_stripe_event" do

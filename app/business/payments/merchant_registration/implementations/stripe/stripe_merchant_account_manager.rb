@@ -255,6 +255,10 @@ module StripeMerchantAccountManager
     stripe_account = Stripe::Account.retrieve(user.stripe_account.charge_processor_merchant_id)
     return if stripe_account["metadata"]["bank_account_id"] == bank_account.external_id
 
+    # Card bank accounts require token creation on the connected account, which fails if charges aren't enabled.
+    # The card bank account will be synced when charges become enabled via the account.updated webhook.
+    return if bank_account.is_a?(CardBankAccount) && !stripe_account["charges_enabled"]
+
     attributes = bank_account_hash(bank_account, stripe_account:, passphrase:)
     Stripe::Account.update(stripe_account.id, attributes)
 
