@@ -203,6 +203,17 @@ describe LibraryPresenter do
       end
     end
 
+    it "caps the number of purchases returned" do
+      stub_const("LibraryPresenter::MAX_LIBRARY_PURCHASES", 1)
+
+      other_product = create(:product, user: creator)
+      create(:purchase, link: other_product, purchaser: buyer).tap { _1.create_url_redirect! }
+
+      purchases, _ = described_class.new(buyer).library_cards
+
+      expect(purchases.size).to eq(1)
+    end
+
     describe "has_third_party_analytics" do
       it "detects product-level receipt analytics" do
         create(:third_party_analytic, user: creator, link: product, location: "receipt", analytics_code: "<script>test</script>")

@@ -3,6 +3,8 @@
 class LibraryPresenter
   include Rails.application.routes.url_helpers
 
+  MAX_LIBRARY_PURCHASES = 5000
+
   attr_reader :logged_in_user
 
   def initialize(logged_in_user)
@@ -26,7 +28,8 @@ class LibraryPresenter
           user: { avatar_attachment: :blob }
         }
       )
-      .find_each(batch_size: 3000, order: :desc) # required to avoid full table scans. See https://github.com/gumroad/web/pull/25970
+      .order(id: :desc)
+      .limit(MAX_LIBRARY_PURCHASES)
       .to_a
 
     user_ids = purchases.map { |p| p.link.user_id }.uniq
