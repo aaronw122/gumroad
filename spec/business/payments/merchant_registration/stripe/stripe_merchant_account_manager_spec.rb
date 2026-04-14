@@ -120,12 +120,23 @@ describe StripeMerchantAccountManager, :vcr do
         expect(bank_account.reload.stripe_fingerprint).to match(/[a-zA-Z0-9]+/)
       end
 
-      it "raises the Stripe::InvalidRequestError" do
+      it "raises the Stripe::InvalidRequestError without notifying Sentry" do
         error_message = "Invalid account number: must contain only digits, and be at most 12 digits long"
         allow(Stripe::Account).to receive(:create).and_raise(Stripe::InvalidRequestError.new(error_message, nil))
+        allow(ErrorNotifier).to receive(:notify)
         expect do
           subject.create_account(user, passphrase: "1234")
         end.to raise_error(Stripe::InvalidRequestError)
+        expect(ErrorNotifier).not_to have_received(:notify)
+      end
+
+      it "raises and notifies Sentry for non-InvalidRequestError Stripe errors" do
+        allow(Stripe::Account).to receive(:create).and_raise(Stripe::APIError.new("Internal server error"))
+        allow(ErrorNotifier).to receive(:notify)
+        expect do
+          subject.create_account(user, passphrase: "1234")
+        end.to raise_error(Stripe::APIError)
+        expect(ErrorNotifier).to have_received(:notify).with(instance_of(Stripe::APIError))
       end
 
       context "when user compliance info contains whitespaces" do
@@ -8528,6 +8539,7 @@ describe StripeMerchantAccountManager, :vcr do
           subject.create_account(user, passphrase: "1234")
         end.to raise_error(Stripe::InvalidRequestError)
         expect(user.merchant_accounts.alive.count).to eq(0)
+        expect(ErrorNotifier).not_to have_received(:notify)
       end
 
       it "still marks the merchant account as deleted when Stripe account deletion fails" do
@@ -8537,7 +8549,7 @@ describe StripeMerchantAccountManager, :vcr do
           subject.create_account(user, passphrase: "1234")
         end.to raise_error(Stripe::InvalidRequestError)
         expect(user.merchant_accounts.alive.count).to eq(0)
-        expect(ErrorNotifier).to have_received(:notify).at_least(:twice)
+        expect(ErrorNotifier).to have_received(:notify).at_least(:once)
       end
     end
 
