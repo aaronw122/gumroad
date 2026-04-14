@@ -350,4 +350,27 @@ describe ElasticsearchIndexerWorker, :elasticsearch_wait_for_refresh do
     @client.get(index: @model.index_name, id: record.id).fetch("_source")
   rescue Elasticsearch::Transport::Transport::Errors::NotFound => _
   end
+
+  describe "sidekiq_retries_exhausted" do
+    it "notifies ErrorNotifier when a Balance record fails" do
+      job = { "args" => ["index", { "class_name" => "Balance", "record_id" => 123 }] }
+      exception = StandardError.new("ES connection refused")
+
+      expect(ErrorNotifier).to receive(:notify).with(
+        "ElasticsearchIndexerWorker retries exhausted for Balance #123. " \
+        "Dashboard balance may be stale. Error: ES connection refused"
+      )
+
+      described_class.sidekiq_retries_exhausted_block.call(job, exception)
+    end
+
+    it "does not notify for non-Balance records" do
+      job = { "args" => ["index", { "class_name" => "Link", "record_id" => 456 }] }
+      exception = StandardError.new("ES connection refused")
+
+      expect(ErrorNotifier).not_to receive(:notify)
+
+      described_class.sidekiq_retries_exhausted_block.call(job, exception)
+    end
+  end
 end

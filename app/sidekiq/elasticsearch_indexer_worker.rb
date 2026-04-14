@@ -4,6 +4,19 @@ class ElasticsearchIndexerWorker
   include Sidekiq::Job
   sidekiq_options retry: 10, queue: :default
 
+  BALANCE_CRITICAL_CLASSES = %w[Balance].freeze
+
+  sidekiq_retries_exhausted do |job, exception|
+    class_name = job.dig("args", 1, "class_name")
+    if class_name.in?(BALANCE_CRITICAL_CLASSES)
+      record_id = job.dig("args", 1, "record_id")
+      ErrorNotifier.notify(
+        "ElasticsearchIndexerWorker retries exhausted for #{class_name} ##{record_id}. " \
+        "Dashboard balance may be stale. Error: #{exception&.message}"
+      )
+    end
+  end
+
   UPDATE_BY_QUERY_SCROLL_SIZE = 100
 
   # Usage examples:
