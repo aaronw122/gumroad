@@ -54,13 +54,37 @@ describe ValidateRecaptcha, type: :controller do
       expect(response).to have_http_status(:unprocessable_entity)
     end
 
-    it "returns empty hash when HTTParty raises an error" do
+    it "returns empty hash when HTTParty raises a network timeout" do
       allow(HTTParty).to receive(:post).and_raise(Net::OpenTimeout.new("execution expired"))
 
       post :action, params: { "g-recaptcha-response" => "test_token" }
 
       expect(response).to have_http_status(:unprocessable_entity)
       expect(JSON.parse(response.body)["error"]).to eq("captcha_failed")
+    end
+
+    it "returns empty hash when HTTParty raises a read timeout" do
+      allow(HTTParty).to receive(:post).and_raise(Net::ReadTimeout.new("read timeout"))
+
+      post :action, params: { "g-recaptcha-response" => "test_token" }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "returns empty hash when HTTParty raises a connection refused error" do
+      allow(HTTParty).to receive(:post).and_raise(Errno::ECONNREFUSED)
+
+      post :action, params: { "g-recaptcha-response" => "test_token" }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "propagates programming errors instead of silently swallowing them" do
+      allow(HTTParty).to receive(:post).and_raise(NoMethodError.new("undefined method 'foo'"))
+
+      expect {
+        post :action, params: { "g-recaptcha-response" => "test_token" }
+      }.to raise_error(NoMethodError)
     end
   end
 end
