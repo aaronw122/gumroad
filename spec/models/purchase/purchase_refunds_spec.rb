@@ -811,6 +811,14 @@ describe "PurchaseRefunds", :vcr do
           purchase.reload
         end
 
+        it "does not issue a refund while the dispute is still active" do
+          expect(ChargeProcessor).not_to receive(:refund!)
+
+          expect(purchase.refund_and_save!(create(:admin_user).id)).to be(false)
+          expect(purchase.errors[:base]).to include(Purchase::Refundable::ACTIVE_DISPUTE_REFUND_ERROR_MESSAGE)
+          expect(purchase.reload.refunds).to be_empty
+        end
+
         it "does not decrement balance from the user on such an event" do
           expect(purchase).to_not receive(:process_refund_or_chargeback_for_purchase_balance)
           expect(purchase).to_not receive(:process_refund_or_chargeback_for_affiliate_credit_balance)

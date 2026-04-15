@@ -2,6 +2,10 @@
 
 class Purchase
   module Refundable
+    ACTIVE_DISPUTE_REFUND_ERROR_MESSAGE = "This purchase has an active dispute. " \
+                                          "The funds have already been returned to the buyer. " \
+                                          "No additional refund is needed."
+
     # * amount - the amount to refund (out of `Purchase#price_cents`, VAT-exclusive). VAT will be refunded proportinally to this amount.
     def refund!(refunding_user_id:, amount: nil)
       if amount.blank?
@@ -28,6 +32,11 @@ class Purchase
     # * amount - the amount to refund (out of `Purchase#price_cents`, VAT-exclusive). VAT will be refunded proportinally to this amount.
     def refund_and_save!(refunding_user_id, amount_cents: nil, is_for_fraud: false)
       return if stripe_transaction_id.blank? || stripe_refunded || amount_refundable_cents <= 0
+
+      if chargedback_not_reversed?
+        errors.add :base, ACTIVE_DISPUTE_REFUND_ERROR_MESSAGE
+        return false
+      end
 
       if (merchant_account.is_a_stripe_connect_account? && !merchant_account.active?) ||
           (paypal_charge_processor? &&
