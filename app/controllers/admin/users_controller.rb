@@ -141,8 +141,8 @@ class Admin::UsersController < Admin::BaseController
           content: suspension_note
         )
       end
+      create_scheduled_payout_if_requested
     end
-    create_scheduled_payout_if_requested
     render json: { success: true }
   rescue => e
     render json: { success: false, message: e.message }

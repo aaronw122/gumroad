@@ -53,9 +53,11 @@ class ScheduledPayout < ApplicationRecord
   end
 
   def cancel!
-    raise "Cannot cancel a #{status} scheduled payout" if !%w[pending flagged].include?(status)
+    with_lock do
+      raise "Cannot cancel a #{status} scheduled payout" if !%w[pending flagged].include?(status)
 
-    update!(status: "cancelled")
+      update!(status: "cancelled")
+    end
   end
 
   def flag_for_review!
