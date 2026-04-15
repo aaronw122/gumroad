@@ -125,9 +125,9 @@ describe ScheduledPayout do
     context "when action is payout" do
       let(:scheduled_payout) { create(:scheduled_payout, user: user, action: "payout", scheduled_at: 1.day.ago) }
 
-      it "calls Payouts to create instant payout and marks as executed" do
-        expect(Payouts).to receive(:create_instant_payouts_for_balances_up_to_date_for_users)
-          .with(Date.yesterday, [user], from_admin: true)
+      it "calls Payouts to create payout and marks as executed" do
+        expect(Payouts).to receive(:create_payments_for_balances_up_to_date_for_users)
+          .with(Date.yesterday, PayoutProcessorType::STRIPE, [user], from_admin: true)
 
         scheduled_payout.execute!
 
@@ -140,7 +140,7 @@ describe ScheduledPayout do
       let(:scheduled_payout) { create(:scheduled_payout, user: user, action: "payout", scheduled_at: 1.day.ago, payout_amount_cents: 150_000) }
 
       it "flags for review instead of executing" do
-        expect(Payouts).not_to receive(:create_instant_payouts_for_balances_up_to_date_for_users)
+        expect(Payouts).not_to receive(:create_payments_for_balances_up_to_date_for_users)
 
         scheduled_payout.execute!
 

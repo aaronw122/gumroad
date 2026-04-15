@@ -42,7 +42,7 @@ class ScheduledPayout < ApplicationRecord
         update!(status: "executed", executed_at: Time.current)
         enqueue_refund = true
       elsif action == "payout"
-        Payouts.create_instant_payouts_for_balances_up_to_date_for_users(Date.yesterday, [user], from_admin: true)
+        Payouts.create_payments_for_balances_up_to_date_for_users(Date.yesterday, PayoutProcessorType::STRIPE, [user], from_admin: true)
         update!(status: "executed", executed_at: Time.current)
       elsif action == "hold"
         update!(status: "held")
