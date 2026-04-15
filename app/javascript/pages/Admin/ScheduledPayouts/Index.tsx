@@ -117,7 +117,7 @@ const AdminScheduledPayoutsIndex = () => {
                     <div className="flex gap-2">
                       <AdminActionButton
                         url={Routes.execute_admin_scheduled_payout_path(sp.external_id)}
-                        label="Pay now"
+                        label={sp.action === "refund" ? "Refund now" : sp.action === "hold" ? "Hold now" : "Pay now"}
                         confirm_message={`Execute ${sp.action} for ${sp.user.name || sp.user.email}?`}
                         success_message="Executed"
                       />
