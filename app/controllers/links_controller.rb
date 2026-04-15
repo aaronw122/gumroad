@@ -290,6 +290,8 @@ class LinksController < ApplicationController
 
     return redirect_to edit_bundle_product_path(@product.external_id) if @product.is_bundle?
 
+    preload_product_for_edit
+
     set_meta_tag(title: @product.name)
 
     ai_generated = params[:ai_generated] == "true"
@@ -548,6 +550,27 @@ class LinksController < ApplicationController
         :alive_prices,
         { display_asset_previews: [:file_attachment, :file_blob] },
         :alive_third_party_analytics
+      ).find(@product.id)
+    end
+
+    def preload_product_for_edit
+      @product = Link.includes(
+        { display_asset_previews: [:file_attachment, :file_blob] },
+        :thumbnail_alive,
+        :custom_domain,
+        :tags,
+        :product_review_stat,
+        { alive_public_files: { file_attachment: :blob } },
+        { live_product_integrations: :integration },
+        { variant_categories_alive: {
+          alive_variants: [
+            :alive_rich_contents,
+            { live_base_variant_integrations: :integration },
+          ]
+        } },
+        :alive_rich_contents,
+        :call_availabilities,
+        :shipping_destinations,
       ).find(@product.id)
     end
 
