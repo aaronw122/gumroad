@@ -60,23 +60,16 @@ const STATUS_FILTERS = [
   { value: "held", label: "Held" },
 ];
 
-const formatAmount = (cents: number | null) =>
-  cents != null ? formatPriceCentsWithCurrencySymbol("usd", cents, { symbolFormat: "short" }) : null;
-
 const describeAction = (sp: ScheduledPayout): string => {
-  const amount = formatAmount(sp.payout_amount_cents);
+  const amount = formatPriceCentsWithCurrencySymbol("usd", sp.payout_amount_cents ?? 0, { symbolFormat: "short" });
 
   switch (sp.action) {
     case "payout":
-      return amount ? `Balance of ${amount} will be paid out to the seller.` : "Balance will be paid out to the seller.";
+      return `Balance of ${amount} will be paid out to the seller.`;
     case "refund":
-      return amount
-        ? `No payout. Balance (${amount}) will be refunded to customers.`
-        : "No payout. Balance will be refunded to customers.";
+      return `No payout. Balance (${amount}) will be refunded to customers.`;
     case "hold":
-      return amount
-        ? `Balance of ${amount} will be held for manual release.`
-        : "Balance will be held for manual release.";
+      return `Balance of ${amount} will be held for manual release.`;
   }
 };
 
