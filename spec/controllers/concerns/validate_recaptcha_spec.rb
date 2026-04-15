@@ -79,6 +79,22 @@ describe ValidateRecaptcha, type: :controller do
       expect(response).to have_http_status(:unprocessable_entity)
     end
 
+    it "returns empty hash when an SSL error occurs" do
+      allow(HTTParty).to receive(:post).and_raise(OpenSSL::SSL::SSLError.new("certificate verify failed"))
+
+      post :action, params: { "g-recaptcha-response" => "test_token" }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "returns empty hash when a generic Timeout::Error occurs" do
+      allow(HTTParty).to receive(:post).and_raise(Timeout::Error.new("execution expired"))
+
+      post :action, params: { "g-recaptcha-response" => "test_token" }
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
     it "propagates programming errors instead of silently swallowing them" do
       allow(HTTParty).to receive(:post).and_raise(NoMethodError.new("undefined method 'foo'"))
 

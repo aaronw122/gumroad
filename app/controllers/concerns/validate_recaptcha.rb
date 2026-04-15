@@ -54,7 +54,7 @@ module ValidateRecaptcha
         Rails.logger.error("Unexpected reCAPTCHA response format: #{response.code} #{parsed.class}")
         {}
       end
-    rescue Net::OpenTimeout, Net::ReadTimeout, SocketError, Errno::ECONNREFUSED, Errno::ECONNRESET, HTTParty::Error => e
+    rescue Net::OpenTimeout, Net::ReadTimeout, Timeout::Error, SocketError, Errno::ECONNREFUSED, Errno::ECONNRESET, OpenSSL::SSL::SSLError, HTTParty::Error => e
       Rails.logger.error("reCAPTCHA verification request failed: #{e.message}")
       {}
     end
