@@ -6,9 +6,9 @@ import { formatPriceCentsWithCurrencySymbol } from "$app/utils/currency";
 
 import { AdminActionButton } from "$app/components/Admin/ActionButton";
 import AdminEmptyState from "$app/components/Admin/EmptyState";
-import { Button } from "$app/components/Button";
 import { Pagination, type PaginationProps } from "$app/components/Pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "$app/components/ui/Table";
+import { Tabs, Tab } from "$app/components/ui/Tabs";
 
 type ScheduledPayoutUser = {
   external_id: string;
@@ -51,6 +51,35 @@ const StatusBadge = ({ status }: { status: string }) => (
   </span>
 );
 
+const STATUS_FILTERS = [
+  { value: null, label: "All" },
+  { value: "pending", label: "Pending" },
+  { value: "flagged", label: "Flagged" },
+  { value: "executed", label: "Executed" },
+  { value: "cancelled", label: "Cancelled" },
+  { value: "held", label: "Held" },
+];
+
+const formatAmount = (cents: number | null) =>
+  cents != null ? formatPriceCentsWithCurrencySymbol("usd", cents, { symbolFormat: "short" }) : null;
+
+const describeAction = (sp: ScheduledPayout): string => {
+  const amount = formatAmount(sp.payout_amount_cents);
+
+  switch (sp.action) {
+    case "payout":
+      return amount ? `Balance of ${amount} will be paid out to the seller.` : "Balance will be paid out to the seller.";
+    case "refund":
+      return amount
+        ? `No payout. Balance (${amount}) will be refunded to customers.`
+        : "No payout. Balance will be refunded to customers.";
+    case "hold":
+      return amount
+        ? `Balance of ${amount} will be held for manual release.`
+        : "Balance will be held for manual release.";
+  }
+};
+
 const AdminScheduledPayoutsIndex = () => {
   const { scheduled_payouts, pagination, current_status_filter } = cast<PageProps>(usePage().props);
 
@@ -64,19 +93,21 @@ const AdminScheduledPayoutsIndex = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex gap-2">
-        {[null, "pending", "flagged", "executed", "cancelled", "held"].map((status) => (
-          <Button
-            key={status ?? "all"}
-            size="sm"
-            color={current_status_filter === status ? "primary" : undefined}
-            outline={current_status_filter !== status}
-            onClick={() => onFilterStatus(status)}
+      <Tabs>
+        {STATUS_FILTERS.map(({ value, label }) => (
+          <Tab
+            key={value ?? "all"}
+            isSelected={current_status_filter === value}
+            onClick={(e) => {
+              e.preventDefault();
+              onFilterStatus(value);
+            }}
+            href="#"
           >
-            {status ? status.charAt(0).toUpperCase() + status.slice(1) : "All"}
-          </Button>
+            {label}
+          </Tab>
         ))}
-      </div>
+      </Tabs>
 
       {scheduled_payouts.length === 0 ? (
         <AdminEmptyState message="No scheduled payouts found." />
@@ -86,7 +117,6 @@ const AdminScheduledPayoutsIndex = () => {
             <TableRow>
               <TableHead>User</TableHead>
               <TableHead>Action</TableHead>
-              <TableHead>Amount</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Scheduled</TableHead>
               <TableHead>Created by</TableHead>
@@ -101,11 +131,9 @@ const AdminScheduledPayoutsIndex = () => {
                     {sp.user.name || sp.user.email}
                   </a>
                 </TableCell>
-                <TableCell className="capitalize">{sp.action}</TableCell>
                 <TableCell>
-                  {sp.payout_amount_cents != null
-                    ? formatPriceCentsWithCurrencySymbol("usd", sp.payout_amount_cents, { symbolFormat: "short" })
-                    : "-"}
+                  <div className="capitalize">{sp.action}</div>
+                  <div className="text-xs text-muted">{describeAction(sp)}</div>
                 </TableCell>
                 <TableCell>
                   <StatusBadge status={sp.status} />
@@ -117,7 +145,7 @@ const AdminScheduledPayoutsIndex = () => {
                     <div className="flex gap-2">
                       <AdminActionButton
                         url={Routes.execute_admin_scheduled_payout_path(sp.external_id)}
-                        label={sp.action === "refund" ? "Refund now" : sp.action === "hold" ? "Hold" : "Pay now"}
+                        label="Execute now"
                         confirm_message={`Execute ${sp.action} for ${sp.user.name || sp.user.email}?`}
                         success_message="Executed"
                       />
