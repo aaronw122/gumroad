@@ -57,6 +57,10 @@ class SaveFilesService
       all_file_params = all_file_params.is_a?(Array) ? all_file_params : all_file_params.values
       all_file_params.each do |file_params|
         file_params[:filetype] = "link" if file_params.delete(:extension) == "URL"
+        if file_params.key?(:name)
+          file_params[:display_name] ||= file_params[:name]
+          file_params.delete(:name)
+        end
       end
     end
 end
