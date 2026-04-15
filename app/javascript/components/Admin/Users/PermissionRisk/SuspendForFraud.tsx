@@ -41,7 +41,7 @@ const SuspendForFraud = ({ user }: SuspendForFraudProps) => {
                   placeholder="Add suspension note (optional)"
                 />
                 <div className="flex items-end gap-2">
-                  <div className="flex-1">
+                  <div className="flex flex-1 flex-col gap-2">
                     <Label htmlFor="scheduled_payout_action">Balance action</Label>
                     <Select
                       id="scheduled_payout_action"
@@ -55,7 +55,7 @@ const SuspendForFraud = ({ user }: SuspendForFraudProps) => {
                     </Select>
                   </div>
                   {payoutAction !== "hold" && (
-                    <div className="w-24">
+                    <div className="flex w-24 flex-col gap-2">
                       <Label htmlFor="scheduled_payout_delay">Delay (days)</Label>
                       <Input
                         id="scheduled_payout_delay"
