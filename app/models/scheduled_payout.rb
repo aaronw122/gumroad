@@ -42,7 +42,11 @@ class ScheduledPayout < ApplicationRecord
         update!(status: "executed", executed_at: Time.current)
         enqueue_refund = true
       elsif action == "payout"
-        Payouts.create_payments_for_balances_up_to_date_for_users(Date.yesterday, PayoutProcessorType::STRIPE, [user], from_admin: true)
+        payments = Payouts.create_payments_for_balances_up_to_date_for_users(Date.yesterday, user.current_payout_processor, [user], from_admin: true)
+        payment = payments.flatten.last
+        if payment.blank? || payment.failed?
+          raise "Payout failed: #{payment&.errors&.full_messages&.first || "Payment was not sent."}"
+        end
         update!(status: "executed", executed_at: Time.current)
       elsif action == "hold"
         update!(status: "held")

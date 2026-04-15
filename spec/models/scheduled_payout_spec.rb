@@ -126,13 +126,34 @@ describe ScheduledPayout do
       let(:scheduled_payout) { create(:scheduled_payout, user: user, action: "payout", scheduled_at: 1.day.ago) }
 
       it "calls Payouts to create payout and marks as executed" do
+        payment = instance_double(Payment, failed?: false)
         expect(Payouts).to receive(:create_payments_for_balances_up_to_date_for_users)
-          .with(Date.yesterday, PayoutProcessorType::STRIPE, [user], from_admin: true)
+          .with(Date.yesterday, user.current_payout_processor, [user], from_admin: true)
+          .and_return([[payment]])
 
         scheduled_payout.execute!
 
         expect(scheduled_payout.reload.status).to eq("executed")
         expect(scheduled_payout.executed_at).to be_present
+      end
+
+      it "raises if payout fails" do
+        payment = instance_double(Payment, failed?: true, errors: double(full_messages: ["Stripe account not found"]))
+        allow(Payouts).to receive(:create_payments_for_balances_up_to_date_for_users)
+          .with(Date.yesterday, user.current_payout_processor, [user], from_admin: true)
+          .and_return([[payment]])
+
+        expect { scheduled_payout.execute! }.to raise_error(RuntimeError, /Payout failed/)
+        expect(scheduled_payout.reload.status).to eq("pending")
+      end
+
+      it "raises if no payment is created" do
+        allow(Payouts).to receive(:create_payments_for_balances_up_to_date_for_users)
+          .with(Date.yesterday, user.current_payout_processor, [user], from_admin: true)
+          .and_return([])
+
+        expect { scheduled_payout.execute! }.to raise_error(RuntimeError, /Payment was not sent/)
+        expect(scheduled_payout.reload.status).to eq("pending")
       end
     end
 
