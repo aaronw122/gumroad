@@ -115,13 +115,8 @@ class Api::V2::LinksController < Api::V2::BaseController
       if !params[:files].is_a?(Array) || params[:files].any? { |f| !f.respond_to?(:key?) }
         return render_response(false, message: "files must be an array of file objects.")
       end
-      if params[:files].any? { |f| !f[:url].respond_to?(:to_str) || f[:url].blank? }
-        return render_response(false, message: "Each file must include a url string.")
-      end
-      seller_s3_prefix = "#{S3_BASE_URL}attachments/#{current_resource_owner.external_id}/"
-      if params[:files].any? { |f| !f[:url].start_with?(seller_s3_prefix) || f[:url].include?("..") || f[:url].include?("%2F") || f[:url].include?("%2f") }
-        return render_response(false, message: "File URLs must reference your own uploaded files. Use the presigned upload endpoint to upload files first.")
-      end
+      error = validate_file_urls(params[:files])
+      return render_response(false, message: error) if error
     end
 
     if params[:taxonomy_id].present?
@@ -247,6 +242,20 @@ class Api::V2::LinksController < Api::V2::BaseController
       if !params[:files].is_a?(Array) || params[:files].any? { |f| !f.respond_to?(:key?) }
         return render_response(false, message: "files must be an array of file objects.")
       end
+      existing_files_by_id = @product.alive_product_files.index_by(&:external_id)
+      new_files = []
+      params[:files].each do |f|
+        existing = f[:id].present? ? existing_files_by_id[f[:id]] : nil
+        if existing
+          if f[:url].present? && f[:url] != existing.url
+            return render_response(false, message: "File URLs must reference your own uploaded files. Use the presigned upload endpoint to upload files first.")
+          end
+        else
+          new_files << f
+        end
+      end
+      error = validate_file_urls(new_files)
+      return render_response(false, message: error) if error
     end
 
     if params.key?(:cover_ids)
@@ -405,6 +414,17 @@ class Api::V2::LinksController < Api::V2::BaseController
 
       render_response(false, message: "You entered the name of the file to be uploaded incorrectly. Please refer to " \
                                       "https://gumroad.com/api#methods for the correct syntax.")
+    end
+
+    def validate_file_urls(files)
+      if files.any? { |f| !f[:url].respond_to?(:to_str) || f[:url].blank? }
+        return "Each file must include a url string."
+      end
+      seller_s3_prefix = "#{S3_BASE_URL}attachments/#{current_resource_owner.external_id}/"
+      if files.any? { |f| !f[:url].start_with?(seller_s3_prefix) || f[:url].include?("..") || f[:url].include?("%2F") || f[:url].include?("%2f") }
+        return "File URLs must reference your own uploaded files. Use the presigned upload endpoint to upload files first."
+      end
+      nil
     end
 
     def set_link_id_to_id

@@ -931,6 +931,38 @@ describe Api::V2::LinksController do
         expect(response.parsed_body["message"]).to include("rich_content must be an array of content page objects")
       end
 
+      it "rejects rich_content with string description" do
+        put @action, params: @params.merge(rich_content: [{ title: "Page", description: "a string" }])
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("description must be a JSON object or array")
+      end
+
+      it "rejects rich_content with non-array wrapper content" do
+        put @action, params: @params.merge(rich_content: [{ description: { type: "doc", content: "oops" } }])
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("content must be an array")
+      end
+
+      it "rejects rich_content with non-object content nodes in wrapper" do
+        put @action, params: @params.merge(rich_content: [{ description: { type: "doc", content: [1, "text"] } }])
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("content node must be a JSON object")
+      end
+
+      it "rejects rich_content with non-object content nodes in raw array" do
+        put @action, params: @params.merge(rich_content: [{ description: [1, 2] }])
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("content node must be a JSON object")
+      end
+
       it "rejects non-array files" do
         put @action, params: @params.merge(files: { url: "https://example.com/file.pdf" })
 
@@ -945,6 +977,58 @@ describe Api::V2::LinksController do
         expect(response).to be_successful
         expect(response.parsed_body["success"]).to be false
         expect(response.parsed_body["message"]).to include("files must be an array of file objects")
+      end
+
+      it "rejects file objects missing url" do
+        put @action, params: @params.merge(files: [{ display_name: "No URL" }])
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("must include a url string")
+      end
+
+      it "rejects file urls that are not the seller's S3 path" do
+        put @action, params: @params.merge(files: [{ url: "https://evil.com/malware.exe" }])
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("must reference your own uploaded files")
+      end
+
+      it "rejects file urls with path traversal" do
+        put @action, params: @params.merge(files: [{ url: "#{S3_BASE_URL}attachments/#{@user.external_id}/../../other-user/secret.pdf" }])
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("must reference your own uploaded files")
+      end
+
+      it "rejects file urls from another seller's S3 path" do
+        other_user = create(:user)
+        put @action, params: @params.merge(files: [{ url: "#{S3_BASE_URL}attachments/#{other_user.external_id}/test/original/stolen.pdf" }])
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("must reference your own uploaded files")
+      end
+
+      it "rejects existing file id with a different url" do
+        existing_file = create(:product_file, link: @product)
+        put @action, params: @params.merge(files: [{ id: existing_file.external_id, url: "https://evil.com/malware.exe" }])
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("must reference your own uploaded files")
+      end
+
+      it "rejects foreign product file id with malicious url" do
+        other_product = create(:product, user: create(:user))
+        other_file = create(:product_file, link: other_product)
+        put @action, params: @params.merge(files: [{ id: other_file.external_id, url: "https://evil.com/malware.exe" }])
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("must reference your own uploaded files")
       end
 
       it "rejects files containing uploaded file objects" do
@@ -988,7 +1072,7 @@ describe Api::V2::LinksController do
 
         expect(response).to be_successful
         expect(response.parsed_body["success"]).to be false
-        expect(response.parsed_body["message"]).to include("files must be an array of file objects")
+        expect(response.parsed_body["message"]).to include("must include a url string")
       end
 
       it "rejects rich_content when numeric-keyed params normalize into non-hash elements" do
@@ -1379,6 +1463,54 @@ describe Api::V2::LinksController do
           expect(response.parsed_body["success"]).to be(true)
           expect(@product.reload.alive_rich_contents.count).to eq 1
         end
+      end
+
+      it "rejects non-array tags" do
+        put @action, params: @params.merge(tags: "oops")
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("tags must be an array")
+      end
+
+      it "rejects tags with non-string elements" do
+        put @action, params: @params.merge(tags: ["valid", { nested: "hash" }])
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("tags must be an array of strings")
+      end
+
+      it "rejects non-array rich_content" do
+        put @action, params: @params.merge(rich_content: "oops")
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("rich_content must be an array")
+      end
+
+      it "rejects rich_content with non-object elements" do
+        put @action, params: @params.merge(rich_content: ["not_an_object"])
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("rich_content must be an array of content page objects")
+      end
+
+      it "rejects non-array files" do
+        put @action, params: @params.merge(files: "oops")
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("files must be an array")
+      end
+
+      it "rejects files with non-object elements" do
+        put @action, params: @params.merge(files: ["not_an_object"])
+
+        expect(response).to be_successful
+        expect(response.parsed_body["success"]).to be false
+        expect(response.parsed_body["message"]).to include("files must be an array of file objects")
       end
     end
   end
