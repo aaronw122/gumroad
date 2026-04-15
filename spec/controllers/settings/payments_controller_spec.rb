@@ -245,6 +245,23 @@ describe Settings::PaymentsController, :vcr, type: :controller, inertia: true do
       end
     end
 
+    describe "unsupported bank account type" do
+      it "returns an error instead of raising" do
+        put :update, params: {
+          bank_account: {
+            type: "UnsupportedBankAccount",
+            account_number: "000123456789",
+            account_number_confirmation: "000123456789",
+            account_holder_full_name: "gumbot"
+          }
+        }
+
+        expect(response).to redirect_to(settings_payments_path)
+        expect(response).to have_http_status :found
+        expect(session[:inertia_errors][:base]).to include("Unsupported bank account type.")
+      end
+    end
+
     describe "individual" do
       let(:all_params) do { user: params }.merge!(
         bank_account: {

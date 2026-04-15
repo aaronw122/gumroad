@@ -140,7 +140,7 @@ class UpdatePayoutMethod
       params[:bank_account][:type].present? &&
       (params[:bank_account][:account_holder_full_name].present? || params[:bank_account][:account_number].present?)
 
-      raise unless params[:bank_account][:type].in?(BANK_ACCOUNT_TYPES)
+      return { error: :bank_account_error, data: "Unsupported bank account type." } unless params[:bank_account][:type].in?(BANK_ACCOUNT_TYPES)
 
       if params[:bank_account][:account_number].present?
         bank_account_account_number = params[:bank_account][:account_number].delete("-").strip
