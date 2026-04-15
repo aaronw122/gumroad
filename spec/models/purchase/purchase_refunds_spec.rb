@@ -1296,9 +1296,11 @@ describe "PurchaseRefunds", :vcr do
     end
 
     it "queues an email to the seller informing them of the refund" do
+      allow(@purchase).to receive(:refund_and_save!).and_return(true)
+
       expect do
-        @purchase.refund_for_fraud!(@user.id)
-      end.to have_enqueued_mail(ContactingCreatorMailer, :purchase_refunded_for_fraud).with(@purchase_id)
+        @purchase.refund_for_fraud!(create(:admin_user).id)
+      end.to have_enqueued_mail(ContactingCreatorMailer, :purchase_refunded_for_fraud).with(@purchase.id)
     end
 
     it "does not cancel the subscription or queue an email when the refund fails",
@@ -1316,8 +1318,9 @@ describe "PurchaseRefunds", :vcr do
     describe "subscription purchases" do
       it "cancels the subscription effective immediately" do
         purchase = create(:membership_purchase)
+        allow(purchase).to receive(:refund_and_save!).and_return(true)
 
-        purchase.refund_for_fraud!(create(:admin_user).id)
+        expect(purchase.refund_for_fraud!(create(:admin_user).id)).to be(true)
 
         subscription = purchase.subscription
         expect(subscription.cancelled?).to eq true
