@@ -22,6 +22,7 @@ import {
   UpdateOfferCode,
   DeleteOfferCode,
 } from "$app/components/ApiDocumentation/Endpoints/OfferCodes";
+import { GetEarnings } from "$app/components/ApiDocumentation/Endpoints/Earnings";
 import {GetPayouts, GetPayout, GetUpcomingPayouts} from "$app/components/ApiDocumentation/Endpoints/Payouts";
 import {
   GetProducts,
@@ -43,6 +44,7 @@ import {
   ResendReceipt,
 } from "$app/components/ApiDocumentation/Endpoints/Sales";
 import { GetSubscribers, GetSubscriber } from "$app/components/ApiDocumentation/Endpoints/Subscribers";
+import { GetTaxForms, DownloadTaxForm } from "$app/components/ApiDocumentation/Endpoints/TaxForms";
 import { GetUser } from "$app/components/ApiDocumentation/Endpoints/User";
 import {
   CreateVariantCategory,
@@ -161,6 +163,15 @@ export default function Api() {
                 <GetPayouts />
                 <GetPayout />
                 <GetUpcomingPayouts />
+              </ApiResource>
+
+              <ApiResource name="Tax forms" id="tax-forms">
+                <GetTaxForms />
+                <DownloadTaxForm />
+              </ApiResource>
+
+              <ApiResource name="Earnings" id="earnings">
+                <GetEarnings />
               </ApiResource>
             </article>
           </div>
