@@ -13,8 +13,7 @@ class CreateScheduledPayouts < ActiveRecord::Migration[7.1]
       t.bigint :payout_amount_cents
       t.timestamps
 
-      t.index :status
-      t.index :scheduled_at
+      t.index [:status, :scheduled_at]
       t.index :created_by_id
     end
   end

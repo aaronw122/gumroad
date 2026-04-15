@@ -1926,8 +1926,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_19_011940) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["created_by_id"], name: "index_scheduled_payouts_on_created_by_id"
-    t.index ["scheduled_at"], name: "index_scheduled_payouts_on_scheduled_at"
-    t.index ["status"], name: "index_scheduled_payouts_on_status"
+    t.index ["status", "scheduled_at"], name: "index_scheduled_payouts_on_status_and_scheduled_at"
     t.index ["user_id"], name: "index_scheduled_payouts_on_user_id"
   end
 
