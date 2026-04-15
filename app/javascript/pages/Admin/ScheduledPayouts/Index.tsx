@@ -8,6 +8,7 @@ import { AdminActionButton } from "$app/components/Admin/ActionButton";
 import AdminEmptyState from "$app/components/Admin/EmptyState";
 import { Button } from "$app/components/Button";
 import { Pagination, type PaginationProps } from "$app/components/Pagination";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "$app/components/ui/Table";
 
 type ScheduledPayoutUser = {
   external_id: string;
@@ -34,13 +35,21 @@ type PageProps = {
   current_status_filter: string | null;
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  pending: "text-yellow-600",
-  executed: "text-green-600",
-  cancelled: "text-muted",
-  flagged: "text-red-600",
-  held: "text-orange-600",
+const STATUS_BADGE_STYLES: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  executed: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  cancelled: "bg-filled text-muted",
+  flagged: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  held: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
 };
+
+const StatusBadge = ({ status }: { status: string }) => (
+  <span
+    className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium capitalize ${STATUS_BADGE_STYLES[status] ?? ""}`}
+  >
+    {status}
+  </span>
+);
 
 const AdminScheduledPayoutsIndex = () => {
   const { scheduled_payouts, pagination, current_status_filter } = cast<PageProps>(usePage().props);
@@ -55,8 +64,6 @@ const AdminScheduledPayoutsIndex = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Scheduled Payouts</h1>
-
       <div className="flex gap-2">
         {[null, "pending", "flagged", "executed", "cancelled", "held"].map((status) => (
           <Button
@@ -66,7 +73,7 @@ const AdminScheduledPayoutsIndex = () => {
             outline={current_status_filter !== status}
             onClick={() => onFilterStatus(status)}
           >
-            {status ?? "All"}
+            {status ? status.charAt(0).toUpperCase() + status.slice(1) : "All"}
           </Button>
         ))}
       </div>
@@ -74,63 +81,61 @@ const AdminScheduledPayoutsIndex = () => {
       {scheduled_payouts.length === 0 ? (
         <AdminEmptyState message="No scheduled payouts found." />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left">
-                <th className="p-2">User</th>
-                <th className="p-2">Action</th>
-                <th className="p-2">Amount</th>
-                <th className="p-2">Status</th>
-                <th className="p-2">Scheduled</th>
-                <th className="p-2">Created by</th>
-                <th className="p-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {scheduled_payouts.map((sp) => (
-                <tr key={sp.external_id} className="border-b border-border">
-                  <td className="p-2">
-                    <a href={Routes.admin_user_path(sp.user.external_id)} className="text-link hover:underline">
-                      {sp.user.name || sp.user.email}
-                    </a>
-                  </td>
-                  <td className="p-2 capitalize">{sp.action}</td>
-                  <td className="p-2">
-                    {sp.payout_amount_cents != null
-                      ? formatPriceCentsWithCurrencySymbol("usd", sp.payout_amount_cents, { symbolFormat: "short" })
-                      : "-"}
-                  </td>
-                  <td className={`p-2 font-medium capitalize ${STATUS_COLORS[sp.status] ?? ""}`}>{sp.status}</td>
-                  <td className="p-2">{new Date(sp.scheduled_at).toLocaleDateString()}</td>
-                  <td className="p-2">{sp.created_by?.name ?? "-"}</td>
-                  <td className="p-2">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User</TableHead>
+              <TableHead>Action</TableHead>
+              <TableHead>Amount</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Scheduled</TableHead>
+              <TableHead>Created by</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {scheduled_payouts.map((sp) => (
+              <TableRow key={sp.external_id}>
+                <TableCell>
+                  <a href={Routes.admin_user_path(sp.user.external_id)} className="hover:underline">
+                    {sp.user.name || sp.user.email}
+                  </a>
+                </TableCell>
+                <TableCell className="capitalize">{sp.action}</TableCell>
+                <TableCell>
+                  {sp.payout_amount_cents != null
+                    ? formatPriceCentsWithCurrencySymbol("usd", sp.payout_amount_cents, { symbolFormat: "short" })
+                    : "-"}
+                </TableCell>
+                <TableCell>
+                  <StatusBadge status={sp.status} />
+                </TableCell>
+                <TableCell>{new Date(sp.scheduled_at).toLocaleDateString()}</TableCell>
+                <TableCell>{sp.created_by?.name ?? "-"}</TableCell>
+                <TableCell>
+                  {(sp.status === "pending" || sp.status === "flagged") && (
                     <div className="flex gap-2">
-                      {(sp.status === "pending" || sp.status === "flagged") && (
-                        <>
-                          <AdminActionButton
-                            url={Routes.execute_admin_scheduled_payout_path(sp.external_id)}
-                            label="Pay now"
-                            confirm_message={`Execute ${sp.action} for ${sp.user.name || sp.user.email}?`}
-                            success_message="Executed"
-                          />
-                          <AdminActionButton
-                            url={Routes.cancel_admin_scheduled_payout_path(sp.external_id)}
-                            label="Cancel"
-                            confirm_message={`Cancel scheduled ${sp.action} for ${sp.user.name || sp.user.email}?`}
-                            success_message="Cancelled"
-                            color="danger"
-                            outline
-                          />
-                        </>
-                      )}
+                      <AdminActionButton
+                        url={Routes.execute_admin_scheduled_payout_path(sp.external_id)}
+                        label="Pay now"
+                        confirm_message={`Execute ${sp.action} for ${sp.user.name || sp.user.email}?`}
+                        success_message="Executed"
+                      />
+                      <AdminActionButton
+                        url={Routes.cancel_admin_scheduled_payout_path(sp.external_id)}
+                        label="Cancel"
+                        confirm_message={`Cancel scheduled ${sp.action} for ${sp.user.name || sp.user.email}?`}
+                        success_message="Cancelled"
+                        color="danger"
+                        outline
+                      />
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
 
       {pagination.pages > 1 && <Pagination pagination={pagination} onChangePage={onChangePage} />}
