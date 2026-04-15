@@ -29,28 +29,37 @@ class ScheduledPayout < ApplicationRecord
   def execute!
     enqueue_refund = false
     process_payout = false
+    send_chargeback_email = false
+    result = nil
 
     with_lock do
       raise "Cannot execute a #{status} scheduled payout" if status != "pending"
 
       if user_has_active_chargebacks?
         update!(status: "flagged")
-        CreatorMailer.scheduled_payout_chargeback_hold(scheduled_payout_id: id).deliver_later
+        send_chargeback_email = true
+        result = :flagged
       elsif action == "payout" && payout_amount_cents.present? && payout_amount_cents > AUTO_PAYOUT_THRESHOLD_CENTS
         update!(status: "flagged")
+        result = :flagged
       elsif action == "refund"
         raise "Cannot refund: user is not suspended" if !user.suspended?
         update!(status: "executed", executed_at: Time.current)
         enqueue_refund = true
+        result = :executed
       elsif action == "payout"
         update!(status: "executed", executed_at: Time.current)
         process_payout = true
+        result = :executed
       elsif action == "hold"
         update!(status: "held")
+        result = :held
       end
     end
 
     # Process payout/refund outside the lock to avoid holding it during external API calls
+    CreatorMailer.scheduled_payout_chargeback_hold(scheduled_payout_id: id).deliver_later if send_chargeback_email
+
     if process_payout
       begin
         payments = Payouts.create_payments_for_balances_up_to_date_for_users(Date.yesterday, user.current_payout_processor, [user], from_admin: true)
@@ -65,6 +74,8 @@ class ScheduledPayout < ApplicationRecord
     end
 
     RefundUnpaidPurchasesWorker.perform_async(user_id, created_by_id) if enqueue_refund
+
+    result
   end
 
   def cancel!
@@ -73,12 +84,6 @@ class ScheduledPayout < ApplicationRecord
 
       update!(status: "cancelled")
     end
-  end
-
-  def flag_for_review!
-    raise "Cannot flag a #{status} scheduled payout" if status != "pending"
-
-    update!(status: "flagged")
   end
 
   def pending?

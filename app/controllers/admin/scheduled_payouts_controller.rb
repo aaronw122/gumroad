@@ -29,8 +29,15 @@ class Admin::ScheduledPayoutsController < Admin::BaseController
       if scheduled_payout.flagged?
         scheduled_payout.update!(status: "pending")
       end
-      scheduled_payout.execute!
-      render json: { success: true }
+      result = scheduled_payout.execute!
+      case result
+      when :executed
+        render json: { success: true }
+      when :held
+        render json: { success: true, message: "Payout is now on hold for manual release." }
+      when :flagged
+        render json: { success: true, message: "Payout was flagged for review instead of executing." }
+      end
     else
       render json: { success: false, message: "Cannot execute a #{scheduled_payout.status} scheduled payout." }
     end

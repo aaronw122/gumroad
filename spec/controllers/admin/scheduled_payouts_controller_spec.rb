@@ -68,6 +68,18 @@ describe Admin::ScheduledPayoutsController, type: :controller, inertia: true do
       expect(scheduled_payout.reload.status).to eq("executed")
     end
 
+    it "returns flagged message when payout is re-flagged due to chargebacks" do
+      product = create(:product, user: suspended_user)
+      create(:free_purchase, link: product, chargeback_date: 2.days.ago)
+      scheduled_payout = create(:scheduled_payout, user: suspended_user, action: "payout", status: "pending", created_by: admin_user)
+
+      post :execute, params: { external_id: scheduled_payout.external_id }
+
+      expect(response.parsed_body["success"]).to be(true)
+      expect(response.parsed_body["message"]).to eq("Payout was flagged for review instead of executing.")
+      expect(scheduled_payout.reload.status).to eq("flagged")
+    end
+
     it "rejects executing a cancelled scheduled payout" do
       scheduled_payout = create(:scheduled_payout, user: user, status: "cancelled")
 

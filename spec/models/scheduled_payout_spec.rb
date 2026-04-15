@@ -204,19 +204,6 @@ describe ScheduledPayout do
     end
   end
 
-  describe "#flag_for_review!" do
-    it "flags a pending payout" do
-      scheduled_payout = create(:scheduled_payout, status: "pending")
-      scheduled_payout.flag_for_review!
-      expect(scheduled_payout.reload.status).to eq("flagged")
-    end
-
-    it "raises if not pending" do
-      scheduled_payout = create(:scheduled_payout, status: "executed")
-      expect { scheduled_payout.flag_for_review! }.to raise_error(RuntimeError, /Cannot flag/)
-    end
-  end
-
   describe "#user_has_active_chargebacks?" do
     let(:user) { create(:user) }
     let(:product) { create(:product, user: user) }

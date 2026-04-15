@@ -62,14 +62,19 @@ const STATUS_FILTERS = [
 
 const describeAction = (sp: ScheduledPayout): string => {
   const amount = formatPriceCentsWithCurrencySymbol("usd", sp.payout_amount_cents ?? 0, { symbolFormat: "short" });
+  const completed = sp.status === "executed";
 
   switch (sp.action) {
     case "payout":
-      return `Balance of ${amount} will be paid out to the seller.`;
+      return completed
+        ? `Balance of ${amount} was paid out to the seller.`
+        : `Balance of ${amount} will be paid out to the seller.`;
     case "refund":
-      return `No payout. Balance (${amount}) will be refunded to customers.`;
+      return completed
+        ? `No payout. Balance (${amount}) was refunded to customers.`
+        : `No payout. Balance (${amount}) will be refunded to customers.`;
     case "hold":
-      return `Balance of ${amount} will be held for manual release.`;
+      return `Balance of ${amount} held for manual release.`;
   }
 };
 
