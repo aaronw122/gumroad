@@ -556,7 +556,7 @@ class LinksController < ApplicationController
     def preload_product_for_edit
       @product = Link.includes(
         { display_asset_previews: [:file_attachment, :file_blob] },
-        :thumbnail_alive,
+        { thumbnail: { file_attachment: :blob } },
         :custom_domain,
         :tags,
         :product_review_stat,
