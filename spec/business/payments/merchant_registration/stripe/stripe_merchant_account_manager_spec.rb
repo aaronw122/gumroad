@@ -147,7 +147,7 @@ describe StripeMerchantAccountManager, :vcr do
         end
       end
 
-      context "when individual tax ID contains non-digit characters" do
+      context "when US individual tax ID contains non-digit characters" do
         before do
           user_compliance_info.individual_tax_id = "123-45-6789"
           user_compliance_info.save!
@@ -156,6 +156,22 @@ describe StripeMerchantAccountManager, :vcr do
         it "strips non-digit characters before sending to Stripe" do
           expect(Stripe::Account).to receive(:create).with(hash_including(
             individual: hash_including(id_number: "123456789")
+          )).and_call_original
+          subject.create_account(user, passphrase: "1234")
+        end
+      end
+
+      context "when non-US individual tax ID contains letters" do
+        let(:user_compliance_info) { create(:user_compliance_info_singapore, user:) }
+
+        before do
+          user_compliance_info.individual_tax_id = "S1234567D"
+          user_compliance_info.save!
+        end
+
+        it "preserves alphanumeric characters" do
+          expect(Stripe::Account).to receive(:create).with(hash_including(
+            individual: hash_including(id_number: "S1234567D")
           )).and_call_original
           subject.create_account(user, passphrase: "1234")
         end

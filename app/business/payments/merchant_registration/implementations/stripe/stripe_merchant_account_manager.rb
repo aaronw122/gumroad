@@ -450,7 +450,7 @@ module StripeMerchantAccountManager
   def self.person_hash(user_compliance_info, passphrase)
     if user_compliance_info
       personal_tax_id = user_compliance_info.individual_tax_id.decrypt(passphrase)
-      personal_tax_id = sanitize_tax_id(personal_tax_id) if personal_tax_id.present?
+      personal_tax_id = sanitize_tax_id(personal_tax_id) if personal_tax_id.present? && user_compliance_info.country_code == Compliance::Countries::USA.alpha2
 
       hash = {
         first_name: user_compliance_info.first_name,
