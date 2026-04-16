@@ -98,6 +98,18 @@ describe Checkout::Upsells::ProductsController do
       end
     end
 
+    context "when query times out" do
+      it "returns an empty array" do
+        sign_in seller
+        allow(WithMaxExecutionTime).to receive(:timeout_queries).and_raise(WithMaxExecutionTime::QueryTimeoutError)
+
+        get :index
+
+        expect(response).to have_http_status(:ok)
+        expect(response.parsed_body).to eq([])
+      end
+    end
+
     context "with custom domain" do
       before do
         @request.host = "example.com"
@@ -216,6 +228,18 @@ describe Checkout::Upsells::ProductsController do
       expect do
         get :show, params: { id: "non_existent_id" }
       end.to raise_error(ActiveRecord::RecordNotFound)
+    end
+
+    context "when query times out" do
+      it "returns a gateway timeout error" do
+        sign_in seller
+        allow(WithMaxExecutionTime).to receive(:timeout_queries).and_raise(WithMaxExecutionTime::QueryTimeoutError)
+
+        get :show, params: { id: product1.external_id }
+
+        expect(response).to have_http_status(:gateway_timeout)
+        expect(response.parsed_body).to eq("error" => "Request timed out")
+      end
     end
   end
 end
