@@ -524,6 +524,25 @@ describe StripeMerchantAccountManager, :vcr do
           subject.create_account(user, passphrase: "1234")
         end
       end
+
+      context "when non-US business is owned by a US resident" do
+        let(:user_compliance_info) do
+          create(:user_compliance_info_business, user:,
+                                                 business_country: "Singapore",
+                                                 business_city: "Singapore",
+                                                 business_state: nil,
+                                                 business_zip_code: "546080",
+                                                 business_tax_id: "200309485K")
+        end
+
+        it "does not strip non-digit characters from the business tax ID" do
+          expect(Stripe::Account).to receive(:create).with(hash_including(
+            company: hash_including(tax_id: "200309485K")
+          )).and_call_original
+          allow(Stripe::Account).to receive(:create_person).and_call_original
+          subject.create_account(user, passphrase: "1234")
+        end
+      end
     end
 
     describe "all info provided of an individual (non-US)" do
