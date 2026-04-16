@@ -1,4 +1,4 @@
-import { range } from "lodash-es";
+import { ChevronDown } from "@boxicons/react";
 import * as React from "react";
 
 import { SearchRequest } from "$app/data/search";
@@ -6,10 +6,9 @@ import { SORT_KEYS } from "$app/parsers/product";
 import { CurrencyCode, getShortCurrencySymbol } from "$app/utils/currency";
 
 import { NumberInput } from "$app/components/NumberInput";
-import { Action, SORT_BY_LABELS, State } from "$app/components/Product/CardGrid";
-import { RatingStars } from "$app/components/RatingStars";
+import { Action, FilterCheckboxes, RatingFilterOptions, SORT_BY_LABELS, State } from "$app/components/Product/CardGrid";
 import { showAlert } from "$app/components/server-components/Alert";
-import { BottomSheet, BottomSheetHeader } from "$app/components/ui/BottomSheet";
+import { BottomSheet, BottomSheetFooter, BottomSheetHeader } from "$app/components/ui/BottomSheet";
 import { Checkbox } from "$app/components/ui/Checkbox";
 import { Fieldset, FieldsetTitle } from "$app/components/ui/Fieldset";
 import { Input } from "$app/components/ui/Input";
@@ -19,6 +18,8 @@ import { Pill } from "$app/components/ui/Pill";
 import { Radio } from "$app/components/ui/Radio";
 import { useDebouncedCallback } from "$app/components/useDebouncedCallback";
 import { useOnChange } from "$app/components/useOnChange";
+
+type FilterKey = "sort" | "tags" | "contains" | "price" | "rating";
 
 type MobileFilterBarProps = {
   state: State;
@@ -38,9 +39,12 @@ export const MobileFilterBar = ({
   hasOfferCode,
 }: MobileFilterBarProps) => {
   const currencySymbol = getShortCurrencySymbol(currencyCode);
-  const [openFilter, setOpenFilter] = React.useState<"sort" | "tags" | "contains" | "price" | "rating" | null>(null);
+  const [openFilter, setOpenFilter] = React.useState<FilterKey | null>(null);
 
-  const { params: searchParams, results } = state;
+  const { params: searchParams } = state;
+  const lastResultsRef = React.useRef(state.results);
+  if (state.results != null) lastResultsRef.current = state.results;
+  const results = state.results ?? lastResultsRef.current;
 
   const updateParams = (newParams: Partial<SearchRequest>) => {
     const { from: _, ...params } = searchParams;
@@ -65,38 +69,12 @@ export const MobileFilterBar = ({
     } else showAlert("Please set the price minimum to be lower than the maximum.", "error");
   };
 
-  let anyFilters = false;
-  for (const key of Object.keys(searchParams)) {
-    if (
+  const hasActiveFilters = Object.keys(searchParams).some(
+    (key) =>
       !["from", "curated_product_ids"].includes(key) &&
       searchParams[key] != null &&
-      searchParams[key] !== defaults[key]
-    )
-      anyFilters = true;
-  }
-
-  const sortActive = searchParams.sort !== defaults.sort && searchParams.sort != null;
-  const sortLabel = SORT_BY_LABELS[searchParams.sort as keyof typeof SORT_BY_LABELS];
-
-  const tagsActive = (searchParams.tags?.length ?? 0) > 0;
-  const showTags = (results?.tags_data?.length ?? 0) > 0 || tagsActive;
-
-  const filetypesActive = (searchParams.filetypes?.length ?? 0) > 0;
-  const showContains = (results?.filetypes_data?.length ?? 0) > 0 || filetypesActive;
-
-  const minPriceSet = searchParams.min_price != null;
-  const maxPriceSet = searchParams.max_price != null;
-  const priceActive = minPriceSet || maxPriceSet;
-
-  const priceLabel = (() => {
-    if (minPriceSet && maxPriceSet)
-      return `${currencySymbol}${searchParams.min_price}\u2013${currencySymbol}${searchParams.max_price}`;
-    if (minPriceSet) return `${currencySymbol}${searchParams.min_price}+`;
-    if (maxPriceSet) return `Up to ${currencySymbol}${searchParams.max_price}`;
-    return "Price";
-  })();
-
-  const ratingActive = searchParams.rating != null;
+      searchParams[key] !== defaults[key],
+  );
 
   const uid = React.useId();
   const minPriceUid = React.useId();
@@ -111,65 +89,16 @@ export const MobileFilterBar = ({
     return notFoundKeys.map((key) => ({ key, doc_count: 0 })).concat(foundData);
   };
 
-  return (
-    <>
-      <div
-        role="toolbar"
-        aria-label="Filters"
-        className="sticky top-0 z-20 flex overflow-x-auto gap-2 bg-background py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {hideSort ? null : (
-          <Pill asChild color={sortActive ? "primary" : undefined} className="shrink-0 cursor-pointer">
-            <button onClick={() => setOpenFilter("sort")} aria-haspopup="dialog">
-              {sortActive ? `Sort: ${sortLabel}` : "Sort by"}
-            </button>
-          </Pill>
-        )}
-        {showTags ? (
-          <Pill asChild color={tagsActive ? "primary" : undefined} className="shrink-0 cursor-pointer">
-            <button onClick={() => setOpenFilter("tags")} aria-haspopup="dialog">
-              {tagsActive ? `Tags (${searchParams.tags!.length})` : "Tags"}
-            </button>
-          </Pill>
-        ) : null}
-        {showContains ? (
-          <Pill asChild color={filetypesActive ? "primary" : undefined} className="shrink-0 cursor-pointer">
-            <button onClick={() => setOpenFilter("contains")} aria-haspopup="dialog">
-              {filetypesActive ? `Contains (${searchParams.filetypes!.length})` : "Contains"}
-            </button>
-          </Pill>
-        ) : null}
-        <Pill asChild color={priceActive ? "primary" : undefined} className="shrink-0 cursor-pointer">
-          <button onClick={() => setOpenFilter("price")} aria-haspopup="dialog">
-            {priceLabel}
-          </button>
-        </Pill>
-        <Pill asChild color={ratingActive ? "primary" : undefined} className="shrink-0 cursor-pointer">
-          <button onClick={() => setOpenFilter("rating")} aria-haspopup="dialog">
-            {ratingActive ? `${searchParams.rating}+ stars` : "Rating"}
-          </button>
-        </Pill>
-        {hasOfferCode ? (
-          <Pill asChild color="primary" className="shrink-0 cursor-pointer">
-            <button onClick={() => updateParams({ offer_code: undefined })}>
-              {searchParams.offer_code}
-            </button>
-          </Pill>
-        ) : null}
-        {anyFilters ? (
-          <Pill asChild className="shrink-0 cursor-pointer">
-            <button onClick={() => dispatchAction({ type: "set-params", params: defaults })}>Clear all</button>
-          </Pill>
-        ) : null}
-      </div>
-
-      <BottomSheet
-        open={openFilter === "sort"}
-        onOpenChange={(open) => {
-          if (!open) setOpenFilter(null);
-        }}
-      >
-        <BottomSheetHeader>Sort by</BottomSheetHeader>
+  const filters: { key: FilterKey; label: string; title: string; active: boolean; visible: boolean; content: React.ReactNode }[] = [
+    {
+      key: "sort",
+      title: "Sort by",
+      label: searchParams.sort !== defaults.sort && searchParams.sort != null
+        ? `Sort: ${SORT_BY_LABELS[searchParams.sort as keyof typeof SORT_BY_LABELS]}`
+        : "Sort by",
+      active: searchParams.sort !== defaults.sort && searchParams.sort != null,
+      visible: !hideSort,
+      content: (
         <Fieldset role="group">
           {SORT_KEYS.map((key) => (
             <Label key={key} className="w-full">
@@ -183,15 +112,15 @@ export const MobileFilterBar = ({
             </Label>
           ))}
         </Fieldset>
-      </BottomSheet>
-
-      <BottomSheet
-        open={openFilter === "tags"}
-        onOpenChange={(open) => {
-          if (!open) setOpenFilter(null);
-        }}
-      >
-        <BottomSheetHeader>Tags</BottomSheetHeader>
+      ),
+    },
+    {
+      key: "tags",
+      title: "Tags",
+      label: (searchParams.tags?.length ?? 0) > 0 ? `Tags (${searchParams.tags!.length})` : "Tags",
+      active: (searchParams.tags?.length ?? 0) > 0,
+      visible: (results?.tags_data?.length ?? 0) > 0 || (searchParams.tags?.length ?? 0) > 0,
+      content: (
         <Fieldset role="group">
           <Label className="w-full">
             All Products
@@ -202,63 +131,50 @@ export const MobileFilterBar = ({
               onChange={() => updateParams({ tags: undefined })}
             />
           </Label>
-          {results
-            ? concatFoundAndNotFound(results.tags_data, searchParams.tags).map((option) => (
-                <Label key={option.key} className="w-full">
-                  {option.key} ({option.doc_count})
-                  <Checkbox
-                    wrapperClassName="ml-auto"
-                    checked={(searchParams.tags ?? []).includes(option.key)}
-                    onChange={() =>
-                      updateParams({
-                        tags: (searchParams.tags ?? []).includes(option.key)
-                          ? (searchParams.tags ?? []).filter((t) => t !== option.key)
-                          : [...(searchParams.tags ?? []), option.key],
-                      })
-                    }
-                  />
-                </Label>
-              ))
-            : null}
+          {results ? (
+            <FilterCheckboxes
+              filters={concatFoundAndNotFound(results.tags_data, searchParams.tags)}
+              selection={searchParams.tags ?? []}
+              setSelection={(tags) => updateParams({ tags })}
+              disabled={false}
+            />
+          ) : null}
         </Fieldset>
-      </BottomSheet>
-
-      <BottomSheet
-        open={openFilter === "contains"}
-        onOpenChange={(open) => {
-          if (!open) setOpenFilter(null);
-        }}
-      >
-        <BottomSheetHeader>Contains</BottomSheetHeader>
+      ),
+    },
+    {
+      key: "contains",
+      title: "Contains",
+      label: (searchParams.filetypes?.length ?? 0) > 0 ? `Contains (${searchParams.filetypes!.length})` : "Contains",
+      active: (searchParams.filetypes?.length ?? 0) > 0,
+      visible: (results?.filetypes_data?.length ?? 0) > 0 || (searchParams.filetypes?.length ?? 0) > 0,
+      content: (
         <Fieldset role="group">
-          {results
-            ? concatFoundAndNotFound(results.filetypes_data, searchParams.filetypes).map((option) => (
-                <Label key={option.key} className="w-full">
-                  {option.key} ({option.doc_count})
-                  <Checkbox
-                    wrapperClassName="ml-auto"
-                    checked={(searchParams.filetypes ?? []).includes(option.key)}
-                    onChange={() =>
-                      updateParams({
-                        filetypes: (searchParams.filetypes ?? []).includes(option.key)
-                          ? (searchParams.filetypes ?? []).filter((t) => t !== option.key)
-                          : [...(searchParams.filetypes ?? []), option.key],
-                      })
-                    }
-                  />
-                </Label>
-              ))
-            : null}
+          {results ? (
+            <FilterCheckboxes
+              filters={concatFoundAndNotFound(results.filetypes_data, searchParams.filetypes)}
+              selection={searchParams.filetypes ?? []}
+              setSelection={(filetypes) => updateParams({ filetypes })}
+              disabled={false}
+            />
+          ) : null}
         </Fieldset>
-      </BottomSheet>
-
-      <BottomSheet
-        open={openFilter === "price"}
-        onOpenChange={(open) => {
-          if (!open) setOpenFilter(null);
-        }}
-      >
-        <BottomSheetHeader>Price</BottomSheetHeader>
+      ),
+    },
+    {
+      key: "price",
+      title: "Price",
+      label: (() => {
+        const minSet = searchParams.min_price != null;
+        const maxSet = searchParams.max_price != null;
+        if (minSet && maxSet) return `${currencySymbol}${searchParams.min_price}\u2013${currencySymbol}${searchParams.max_price}`;
+        if (minSet) return `${currencySymbol}${searchParams.min_price}+`;
+        if (maxSet) return `Up to ${currencySymbol}${searchParams.max_price}`;
+        return "Price";
+      })(),
+      active: searchParams.min_price != null || searchParams.max_price != null,
+      visible: true,
+      content: (
         <div
           style={{
             display: "grid",
@@ -297,39 +213,70 @@ export const MobileFilterBar = ({
                 }}
                 value={enteredMaxPrice ?? null}
               >
-                {(props) => <Input id={maxPriceUid} placeholder="\u221E" {...props} />}
+                {(props) => <Input id={maxPriceUid} placeholder="∞" {...props} />}
               </NumberInput>
             </InputGroup>
           </Fieldset>
         </div>
-      </BottomSheet>
+      ),
+    },
+    {
+      key: "rating",
+      title: "Rating",
+      label: searchParams.rating != null ? `${searchParams.rating}+ stars` : "Rating",
+      active: searchParams.rating != null,
+      visible: true,
+      content: (
+        <RatingFilterOptions
+          rating={searchParams.rating}
+          onRatingChange={(rating) => updateParams({ rating })}
+        />
+      ),
+    },
+  ];
 
-      <BottomSheet
-        open={openFilter === "rating"}
-        onOpenChange={(open) => {
-          if (!open) setOpenFilter(null);
-        }}
+  const visibleFilters = filters.filter((f) => f.visible);
+
+  return (
+    <>
+      <div
+        role="toolbar"
+        aria-label="Filters"
+        className="flex overflow-x-auto gap-2 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        <BottomSheetHeader>Rating</BottomSheetHeader>
-        <Fieldset role="group">
-          {range(4, 0).map((number) => (
-            <Label key={number} className="w-full">
-              <span className="flex shrink-0 items-center gap-1">
-                <RatingStars rating={number} />
-                and up
-              </span>
-              <Radio
-                wrapperClassName="ml-auto"
-                value={number}
-                aria-label={`${number} ${number === 1 ? "star" : "stars"} and up`}
-                checked={number === searchParams.rating}
-                readOnly
-                onClick={() => updateParams(searchParams.rating === number ? { rating: undefined } : { rating: number })}
-              />
-            </Label>
-          ))}
-        </Fieldset>
-      </BottomSheet>
+        {visibleFilters.map((filter) => (
+          <Pill key={filter.key} asChild className={`shrink-0 cursor-pointer ${filter.active ? "bg-accent/20 border-foreground" : "bg-transparent"}`}>
+            <button onClick={() => setOpenFilter(filter.key)} aria-haspopup="dialog" className="inline-flex items-center gap-1">
+              {filter.label}
+              <ChevronDown className="size-4" />
+            </button>
+          </Pill>
+        ))}
+        {hasOfferCode ? (
+          <Pill asChild color="primary" className="shrink-0 cursor-pointer">
+            <button onClick={() => updateParams({ offer_code: undefined })}>
+              {searchParams.offer_code}
+            </button>
+          </Pill>
+        ) : null}
+        {hasActiveFilters ? (
+          <Pill asChild className="shrink-0 cursor-pointer bg-transparent">
+            <button onClick={() => dispatchAction({ type: "set-params", params: defaults })}>Clear all</button>
+          </Pill>
+        ) : null}
+      </div>
+
+      {filters.map((filter) => (
+        <BottomSheet
+          key={filter.key}
+          open={openFilter === filter.key}
+          onOpenChange={(open) => { if (!open) setOpenFilter(null); }}
+        >
+          <BottomSheetHeader>{filter.title}</BottomSheetHeader>
+          {filter.content}
+          <BottomSheetFooter />
+        </BottomSheet>
+      ))}
     </>
   );
 };
