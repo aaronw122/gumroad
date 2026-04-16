@@ -353,6 +353,24 @@ describe Api::V2::LinksController do
         expect(@user.links.last.tags.pluck(:name)).to eq(["valid-tag"])
       end
 
+      %i[name custom_permalink description custom_receipt custom_summary price_currency_type].each do |field|
+        it "rejects a nested object for #{field}" do
+          post @action, params: @params.merge(field => { foo: "bar" })
+
+          expect(response).to be_successful
+          expect(response.parsed_body["success"]).to be false
+          expect(response.parsed_body["message"]).to eq("#{field} must be a string value.")
+        end
+
+        it "rejects an array for #{field}" do
+          post @action, params: @params.merge(field => ["a", "b"])
+
+          expect(response).to be_successful
+          expect(response.parsed_body["success"]).to be false
+          expect(response.parsed_body["message"]).to eq("#{field} must be a string value.")
+        end
+      end
+
       it "rejects non-array tags" do
         post @action, params: @params.merge(tags: "oops")
 
@@ -897,6 +915,24 @@ describe Api::V2::LinksController do
         put @action, params: @params.merge(tags: ["ruby"])
         expect(response.parsed_body["success"]).to be(true)
         expect(@product.reload.tags.pluck(:name)).to match_array(["ruby"])
+      end
+
+      %i[name custom_permalink description custom_receipt custom_summary price_currency_type].each do |field|
+        it "rejects a nested object for #{field}" do
+          put @action, params: @params.merge(field => { foo: "bar" })
+
+          expect(response).to be_successful
+          expect(response.parsed_body["success"]).to be false
+          expect(response.parsed_body["message"]).to eq("#{field} must be a string value.")
+        end
+
+        it "rejects an array for #{field}" do
+          put @action, params: @params.merge(field => ["a", "b"])
+
+          expect(response).to be_successful
+          expect(response.parsed_body["success"]).to be false
+          expect(response.parsed_body["message"]).to eq("#{field} must be a string value.")
+        end
       end
 
       it "rejects non-array tags" do

@@ -76,6 +76,13 @@ class Api::V2::LinksController < Api::V2::BaseController
       end
     end
 
+    [:name, :custom_permalink, :description, :custom_receipt, :custom_summary, :price_currency_type].each do |key|
+      next if !params.key?(key)
+      if params[key].respond_to?(:key?) || params[key].is_a?(Array)
+        return render_response(false, message: "#{key} must be a string value.")
+      end
+    end
+
     currency = params[:price_currency_type].presence || current_resource_owner.currency_type
     if !CURRENCY_CHOICES.key?(currency)
       return render_response(false, message: "'#{currency}' is not a supported currency.")
@@ -206,6 +213,13 @@ class Api::V2::LinksController < Api::V2::BaseController
   def update
     if @product.is_tiered_membership && params.key?(:price)
       return render_response(false, message: "Price cannot be updated for tiered membership products. Use the variant endpoints to manage tier pricing.")
+    end
+
+    [:name, :custom_permalink, :description, :custom_receipt, :custom_summary, :price_currency_type].each do |key|
+      next if !params.key?(key)
+      if params[key].respond_to?(:key?) || params[key].is_a?(Array)
+        return render_response(false, message: "#{key} must be a string value.")
+      end
     end
 
     if params.key?(:tags)
