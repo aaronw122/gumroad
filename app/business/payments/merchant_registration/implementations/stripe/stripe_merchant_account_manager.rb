@@ -441,9 +441,16 @@ module StripeMerchantAccountManager
   end
 
   private_class_method
+  def self.sanitize_tax_id(tax_id)
+    return tax_id unless tax_id.is_a?(String)
+    tax_id.gsub(/\D/, "")
+  end
+
+  private_class_method
   def self.person_hash(user_compliance_info, passphrase)
     if user_compliance_info
       personal_tax_id = user_compliance_info.individual_tax_id.decrypt(passphrase)
+      personal_tax_id = sanitize_tax_id(personal_tax_id) if personal_tax_id.present?
 
       hash = {
         first_name: user_compliance_info.first_name,
@@ -523,6 +530,7 @@ module StripeMerchantAccountManager
     return unless user_compliance_info.present?
 
     business_tax_id = user_compliance_info.business_tax_id.decrypt(passphrase)
+    business_tax_id = sanitize_tax_id(business_tax_id) if business_tax_id.present?
     hash = {
       company: {
         name: user_compliance_info.business_name.presence,

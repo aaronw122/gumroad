@@ -147,6 +147,20 @@ describe StripeMerchantAccountManager, :vcr do
         end
       end
 
+      context "when individual tax ID contains non-digit characters" do
+        before do
+          user_compliance_info.individual_tax_id = "123-45-6789"
+          user_compliance_info.save!
+        end
+
+        it "strips non-digit characters before sending to Stripe" do
+          expect(Stripe::Account).to receive(:create).with(hash_including(
+            individual: hash_including(id_number: "123456789")
+          )).and_call_original
+          subject.create_account(user, passphrase: "1234")
+        end
+      end
+
       context "with stripe connect account" do
         before do
           allow_any_instance_of(MerchantAccount).to receive(:is_a_stripe_connect_account?).and_return(true)
@@ -478,6 +492,21 @@ describe StripeMerchantAccountManager, :vcr do
         merchant_account = subject.create_account(user, passphrase: "1234")
         expect(merchant_account.charge_processor_id).to eq(StripeChargeProcessor.charge_processor_id)
         expect(merchant_account.charge_processor_merchant_id).to be_present
+      end
+
+      context "when business tax ID contains non-digit characters" do
+        before do
+          user_compliance_info.business_tax_id = "12-3456789"
+          user_compliance_info.save!
+        end
+
+        it "strips non-digit characters before sending to Stripe" do
+          expect(Stripe::Account).to receive(:create).with(hash_including(
+            company: hash_including(tax_id: "123456789")
+          )).and_call_original
+          allow(Stripe::Account).to receive(:create_person).and_call_original
+          subject.create_account(user, passphrase: "1234")
+        end
       end
     end
 
