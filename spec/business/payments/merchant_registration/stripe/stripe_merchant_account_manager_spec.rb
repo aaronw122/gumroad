@@ -9,6 +9,35 @@ describe StripeMerchantAccountManager, :vcr do
 
   let(:user) { create(:user, unpaid_balance_cents: 10, email: "chuck@gum.com", username: "chuck") }
 
+  describe "tax ID sanitization" do
+    let(:user) { create(:user, email: "chuck@gum.com", username: "chuck") }
+
+    it "strips non-digits from a US individual's SSN before building Stripe params" do
+      user_compliance_info = create(:user_compliance_info, user:, individual_tax_id: "123-45-6789")
+
+      person_hash = described_class.send(:person_hash, user_compliance_info, "1234")
+
+      expect(person_hash[:id_number]).to eq("123456789")
+      expect(person_hash).not_to have_key(:ssn_last_4)
+    end
+
+    it "strips non-digits from a US business's EIN before building Stripe params" do
+      user_compliance_info = create(:user_compliance_info_business, user:, business_tax_id: "12-3456789")
+
+      company_hash = described_class.send(:company_hash, user_compliance_info, "1234")
+
+      expect(company_hash.dig(:company, :tax_id)).to eq("123456789")
+    end
+
+    it "preserves non-US alphanumeric tax IDs" do
+      user_compliance_info = create(:user_compliance_info_singapore, user:, individual_tax_id: "S1234567D")
+
+      person_hash = described_class.send(:person_hash, user_compliance_info, "1234")
+
+      expect(person_hash[:id_number]).to eq("S1234567D")
+    end
+  end
+
   describe "#create_account" do
     describe "all info provided of an individual" do
       let(:user_compliance_info) { create(:user_compliance_info, user:) }

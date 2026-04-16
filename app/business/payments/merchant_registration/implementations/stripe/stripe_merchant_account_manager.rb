@@ -392,6 +392,11 @@ module StripeMerchantAccountManager
   end
 
   private_class_method
+  def self.sanitize_tax_id(tax_id)
+    tax_id&.gsub(/\D/, "")
+  end
+
+  private_class_method
   def self.bank_account_hash(bank_account, stripe_account: {}, passphrase:)
     country_code = bank_account.user.alive_user_compliance_info.legal_entity_country_code
     cross_border_payouts_only = Country.new(country_code).supports_stripe_cross_border_payouts?
@@ -444,6 +449,7 @@ module StripeMerchantAccountManager
   def self.person_hash(user_compliance_info, passphrase)
     if user_compliance_info
       personal_tax_id = user_compliance_info.individual_tax_id.decrypt(passphrase)
+      personal_tax_id = sanitize_tax_id(personal_tax_id) if user_compliance_info.country_code == Compliance::Countries::USA.alpha2
 
       hash = {
         first_name: user_compliance_info.first_name,
@@ -523,6 +529,7 @@ module StripeMerchantAccountManager
     return unless user_compliance_info.present?
 
     business_tax_id = user_compliance_info.business_tax_id.decrypt(passphrase)
+    business_tax_id = sanitize_tax_id(business_tax_id) if user_compliance_info.country_code == Compliance::Countries::USA.alpha2
     hash = {
       company: {
         name: user_compliance_info.business_name.presence,
