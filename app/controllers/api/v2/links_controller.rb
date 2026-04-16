@@ -76,7 +76,7 @@ class Api::V2::LinksController < Api::V2::BaseController
       end
     end
 
-    [:name, :custom_permalink, :description, :custom_receipt, :custom_summary, :price_currency_type].each do |key|
+    [:name, :custom_permalink, :description, :custom_summary, :price_currency_type].each do |key|
       next if !params.key?(key)
       if params[key].respond_to?(:key?) || params[key].is_a?(Array)
         return render_response(false, message: "#{key} must be a string value.")
