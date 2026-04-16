@@ -8,7 +8,7 @@
       <p>Your unpaid balance (<%= @payout_amount %>) is under review and will not be paid out at this time.</p>
     <% else %>
       <p>You have a scheduled payout (<%= @payout_amount %>) set for <%= @scheduled_payout.scheduled_at.to_fs(:formatted_date_full_month) %>.</p>
-      <p>Please note that if chargebacks are filed on any of your sales, the scheduled amount may be delayed or adjusted pending their resolution.</p>
+      <p>If chargebacks are filed against any of your sales, your payout will be held for review and the amount may be reduced.</p>
     <% end %>
   <% end %>
   <p>The Gumroad team</p>

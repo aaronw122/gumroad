@@ -2000,7 +2000,7 @@ describe ContactingCreatorMailer do
         mail = ContactingCreatorMailer.account_suspended(seller.id)
 
         expect(mail.body.encoded).to include("You have a scheduled payout ($150) set for June 15, 2025.")
-        expect(mail.body.encoded).to include("if chargebacks are filed on any of your sales, the scheduled amount may be delayed or adjusted pending their resolution")
+        expect(mail.body.encoded).to include("If chargebacks are filed against any of your sales, your payout will be held for review and the amount may be reduced.")
       end
     end
 
