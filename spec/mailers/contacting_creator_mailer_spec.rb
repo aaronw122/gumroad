@@ -1986,10 +1986,12 @@ describe ContactingCreatorMailer do
       mail = ContactingCreatorMailer.account_suspended(seller.id)
 
       expect(mail.to).to eq([seller.email])
-      expect(mail.from).to eq([ApplicationMailer::NOREPLY_EMAIL])
+      expect(mail.from).to eq([ApplicationMailer::SUPPORT_EMAIL])
       expect(mail.subject).to eq("Your Gumroad account has been suspended")
 
       expect(mail.body.encoded).to include("Your Gumroad account has been suspended for a policy violation.")
+      expect(mail.body.encoded).to include("contact our support team")
+      expect(mail.body.encoded).to include("reply to this email")
       expect(mail.body.encoded).to include("The Gumroad team")
     end
 
