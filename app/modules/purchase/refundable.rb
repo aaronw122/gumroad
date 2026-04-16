@@ -332,7 +332,7 @@ class Purchase
   end
 
   def refund_for_fraud!(refunding_user_id)
-    return false unless refund_and_save!(refunding_user_id, is_for_fraud: true)
+    return false if refund_and_save!(refunding_user_id, is_for_fraud: true) == false
 
     subscription.cancel_effective_immediately! if subscription.present? && !subscription.deactivated?
     ContactingCreatorMailer.purchase_refunded_for_fraud(id).deliver_later(queue: "default") unless seller.suspended?

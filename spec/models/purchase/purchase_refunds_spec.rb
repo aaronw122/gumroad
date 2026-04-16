@@ -1315,10 +1315,22 @@ describe "PurchaseRefunds", :vcr do
       expect(@purchase.refund_for_fraud!(create(:admin_user).id)).to be(false)
     end
 
+    it "still runs side effects when refund_and_save! is an idempotent no-op",
+       vcr: { cassette_name: "PurchaseRefunds/_refund_for_fraud_/refunds_the_original_purchase" } do
+      subscription = double(deactivated?: false)
+      allow(@purchase).to receive(:subscription).and_return(subscription)
+      allow(@purchase).to receive(:refund_and_save!).and_return(nil)
+
+      expect(subscription).to receive(:cancel_effective_immediately!)
+
+      expect do
+        expect(@purchase.refund_for_fraud!(create(:admin_user).id)).to be(true)
+      end.to have_enqueued_mail(ContactingCreatorMailer, :purchase_refunded_for_fraud).with(@purchase.id)
+    end
+
     describe "subscription purchases" do
       it "cancels the subscription effective immediately" do
         purchase = create(:membership_purchase)
-        allow(purchase).to receive(:refund_and_save!).and_return(true)
 
         expect(purchase.refund_for_fraud!(create(:admin_user).id)).to be(true)
 
