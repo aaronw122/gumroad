@@ -15,6 +15,8 @@ describe User::Risk do
   end
 
   describe "suspension state machine callback" do
+    before { Feature.activate(:account_suspended_email) }
+
     it "sends suspension email when suspended for TOS violation" do
       user = create(:user)
       user.flag_for_tos_violation!(author_name: "admin", bulk: true)
@@ -41,10 +43,22 @@ describe User::Risk do
         user.suspend_for_tos_violation!(author_name: "admin", skip_generic_suspension_email: true)
       end.not_to have_enqueued_mail(ContactingCreatorMailer, :account_suspended)
     end
+
+    it "does not send the generic suspension email when the feature flag is inactive" do
+      Feature.deactivate(:account_suspended_email)
+      user = create(:user)
+      user.flag_for_tos_violation!(author_name: "admin", bulk: true)
+
+      expect do
+        user.suspend_for_tos_violation!(author_name: "admin")
+      end.not_to have_enqueued_mail(ContactingCreatorMailer, :account_suspended)
+    end
   end
 
   describe "#suspend_due_to_stripe_risk" do
     let(:user) { create(:user) }
+
+    before { Feature.activate(:account_suspended_email) }
 
     it "sends the Stripe-risk-specific email and not the generic suspension email" do
       expect do

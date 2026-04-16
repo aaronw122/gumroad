@@ -106,6 +106,7 @@ module User::Risk
 
   def send_suspension_email(transition)
     return if transition.args.first&.dig(:skip_generic_suspension_email)
+    return unless Feature.active?(:account_suspended_email)
 
     ContactingCreatorMailer.account_suspended(id).deliver_later
   end
