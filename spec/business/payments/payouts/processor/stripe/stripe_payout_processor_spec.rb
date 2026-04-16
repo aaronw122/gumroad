@@ -625,6 +625,32 @@ describe StripePayoutProcessor, :vcr do
         end
       end
 
+      describe "the external transfer fails because payouts cannot be created" do
+        before do
+          allow(Stripe::Payout).to receive(:create).and_raise(Stripe::InvalidRequestError.new("Cannot create payouts; please contact us via https://support.stripe.com/contact with details for assistance.", "amount_cents"))
+        end
+
+        it "returns the errors" do
+          described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+          errors = described_class.perform_payment(payment)
+          expect(errors).to be_present
+        end
+
+        it "marks the payment as failed" do
+          described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+          described_class.perform_payment(payment)
+          payment.reload
+          expect(payment.state).to eq("failed")
+        end
+
+        it "marks the payment with a failure reason of cannot pay" do
+          described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+          described_class.perform_payment(payment)
+          payment.reload
+          expect(payment.failure_reason).to eq(Payment::FailureReason::CANNOT_PAY)
+        end
+      end
+
       describe "the external transfer fails because of an unsupported reason" do
         before do
           allow(Stripe::Payout).to receive(:create).and_raise(Stripe::InvalidRequestError.new("Food was not tasty.", "food_bad"))
@@ -985,6 +1011,32 @@ describe StripePayoutProcessor, :vcr do
       describe "the external transfer fails because the account cannot be paid" do
         before do
           allow(Stripe::Payout).to receive(:create).and_raise(Stripe::InvalidRequestError.new("Cannot create live transfers: The account has fields needed.", "amount_cents"))
+        end
+
+        it "returns the errors" do
+          described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+          errors = described_class.perform_payment(payment)
+          expect(errors).to be_present
+        end
+
+        it "marks the payment as failed" do
+          described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+          described_class.perform_payment(payment)
+          payment.reload
+          expect(payment.state).to eq("failed")
+        end
+
+        it "marks the payment with a failure reason of cannot pay" do
+          described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+          described_class.perform_payment(payment)
+          payment.reload
+          expect(payment.failure_reason).to eq(Payment::FailureReason::CANNOT_PAY)
+        end
+      end
+
+      describe "the external transfer fails because payouts cannot be created" do
+        before do
+          allow(Stripe::Payout).to receive(:create).and_raise(Stripe::InvalidRequestError.new("Cannot create payouts; please contact us via https://support.stripe.com/contact with details for assistance.", "amount_cents"))
         end
 
         it "returns the errors" do
