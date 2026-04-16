@@ -149,6 +149,13 @@ export const MobileFilterBar = ({
             {ratingActive ? `${searchParams.rating}+ stars` : "Rating"}
           </button>
         </Pill>
+        {hasOfferCode ? (
+          <Pill asChild color="primary" className="shrink-0 cursor-pointer">
+            <button onClick={() => updateParams({ offer_code: undefined })}>
+              {searchParams.offer_code}
+            </button>
+          </Pill>
+        ) : null}
         {anyFilters ? (
           <Pill asChild className="shrink-0 cursor-pointer">
             <button onClick={() => dispatchAction({ type: "set-params", params: defaults })}>Clear all</button>
