@@ -36,6 +36,18 @@ describe StripeMerchantAccountManager, :vcr do
 
       expect(person_hash[:id_number]).to eq("S1234567D")
     end
+    it "does not sanitize a non-US business tax ID for a US resident" do
+      user_compliance_info = create(:user_compliance_info_business,
+                                    user:,
+                                    country: "United States",
+                                    business_country: "Singapore",
+                                    business_tax_id: "200309485K")
+
+      company_hash = described_class.send(:company_hash, user_compliance_info, "1234")
+
+      expect(company_hash.dig(:company, :tax_id)).to eq("200309485K")
+    end
+
   end
 
   describe "#create_account" do

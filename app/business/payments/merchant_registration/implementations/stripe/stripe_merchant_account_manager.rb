@@ -529,7 +529,7 @@ module StripeMerchantAccountManager
     return unless user_compliance_info.present?
 
     business_tax_id = user_compliance_info.business_tax_id.decrypt(passphrase)
-    business_tax_id = sanitize_tax_id(business_tax_id) if user_compliance_info.country_code == Compliance::Countries::USA.alpha2
+    business_tax_id = sanitize_tax_id(business_tax_id) if user_compliance_info.legal_entity_country_code == Compliance::Countries::USA.alpha2
     hash = {
       company: {
         name: user_compliance_info.business_name.presence,
