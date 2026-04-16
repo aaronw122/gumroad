@@ -623,6 +623,12 @@ describe StripePayoutProcessor, :vcr do
           payment.reload
           expect(payment.failure_reason).to eq(Payment::FailureReason::CANNOT_PAY)
         end
+
+        it "adds a payout note to the user" do
+          described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+          expect { described_class.perform_payment(payment) }.to change { user.comments.with_type_payout_note.count }.by(1)
+          expect(user.comments.with_type_payout_note.last.content).to include("Stripe is unable to create payouts")
+        end
       end
 
       describe "the external transfer fails because payouts cannot be created" do
@@ -648,6 +654,12 @@ describe StripePayoutProcessor, :vcr do
           described_class.perform_payment(payment)
           payment.reload
           expect(payment.failure_reason).to eq(Payment::FailureReason::CANNOT_PAY)
+        end
+
+        it "adds a payout note to the user" do
+          described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+          expect { described_class.perform_payment(payment) }.to change { user.comments.with_type_payout_note.count }.by(1)
+          expect(user.comments.with_type_payout_note.last.content).to include("Stripe is unable to create payouts")
         end
       end
 
@@ -1032,6 +1044,12 @@ describe StripePayoutProcessor, :vcr do
           payment.reload
           expect(payment.failure_reason).to eq(Payment::FailureReason::CANNOT_PAY)
         end
+
+        it "adds a payout note to the user" do
+          described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+          expect { described_class.perform_payment(payment) }.to change { user.comments.with_type_payout_note.count }.by(1)
+          expect(user.comments.with_type_payout_note.last.content).to include("Stripe is unable to create payouts")
+        end
       end
 
       describe "the external transfer fails because payouts cannot be created" do
@@ -1057,6 +1075,12 @@ describe StripePayoutProcessor, :vcr do
           described_class.perform_payment(payment)
           payment.reload
           expect(payment.failure_reason).to eq(Payment::FailureReason::CANNOT_PAY)
+        end
+
+        it "adds a payout note to the user" do
+          described_class.prepare_payment_and_set_amount(payment, payment.balances.to_a)
+          expect { described_class.perform_payment(payment) }.to change { user.comments.with_type_payout_note.count }.by(1)
+          expect(user.comments.with_type_payout_note.last.content).to include("Stripe is unable to create payouts")
         end
       end
 
