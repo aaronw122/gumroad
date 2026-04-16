@@ -104,6 +104,10 @@ module User::Risk
     !verified
   end
 
+  def send_suspension_email
+    ContactingCreatorMailer.account_suspended(id).deliver_later
+  end
+
   def log_suspension_time_to_mongo
     Mongoer.async_write(MongoCollections::USER_SUSPENSION_TIME, "user_id" => id, "suspended_at" => Time.current.to_s)
   end

@@ -14,6 +14,36 @@ describe User::Risk do
     end
   end
 
+  describe "#send_suspension_email" do
+    let(:user) { create(:user) }
+
+    it "enqueues account_suspended email" do
+      expect do
+        user.send_suspension_email
+      end.to have_enqueued_mail(ContactingCreatorMailer, :account_suspended).with(user.id)
+    end
+  end
+
+  describe "suspension state machine callback" do
+    it "sends suspension email when suspended for TOS violation" do
+      user = create(:user)
+      user.flag_for_tos_violation!(author_name: "admin", bulk: true)
+
+      expect do
+        user.suspend_for_tos_violation!(author_name: "admin")
+      end.to have_enqueued_mail(ContactingCreatorMailer, :account_suspended).with(user.id)
+    end
+
+    it "sends suspension email when suspended for fraud" do
+      user = create(:user)
+      user.flag_for_fraud!(author_name: "admin")
+
+      expect do
+        user.suspend_for_fraud!(author_name: "admin")
+      end.to have_enqueued_mail(ContactingCreatorMailer, :account_suspended).with(user.id)
+    end
+  end
+
   describe "#log_suspension_time_to_mongo", :sidekiq_inline do
     let(:user) { create(:user) }
     let(:collection) { MONGO_DATABASE[MongoCollections::USER_SUSPENSION_TIME] }
