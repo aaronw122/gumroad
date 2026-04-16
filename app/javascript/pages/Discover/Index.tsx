@@ -12,6 +12,7 @@ import { classNames } from "$app/utils/classNames";
 import { CurrencyCode, formatPriceCentsWithCurrencySymbol } from "$app/utils/currency";
 import { discoverTitleGenerator, Taxonomy } from "$app/utils/discover";
 
+import { MobileFilterBar } from "$app/components/Discover/MobileFilterBar";
 import { Layout } from "$app/components/Discover/Layout";
 import { RecommendedWishlists } from "$app/components/Discover/RecommendedWishlists";
 import { HomeFooter } from "$app/components/Home/Shared/Footer";
@@ -25,6 +26,7 @@ import { Fieldset } from "$app/components/ui/Fieldset";
 import { Label } from "$app/components/ui/Label";
 import { Radio } from "$app/components/ui/Radio";
 import { Tab, Tabs } from "$app/components/ui/Tabs";
+import { useIsAboveBreakpoint } from "$app/components/useIsAboveBreakpoint";
 import { useScrollableCarousel } from "$app/components/useScrollableCarousel";
 import { CardWishlist } from "$app/components/Wishlist/Card";
 
@@ -325,6 +327,7 @@ function DiscoverIndex() {
     dispatch({ type: "set-params", params: { ...state.params, from: undefined, ...newParams } });
 
   const hasOfferCode = !!state.params.offer_code;
+  const isDesktop = useIsAboveBreakpoint("lg");
 
   const recommendedProducts = props.recommended_products ?? [];
   const isCuratedProducts = (() => {
@@ -471,10 +474,25 @@ function DiscoverIndex() {
                 </Tabs>
               )}
             </div>
+            {!isDesktop ? (
+              <MobileFilterBar
+                state={state}
+                dispatchAction={dispatch}
+                defaults={{
+                  taxonomy: state.params.taxonomy,
+                  query: state.params.query,
+                  sort: state.params.query || hasOfferCode ? "default" : state.params.sort,
+                }}
+                currencyCode={props.currency_code}
+                hideSort={!state.params.query && !hasOfferCode}
+                hasOfferCode={hasOfferCode}
+              />
+            ) : null}
             <CardGrid
               state={state}
               dispatchAction={dispatch}
               currencyCode={props.currency_code}
+              hideFilters={!isDesktop}
               hideSort={!state.params.query && !hasOfferCode}
               defaults={{
                 taxonomy: state.params.taxonomy,
@@ -482,56 +500,58 @@ function DiscoverIndex() {
                 sort: state.params.query || hasOfferCode ? "default" : state.params.sort,
               }}
               appendFilters={
-                <>
-                  <CardContent asChild details>
-                    <Details>
-                      <DetailsToggle chevronPosition="right" className="grow">
-                        Rating
-                      </DetailsToggle>
-                      <Fieldset role="group">
-                        {range(4, 0).map((number) => (
-                          <Label key={number} className="w-full">
-                            <span className="flex shrink-0 items-center gap-1">
-                              <RatingStars rating={number} />
-                              and up
-                            </span>
-                            <Radio
-                              wrapperClassName="ml-auto"
-                              value={number}
-                              aria-label={`${number} ${number === 1 ? "star" : "stars"} and up`}
-                              checked={number === state.params.rating}
-                              readOnly
-                              onClick={() =>
-                                updateParams(
-                                  state.params.rating === number ? { rating: undefined } : { rating: number },
-                                )
-                              }
-                            />
-                          </Label>
-                        ))}
-                      </Fieldset>
-                    </Details>
-                  </CardContent>
-                  {hasOfferCode ? (
+                isDesktop ? (
+                  <>
                     <CardContent asChild details>
-                      <Details open>
+                      <Details>
                         <DetailsToggle chevronPosition="right" className="grow">
-                          Offer code
+                          Rating
                         </DetailsToggle>
-                        <div className="flex items-center justify-between gap-2 py-1">
-                          <span>{props.black_friday_offer_code}</span>
-                          <button
-                            onClick={() => updateParams({ offer_code: undefined })}
-                            className="flex cursor-pointer items-center justify-center all-unset"
-                            aria-label="Remove offer code filter"
-                          >
-                            <X className="size-4" />
-                          </button>
-                        </div>
+                        <Fieldset role="group">
+                          {range(4, 0).map((number) => (
+                            <Label key={number} className="w-full">
+                              <span className="flex shrink-0 items-center gap-1">
+                                <RatingStars rating={number} />
+                                and up
+                              </span>
+                              <Radio
+                                wrapperClassName="ml-auto"
+                                value={number}
+                                aria-label={`${number} ${number === 1 ? "star" : "stars"} and up`}
+                                checked={number === state.params.rating}
+                                readOnly
+                                onClick={() =>
+                                  updateParams(
+                                    state.params.rating === number ? { rating: undefined } : { rating: number },
+                                  )
+                                }
+                              />
+                            </Label>
+                          ))}
+                        </Fieldset>
                       </Details>
                     </CardContent>
-                  ) : null}
-                </>
+                    {hasOfferCode ? (
+                      <CardContent asChild details>
+                        <Details open>
+                          <DetailsToggle chevronPosition="right" className="grow">
+                            Offer code
+                          </DetailsToggle>
+                          <div className="flex items-center justify-between gap-2 py-1">
+                            <span>{props.black_friday_offer_code}</span>
+                            <button
+                              onClick={() => updateParams({ offer_code: undefined })}
+                              className="flex cursor-pointer items-center justify-center all-unset"
+                              aria-label="Remove offer code filter"
+                            >
+                              <X className="size-4" />
+                            </button>
+                          </div>
+                        </Details>
+                      </CardContent>
+                    ) : null}
+                  </>
+                ) : undefined
               }
               pagination="button"
             />
