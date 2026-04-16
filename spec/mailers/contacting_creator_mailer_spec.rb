@@ -2005,25 +2005,25 @@ describe ContactingCreatorMailer do
     end
 
     context "when the seller has a pending scheduled refund" do
-      it "includes refund amount and chargeback disclaimer" do
+      it "includes refund amount" do
         create(:scheduled_payout, user: seller, action: "refund", scheduled_at: Date.parse("2025-06-15"), payout_amount_cents: 75_50)
 
         mail = ContactingCreatorMailer.account_suspended(seller.id)
 
         expect(mail.body.encoded).to include("Your unpaid balance ($75.50) will be refunded back to your customers.")
         expect(mail.body.encoded).to include("This is scheduled for June 15, 2025.")
-        expect(mail.body.encoded).to include("if chargebacks are filed on any of your sales, the scheduled amount may be delayed or adjusted pending their resolution")
+        expect(mail.body.encoded).not_to include("chargeback")
       end
     end
 
     context "when the seller has a pending scheduled hold" do
-      it "includes hold amount and chargeback disclaimer" do
+      it "includes hold amount" do
         create(:scheduled_payout, user: seller, action: "hold", scheduled_at: Date.parse("2025-06-15"), payout_amount_cents: 200_00)
 
         mail = ContactingCreatorMailer.account_suspended(seller.id)
 
         expect(mail.body.encoded).to include("Your unpaid balance ($200) is under review and will not be paid out at this time.")
-        expect(mail.body.encoded).to include("if chargebacks are filed on any of your sales, the scheduled amount may be delayed or adjusted pending their resolution")
+        expect(mail.body.encoded).not_to include("chargeback")
       end
     end
 
