@@ -189,26 +189,24 @@ export const Layout: React.FC<{
   return (
     <div className={className}>
       <header
-        className={classNames("hero relative z-20 border-t-0 bg-body pt-8", stickyBar ? "pb-2" : "border-b border-border pb-8")}
+        className={classNames("hero relative z-20 border-t-0 bg-body px-4 pt-8 lg:ps-16 lg:pe-16", stickyBar ? "pb-2" : "border-b border-border pb-8")}
         style={showTaxonomy && rootTaxonomy ? getRootTaxonomyCss(rootTaxonomy) : undefined}
       >
-        <div className="px-4 lg:ps-16 lg:pe-16">
-          <div className="flex w-full flex-col gap-4">
-            {isDesktop ? (
-              <DesktopHeaderRows {...headerRowElementsProps} />
-            ) : (
-              <MobileHeaderRows {...headerRowElementsProps} />
-            )}
-          </div>
-
-          {showTaxonomy && taxonomyPath ? (
-            <TaxonomyCategoryBreadcrumbs
-              taxonomyPath={taxonomyPath}
-              taxonomies={taxonomiesForNav}
-              onClickTaxonomy={onTaxonomyChange}
-            />
-          ) : null}
+        <div className="flex w-full flex-col gap-4">
+          {isDesktop ? (
+            <DesktopHeaderRows {...headerRowElementsProps} />
+          ) : (
+            <MobileHeaderRows {...headerRowElementsProps} />
+          )}
         </div>
+
+        {showTaxonomy && taxonomyPath ? (
+          <TaxonomyCategoryBreadcrumbs
+            taxonomyPath={taxonomyPath}
+            taxonomies={taxonomiesForNav}
+            onClickTaxonomy={onTaxonomyChange}
+          />
+        ) : null}
       </header>
       {stickyBar ? <StickyBar>{stickyBar}</StickyBar> : null}
       {children}
