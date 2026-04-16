@@ -51,6 +51,17 @@ describe ScheduledPayout do
       scheduled_payout = build(:scheduled_payout, scheduled_at: nil, delay_days: nil)
       expect(scheduled_payout).not_to be_valid
     end
+
+    it "requires payout_amount_cents to be a non-negative integer" do
+      scheduled_payout = build(:scheduled_payout, payout_amount_cents: nil)
+      expect(scheduled_payout).not_to be_valid
+
+      scheduled_payout = build(:scheduled_payout, payout_amount_cents: -1)
+      expect(scheduled_payout).not_to be_valid
+
+      scheduled_payout = build(:scheduled_payout, payout_amount_cents: 0)
+      expect(scheduled_payout).to be_valid
+    end
   end
 
   describe "#set_scheduled_at" do

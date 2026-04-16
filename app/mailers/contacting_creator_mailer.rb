@@ -375,7 +375,7 @@ class ContactingCreatorMailer < ApplicationMailer
     @seller = User.find(user_id)
     @subject = "Your Gumroad account has been suspended"
     @scheduled_payout = @seller.scheduled_payouts.pending.last
-    @payout_amount = formatted_dollar_amount(@scheduled_payout.payout_amount_cents) if @scheduled_payout&.payout_amount_cents
+    @payout_amount = formatted_dollar_amount(@scheduled_payout.payout_amount_cents) if @scheduled_payout
     @from = NOREPLY_EMAIL_WITH_NAME
   end
 

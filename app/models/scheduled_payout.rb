@@ -15,6 +15,7 @@ class ScheduledPayout < ApplicationRecord
   validates :status, presence: true, inclusion: { in: STATUSES }
   validates :delay_days, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :scheduled_at, presence: true
+  validates :payout_amount_cents, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
   scope :pending, -> { where(status: "pending") }
   scope :executed, -> { where(status: "executed") }
