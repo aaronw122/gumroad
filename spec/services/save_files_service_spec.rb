@@ -142,6 +142,37 @@ describe SaveFilesService do
       expect(file.reload.display_name).to eq("renamed file")
     end
 
+    it "maps 'file_name' param to 'display_name' for product files" do
+      file = create(:product_file, link: @product, url: "#{AWS_S3_ENDPOINT}/#{S3_BUCKET}/attachment/pencil.png")
+      @product.product_files << file
+
+      service.perform(@product, {
+                        files: [{
+                          external_id: file.external_id,
+                          url: file.url,
+                          file_name: "renamed via file_name",
+                        }]
+                      })
+
+      expect(file.reload.display_name).to eq("renamed via file_name")
+    end
+
+    it "prefers 'display_name' over 'file_name' when both are provided" do
+      file = create(:product_file, link: @product, url: "#{AWS_S3_ENDPOINT}/#{S3_BUCKET}/attachment/pencil.png")
+      @product.product_files << file
+
+      service.perform(@product, {
+                        files: [{
+                          external_id: file.external_id,
+                          url: file.url,
+                          file_name: "from file_name",
+                          display_name: "from display_name",
+                        }]
+                      })
+
+      expect(file.reload.display_name).to eq("from display_name")
+    end
+
     it "prefers 'display_name' over 'name' when both are provided" do
       file = create(:product_file, link: @product, url: "#{AWS_S3_ENDPOINT}/#{S3_BUCKET}/attachment/pencil.png")
       @product.product_files << file
