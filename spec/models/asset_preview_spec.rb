@@ -305,15 +305,15 @@ describe AssetPreview, :vcr do
   end
 
   describe "callbacks" do
-    describe "#reset_moderated_by_iffy_flag" do
-      let(:product) { create(:product, moderated_by_iffy: true) }
+    describe "#reset_content_moderated_flag" do
+      let(:product) { create(:product, content_moderated: true) }
       let(:asset_preview) { create(:asset_preview, link: product) }
 
       context "when a new asset preview is created" do
-        it "resets moderated_by_iffy flag on the associated product" do
+        it "resets content_moderated flag on the associated product" do
           expect do
             create(:asset_preview, link: product)
-          end.to change { product.reload.moderated_by_iffy }.from(true).to(false)
+          end.to change { product.reload.content_moderated }.from(true).to(false)
         end
       end
     end

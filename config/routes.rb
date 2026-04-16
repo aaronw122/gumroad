@@ -283,10 +283,6 @@ Rails.application.routes.draw do
           resources :openapi, only: :index
         end
 
-        namespace :iffy do
-          post :webhook, to: "webhook#handle"
-        end
-
         namespace :grmc do
           post :webhook, to: "webhook#handle"
         end

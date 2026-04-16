@@ -1402,7 +1402,7 @@ describe Settings::PaymentsController, :vcr, type: :controller, inertia: true do
     end
 
     before do
-      seller.mark_compliant!(author_name: "Iffy")
+      seller.mark_compliant!(author_name: "ContentModeration")
       allow_any_instance_of(User).to receive(:sales_cents_total).and_return(100_00)
       create(:payment_completed, user: seller)
     end

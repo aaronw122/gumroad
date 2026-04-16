@@ -75,7 +75,7 @@ class Installment < ApplicationRecord
 
   friendly_id :slug_candidates, use: :slugged
 
-  after_save :trigger_iffy_ingest
+  after_save :trigger_content_moderation
 
   validates :name, length: { maximum: 255 }
   validate :message_must_be_provided, :validate_call_to_action_url_and_text, :validate_channel,
@@ -934,9 +934,9 @@ class Installment < ApplicationRecord
       Rails.cache.write(cache_key, cache)
     end
 
-    def trigger_iffy_ingest
+    def trigger_content_moderation
       return unless saved_change_to_name? || saved_change_to_message?
-      Iffy::Post::IngestJob.perform_async(id)
+      ContentModeration::ModeratePostJob.perform_async(id)
     end
 
     def normalize_tag(raw)

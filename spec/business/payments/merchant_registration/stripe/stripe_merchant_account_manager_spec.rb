@@ -9669,8 +9669,8 @@ describe StripeMerchantAccountManager, :vcr do
             end
 
             it "does not email the creator if they are suspended" do
-              user.flag_for_fraud!(author_name: "iffy")
-              user.suspend_for_fraud!(author_name: "iffy")
+              user.flag_for_fraud!(author_name: "ContentModeration")
+              user.suspend_for_fraud!(author_name: "ContentModeration")
 
               expect do
                 described_class.handle_stripe_event(stripe_event)

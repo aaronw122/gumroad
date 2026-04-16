@@ -38,7 +38,7 @@ class Link < ApplicationRecord
             29 => :is_unpublished_by_admin,
             30 => :community_chat_enabled,
             31 => :DEPRECATED_excluded_from_mobile_app_discover,
-            32 => :moderated_by_iffy,
+            32 => :content_moderated,
             33 => :hide_sold_out_variants,
             :column => "flags",
             :flag_query_mode => :bit_operator,
@@ -218,8 +218,8 @@ class Link < ApplicationRecord
   after_update :create_licenses_for_existing_customers,
                if: ->(link) { link.saved_change_to_is_licensed? && link.is_licensed? }
   after_update :delete_unused_prices, if: :saved_change_to_purchase_type?
-  after_update :reset_moderated_by_iffy_flag, if: :saved_change_to_description?
-  after_save :queue_iffy_ingest_job_if_unpublished_by_admin
+  after_update :reset_content_moderated_flag, if: :saved_change_to_description?
+  after_save :queue_content_moderation_job
 
   enum subscription_duration: %i[monthly yearly quarterly biannually every_two_years]
   enum purchase_type: %i[buy_only rent_only buy_and_rent] # Indicates whether this product can be bought or rented or both.
@@ -1416,13 +1416,13 @@ class Link < ApplicationRecord
       end
     end
 
-    def reset_moderated_by_iffy_flag
-      update_attribute(:moderated_by_iffy, false)
+    def reset_content_moderated_flag
+      update_attribute(:content_moderated, false)
     end
 
-    def queue_iffy_ingest_job_if_unpublished_by_admin
+    def queue_content_moderation_job
       return unless is_unpublished_by_admin? && !saved_change_to_is_unpublished_by_admin?
 
-      Iffy::Product::IngestJob.perform_async(id)
+      ContentModeration::ModerateProductJob.perform_async(id)
     end
 end

@@ -3177,35 +3177,31 @@ describe User, :vcr do
     end
   end
 
-  describe "#trigger_iffy_ingest" do
+  describe "#trigger_content_moderation" do
     let!(:user) { create(:user, name: "Original Name", bio: "Original Bio") }
 
-    before do
-      allow_any_instance_of(Iffy::Profile::IngestService).to receive(:perform).and_return(true)
-    end
-
-    it "does not trigger an iffy ingest job if neither name nor bio have changed" do
+    it "does not trigger a content moderation job if neither name nor bio have changed" do
       expect do
         user.update!(email: "newemail@example.com")
-      end.not_to change { Iffy::Profile::IngestJob.jobs.size }
+      end.not_to change { ContentModeration::ModerateProfileJob.jobs.size }
     end
 
-    it "triggers an iffy ingest job if the name has changed" do
+    it "triggers a content moderation job if the name has changed" do
       expect do
         user.update!(name: "New Name")
-      end.to change { Iffy::Profile::IngestJob.jobs.size }.by(1)
+      end.to change { ContentModeration::ModerateProfileJob.jobs.size }.by(1)
     end
 
-    it "triggers an iffy ingest job if the bio has changed" do
+    it "triggers a content moderation job if the bio has changed" do
       expect do
         user.update!(bio: "New Bio")
-      end.to change { Iffy::Profile::IngestJob.jobs.size }.by(1)
+      end.to change { ContentModeration::ModerateProfileJob.jobs.size }.by(1)
     end
 
-    it "triggers an iffy ingest job if the username has changed" do
+    it "triggers a content moderation job if the username has changed" do
       expect do
         user.update!(username: "username1")
-      end.to change { Iffy::Profile::IngestJob.jobs.size }.by(1)
+      end.to change { ContentModeration::ModerateProfileJob.jobs.size }.by(1)
     end
   end
 

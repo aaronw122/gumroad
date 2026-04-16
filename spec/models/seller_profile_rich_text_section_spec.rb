@@ -24,8 +24,8 @@ describe SellerProfileRichTextSection do
     expect(section.errors.full_messages.to_sentence).to eq "Text is too large"
   end
 
-  describe "iffy ingest" do
-    it "triggers iffy ingest when json_data changes" do
+  describe "content moderation" do
+    it "triggers content moderation when json_data changes" do
       section = create(:seller_profile_rich_text_section)
       expect do
         section.update!(json_data: {
@@ -37,14 +37,14 @@ describe SellerProfileRichTextSection do
                             ]
                           }
                         })
-      end.to change { Iffy::Profile::IngestJob.jobs.size }.by(1)
+      end.to change { ContentModeration::ModerateProfileJob.jobs.size }.by(1)
     end
 
-    it "triggers iffy ingest when header changes" do
+    it "triggers content moderation when header changes" do
       section = create(:seller_profile_rich_text_section)
       expect do
         section.update!(header: "New Header")
-      end.to change { Iffy::Profile::IngestJob.jobs.size }.by(1)
+      end.to change { ContentModeration::ModerateProfileJob.jobs.size }.by(1)
     end
   end
 end

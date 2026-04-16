@@ -243,8 +243,8 @@ class Purchase < ApplicationRecord
                                                                                                                                  }
     after_transition any => :successful, :do => :block_fraudulent_free_purchases!
     after_transition any => any, :do => :log_transition
-    after_transition any => [:successful, :not_charged, :gift_receiver_purchase_successful], :do => :trigger_iffy_moderation, if: lambda { |purchase|
-      purchase.price_cents > 0 && !purchase.link.moderated_by_iffy
+    after_transition any => [:successful, :not_charged, :gift_receiver_purchase_successful], :do => :trigger_content_moderation, if: lambda { |purchase|
+      purchase.price_cents > 0 && !purchase.link.content_moderated
     }
 
     # normal purchase transitions:
@@ -3796,10 +3796,10 @@ class Purchase < ApplicationRecord
       @_purchasing_power_parity_factor ||= PurchasingPowerParityService.new.get_factor(Compliance::Countries.find_by_name(ip_country)&.alpha2, seller)
     end
 
-    def trigger_iffy_moderation
-      probability = $redis.get(RedisKey.iffy_moderation_probability).to_f || 0.001
+    def trigger_content_moderation
+      probability = $redis.get(RedisKey.content_moderation_probability).to_f || 0.001
       if rand < probability
-        Iffy::Product::IngestJob.perform_async(link.id)
+        ContentModeration::ModerateProductJob.perform_async(link.id)
       end
     end
 

@@ -12,5 +12,5 @@ CHAT_ROOMS = {
   payouts: { email: PAYMENTS_NOTIFICATION_EMAIL },
   risk: { email: INTERNAL_NOTIFICATION_EMAIL },
   test: { email: INTERNAL_NOTIFICATION_EMAIL },
-  iffy_log: { email: INTERNAL_NOTIFICATION_EMAIL },
+  content_moderation_log: { email: INTERNAL_NOTIFICATION_EMAIL },
 }.freeze

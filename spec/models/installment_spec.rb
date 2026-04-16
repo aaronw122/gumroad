@@ -988,25 +988,25 @@ const b = 2;</code></pre>
     end
   end
 
-  describe "#trigger_iffy_ingest" do
+  describe "#trigger_content_moderation" do
     let!(:installment) { create(:installment, name: "Original Name", message: "Original Message") }
 
-    it "does not trigger an iffy ingest job if neither name nor message have changed" do
+    it "does not trigger a content moderation job if neither name nor message have changed" do
       expect do
         installment.update!(published_at: Time.current)
-      end.not_to change { Iffy::Post::IngestJob.jobs.size }
+      end.not_to change { ContentModeration::ModeratePostJob.jobs.size }
     end
 
-    it "triggers an iffy ingest job if the name has changed" do
+    it "triggers a content moderation job if the name has changed" do
       expect do
         installment.update!(name: "New Name")
-      end.to change { Iffy::Post::IngestJob.jobs.size }.by(1)
+      end.to change { ContentModeration::ModeratePostJob.jobs.size }.by(1)
     end
 
-    it "triggers an iffy ingest job if the message has changed" do
+    it "triggers a content moderation job if the message has changed" do
       expect do
         installment.update!(message: "New Message")
-      end.to change { Iffy::Post::IngestJob.jobs.size }.by(1)
+      end.to change { ContentModeration::ModeratePostJob.jobs.size }.by(1)
     end
   end
 
