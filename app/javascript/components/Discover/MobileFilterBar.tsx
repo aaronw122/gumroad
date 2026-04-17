@@ -1,4 +1,4 @@
-import { ChevronDown } from "@boxicons/react";
+import { ChevronDown, X } from "@boxicons/react";
 import * as React from "react";
 
 import { SearchRequest } from "$app/data/search";
@@ -28,6 +28,13 @@ type MobileFilterBarProps = {
   currencyCode: CurrencyCode;
   hideSort?: boolean;
   hasOfferCode?: boolean;
+};
+
+const MOBILE_SORT_LABELS: Partial<Record<string, string>> = {
+  ...SORT_BY_LABELS,
+  best_sellers: "Best Sellers",
+  curated: "Curated",
+  trending: "Trending",
 };
 
 export const MobileFilterBar = ({
@@ -89,13 +96,24 @@ export const MobileFilterBar = ({
     return notFoundKeys.map((key) => ({ key, doc_count: 0 })).concat(foundData);
   };
 
-  const filters: { key: FilterKey; label: string; title: string; active: boolean; visible: boolean; content: React.ReactNode }[] = [
+  const selectedTagsCount = searchParams.tags?.length ?? 0;
+  const selectedFiletypesCount = searchParams.filetypes?.length ?? 0;
+
+  const filters: {
+    key: FilterKey;
+    label: string;
+    title: string;
+    active: boolean;
+    visible: boolean;
+    content: React.ReactNode;
+  }[] = [
     {
       key: "sort",
       title: "Sort by",
-      label: searchParams.sort !== defaults.sort && searchParams.sort != null
-        ? `Sort: ${SORT_BY_LABELS[searchParams.sort as keyof typeof SORT_BY_LABELS]}`
-        : "Sort by",
+      label:
+        searchParams.sort !== defaults.sort && searchParams.sort != null
+          ? `Sort: ${MOBILE_SORT_LABELS[searchParams.sort] ?? searchParams.sort}`
+          : "Sort by",
       active: searchParams.sort !== defaults.sort && searchParams.sort != null,
       visible: !hideSort,
       content: (
@@ -117,9 +135,9 @@ export const MobileFilterBar = ({
     {
       key: "tags",
       title: "Tags",
-      label: (searchParams.tags?.length ?? 0) > 0 ? `Tags (${searchParams.tags!.length})` : "Tags",
-      active: (searchParams.tags?.length ?? 0) > 0,
-      visible: (results?.tags_data?.length ?? 0) > 0 || (searchParams.tags?.length ?? 0) > 0,
+      label: selectedTagsCount > 0 ? `Tags (${selectedTagsCount})` : "Tags",
+      active: selectedTagsCount > 0,
+      visible: (results?.tags_data.length ?? 0) > 0 || selectedTagsCount > 0,
       content: (
         <Fieldset role="group">
           <Label className="w-full">
@@ -145,9 +163,9 @@ export const MobileFilterBar = ({
     {
       key: "contains",
       title: "Contains",
-      label: (searchParams.filetypes?.length ?? 0) > 0 ? `Contains (${searchParams.filetypes!.length})` : "Contains",
-      active: (searchParams.filetypes?.length ?? 0) > 0,
-      visible: (results?.filetypes_data?.length ?? 0) > 0 || (searchParams.filetypes?.length ?? 0) > 0,
+      label: selectedFiletypesCount > 0 ? `Contains (${selectedFiletypesCount})` : "Contains",
+      active: selectedFiletypesCount > 0,
+      visible: (results?.filetypes_data.length ?? 0) > 0 || selectedFiletypesCount > 0,
       content: (
         <Fieldset role="group">
           {results ? (
@@ -167,7 +185,8 @@ export const MobileFilterBar = ({
       label: (() => {
         const minSet = searchParams.min_price != null;
         const maxSet = searchParams.max_price != null;
-        if (minSet && maxSet) return `${currencySymbol}${searchParams.min_price}\u2013${currencySymbol}${searchParams.max_price}`;
+        if (minSet && maxSet)
+          return `${currencySymbol}${searchParams.min_price}\u2013${currencySymbol}${searchParams.max_price}`;
         if (minSet) return `${currencySymbol}${searchParams.min_price}+`;
         if (maxSet) return `Up to ${currencySymbol}${searchParams.max_price}`;
         return "Price";
@@ -227,10 +246,7 @@ export const MobileFilterBar = ({
       active: searchParams.rating != null,
       visible: true,
       content: (
-        <RatingFilterOptions
-          rating={searchParams.rating}
-          onRatingChange={(rating) => updateParams({ rating })}
-        />
+        <RatingFilterOptions rating={searchParams.rating} onRatingChange={(rating) => updateParams({ rating })} />
       ),
     },
   ];
@@ -242,11 +258,19 @@ export const MobileFilterBar = ({
       <div
         role="toolbar"
         aria-label="Filters"
-        className="flex overflow-x-auto gap-2 px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {visibleFilters.map((filter) => (
-          <Pill key={filter.key} asChild className={`shrink-0 cursor-pointer ${filter.active ? "bg-accent/20 border-foreground" : "bg-transparent"}`}>
-            <button onClick={() => setOpenFilter(filter.key)} aria-haspopup="dialog" className="inline-flex items-center gap-1">
+          <Pill
+            key={filter.key}
+            asChild
+            className={`shrink-0 cursor-pointer ${filter.active ? "border-foreground bg-accent/20" : "bg-transparent"}`}
+          >
+            <button
+              onClick={() => setOpenFilter(filter.key)}
+              aria-haspopup="dialog"
+              className="inline-flex items-center gap-1"
+            >
               {filter.label}
               <ChevronDown className="size-4" />
             </button>
@@ -254,8 +278,13 @@ export const MobileFilterBar = ({
         ))}
         {hasOfferCode ? (
           <Pill asChild color="primary" className="shrink-0 cursor-pointer">
-            <button onClick={() => updateParams({ offer_code: undefined })}>
+            <button
+              onClick={() => updateParams({ offer_code: undefined })}
+              aria-label="Remove offer code filter"
+              className="inline-flex items-center gap-1"
+            >
               {searchParams.offer_code}
+              <X className="size-4" />
             </button>
           </Pill>
         ) : null}
@@ -270,7 +299,9 @@ export const MobileFilterBar = ({
         <BottomSheet
           key={filter.key}
           open={openFilter === filter.key}
-          onOpenChange={(open) => { if (!open) setOpenFilter(null); }}
+          onOpenChange={(open) => {
+            if (!open) setOpenFilter(null);
+          }}
         >
           <BottomSheetHeader>{filter.title}</BottomSheetHeader>
           {filter.content}
