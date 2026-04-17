@@ -30,12 +30,7 @@ type MobileFilterBarProps = {
   hasOfferCode?: boolean;
 };
 
-const MOBILE_SORT_LABELS: Partial<Record<string, string>> = {
-  ...SORT_BY_LABELS,
-  best_sellers: "Best Sellers",
-  curated: "Curated",
-  trending: "Trending",
-};
+const SORT_LABELS: Partial<Record<string, string>> = SORT_BY_LABELS;
 
 export const MobileFilterBar = ({
   state,
@@ -112,7 +107,7 @@ export const MobileFilterBar = ({
       title: "Sort by",
       label:
         searchParams.sort !== defaults.sort && searchParams.sort != null
-          ? `Sort: ${MOBILE_SORT_LABELS[searchParams.sort] ?? searchParams.sort}`
+          ? `Sort: ${SORT_LABELS[searchParams.sort] ?? searchParams.sort}`
           : "Sort by",
       active: searchParams.sort !== defaults.sort && searchParams.sort != null,
       visible: !hideSort,
