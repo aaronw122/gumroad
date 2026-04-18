@@ -193,15 +193,15 @@ export const RatingFilterOptions = ({
 export type FilterDefinition = {
   key: string;
   title: string;
-  label: string;
+  triggerLabel: string;
   active: boolean;
-  onClear: (() => void) | null;
+  clear?: () => void;
   content: React.ReactNode;
-  alwaysShow?: boolean;
-  hasData?: boolean;
+  isVisible: boolean;
+  hasData: boolean;
 };
 
-export const useDiscoverFilters = ({
+export const useDiscoverFilterSections = ({
   state,
   dispatchAction,
   defaults = {},
@@ -291,12 +291,12 @@ export const useDiscoverFilters = ({
     {
       key: "sort",
       title: "Sort by",
-      label:
+      triggerLabel:
         sortActive && searchParams.sort ? `Sort: ${sortLabels[searchParams.sort] ?? searchParams.sort}` : "Sort by",
       active: sortActive,
-      alwaysShow: !hideSort,
+      isVisible: !hideSort,
       hasData: true,
-      onClear: sortActive ? () => updateParams({ sort: defaults.sort }) : null,
+      ...(sortActive ? { clear: () => updateParams({ sort: defaults.sort }) } : {}),
       content: (
         <Fieldset role="group">
           {(onProfile ? PROFILE_SORT_KEYS : SORT_KEYS).map((key) => (
@@ -317,10 +317,11 @@ export const useDiscoverFilters = ({
     {
       key: "tags",
       title: "Tags",
-      label: selectedTagsCount > 0 ? `Tags (${selectedTagsCount})` : "Tags",
+      triggerLabel: selectedTagsCount > 0 ? `Tags (${selectedTagsCount})` : "Tags",
       active: selectedTagsCount > 0,
+      isVisible: true,
       hasData: (results?.tags_data.length ?? 0) > 0 || selectedTagsCount > 0,
-      onClear: selectedTagsCount > 0 ? () => updateParams({ tags: undefined }) : null,
+      ...(selectedTagsCount > 0 ? { clear: () => updateParams({ tags: undefined }) } : {}),
       content: (
         <Fieldset role="group">
           <Label className="w-full">
@@ -346,10 +347,11 @@ export const useDiscoverFilters = ({
     {
       key: "contains",
       title: "Contains",
-      label: selectedFiletypesCount > 0 ? `Contains (${selectedFiletypesCount})` : "Contains",
+      triggerLabel: selectedFiletypesCount > 0 ? `Contains (${selectedFiletypesCount})` : "Contains",
       active: selectedFiletypesCount > 0,
+      isVisible: true,
       hasData: (results?.filetypes_data.length ?? 0) > 0 || selectedFiletypesCount > 0,
-      onClear: selectedFiletypesCount > 0 ? () => updateParams({ filetypes: undefined }) : null,
+      ...(selectedFiletypesCount > 0 ? { clear: () => updateParams({ filetypes: undefined }) } : {}),
       content: (
         <Fieldset role="group">
           {results ? (
@@ -366,11 +368,11 @@ export const useDiscoverFilters = ({
     {
       key: "price",
       title: "Price",
-      label: priceLabel,
+      triggerLabel: priceLabel,
       active: priceActive,
-      alwaysShow: true,
+      isVisible: true,
       hasData: true,
-      onClear: priceActive ? () => updateParams({ min_price: undefined, max_price: undefined }) : null,
+      ...(priceActive ? { clear: () => updateParams({ min_price: undefined, max_price: undefined }) } : {}),
       content: (
         <div
           style={{
@@ -420,11 +422,11 @@ export const useDiscoverFilters = ({
     {
       key: "rating",
       title: "Rating",
-      label: searchParams.rating != null ? `${searchParams.rating}+ stars` : "Rating",
+      triggerLabel: searchParams.rating != null ? `${searchParams.rating}+ stars` : "Rating",
       active: searchParams.rating != null,
-      alwaysShow: true,
+      isVisible: true,
       hasData: true,
-      onClear: searchParams.rating != null ? () => updateParams({ rating: undefined }) : null,
+      ...(searchParams.rating != null ? { clear: () => updateParams({ rating: undefined }) } : {}),
       content: (
         <RatingFilterOptions rating={searchParams.rating} onRatingChange={(rating) => updateParams({ rating })} />
       ),
@@ -450,7 +452,7 @@ export const CardGrid = ({
   const gridRef = React.useRef<HTMLDivElement | null>(null);
   const { results } = state;
 
-  const { filters, resetFilters, anyFilters } = useDiscoverFilters({
+  const { filters, resetFilters, anyFilters } = useDiscoverFilterSections({
     state,
     dispatchAction,
     defaults,
@@ -499,7 +501,7 @@ export const CardGrid = ({
           {prependFilters}
           {filters.map((filter) => {
             const local = localOpenState[filter.key];
-            const shouldShow = filter.alwaysShow || filter.hasData || local?.open;
+            const shouldShow = filter.isVisible || local?.open;
             if (!shouldShow) return null;
             return (
               <CardContent key={filter.key} asChild details>

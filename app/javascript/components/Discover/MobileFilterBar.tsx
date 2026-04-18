@@ -2,9 +2,10 @@ import { ChevronDown, X } from "@boxicons/react";
 import * as React from "react";
 
 import { SearchRequest } from "$app/data/search";
+import { classNames } from "$app/utils/classNames";
 import { CurrencyCode } from "$app/utils/currency";
 
-import { Action, State, useDiscoverFilters } from "$app/components/Product/CardGrid";
+import { Action, State, useDiscoverFilterSections } from "$app/components/Product/CardGrid";
 import { BottomSheet, BottomSheetFooter, BottomSheetHeader } from "$app/components/ui/BottomSheet";
 import { Pill } from "$app/components/ui/Pill";
 
@@ -29,7 +30,7 @@ export const MobileFilterBar = ({
 
   const { params: searchParams } = state;
 
-  const { filters, updateParams, results } = useDiscoverFilters({
+  const { filters, updateParams, results } = useDiscoverFilterSections({
     state,
     dispatchAction,
     defaults,
@@ -37,15 +38,12 @@ export const MobileFilterBar = ({
     hideSort,
   });
 
-  const visibleFilters = filters.filter((f) => {
-    if (f.key === "sort") return !hideSort;
-    return true;
-  });
+  const visibleFilters = filters.filter((filter) => filter.isVisible);
 
   const disabledFilters = new Set(visibleFilters.filter((f) => !f.hasData && !f.active).map((f) => f.key));
 
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const filterLabels = visibleFilters.map((f) => f.label).join(",");
+  const filterLabels = visibleFilters.map((filter) => filter.triggerLabel).join(",");
 
   React.useLayoutEffect(() => {
     const container = containerRef.current;
@@ -131,7 +129,11 @@ export const MobileFilterBar = ({
             <Pill
               key={filter.key}
               asChild
-              className={`shrink-0 ${disabled ? "cursor-default opacity-50" : "cursor-pointer"} ${filter.active ? "border-foreground bg-accent/20" : "bg-transparent"}`}
+              className={classNames(
+                "shrink-0",
+                disabled ? "cursor-default opacity-50" : "cursor-pointer",
+                filter.active ? "border-foreground bg-accent/20" : "bg-transparent",
+              )}
             >
               <button
                 onClick={() => {
@@ -141,7 +143,7 @@ export const MobileFilterBar = ({
                 aria-haspopup="dialog"
                 className="inline-flex min-h-11 items-center gap-1 text-base"
               >
-                {filter.label}
+                {filter.triggerLabel}
                 <ChevronDown className="size-4" />
               </button>
             </Pill>
@@ -149,7 +151,7 @@ export const MobileFilterBar = ({
         })}
       </div>
 
-      {filters.map((filter) => (
+      {visibleFilters.map((filter) => (
         <BottomSheet
           key={filter.key}
           open={openFilter === filter.key}
@@ -168,9 +170,12 @@ export const MobileFilterBar = ({
             buttonDisabled={results?.total === 0}
           >
             <button
-              className={`mr-auto underline all-unset ${filter.onClear ? "cursor-pointer text-foreground" : "cursor-default text-muted"}`}
-              onClick={() => filter.onClear?.()}
-              disabled={!filter.onClear}
+              className={classNames(
+                "mr-auto underline all-unset",
+                filter.clear ? "cursor-pointer text-foreground" : "cursor-default text-muted",
+              )}
+              onClick={() => filter.clear?.()}
+              disabled={!filter.clear}
             >
               Clear
             </button>

@@ -189,7 +189,10 @@ export const Layout: React.FC<{
   return (
     <div className={className}>
       <header
-        className={classNames("hero relative z-20 border-t-0 bg-body px-4 pt-8 lg:ps-16 lg:pe-16", stickyBar ? "pb-2" : "border-b border-border pb-8")}
+        className={classNames(
+          "hero relative z-20 border-t-0 bg-body px-4 pt-8 lg:ps-16 lg:pe-16",
+          stickyBar ? "pb-2" : "border-b border-border pb-8",
+        )}
         style={showTaxonomy && rootTaxonomy ? getRootTaxonomyCss(rootTaxonomy) : undefined}
       >
         <div className="flex w-full flex-col gap-4">
@@ -215,14 +218,16 @@ export const Layout: React.FC<{
 };
 
 const StickyBar = ({ children }: { children: React.ReactNode }) => {
-  const sentinelRef = React.useRef<HTMLDivElement>(null);
-  const [isStuck, setIsStuck] = React.useState(false);
+  const stickySentinelRef = React.useRef<HTMLDivElement>(null);
+  const [showBottomBorder, setShowBottomBorder] = React.useState(false);
 
   React.useEffect(() => {
-    const sentinel = sentinelRef.current;
+    const sentinel = stickySentinelRef.current;
     if (!sentinel) return;
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry) setIsStuck(!entry.isIntersecting); },
+      ([entry]) => {
+        if (entry) setShowBottomBorder(!entry.isIntersecting);
+      },
       { threshold: 0 },
     );
     observer.observe(sentinel);
@@ -231,8 +236,8 @@ const StickyBar = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <>
-      <div ref={sentinelRef} className="h-0" />
-      <div className={classNames("sticky top-0 z-10 bg-body py-2", isStuck && "border-b border-border")}>
+      <div ref={stickySentinelRef} className="h-0" />
+      <div className={classNames("sticky top-0 z-10 bg-body py-2", showBottomBorder && "border-b border-border")}>
         {children}
       </div>
     </>
