@@ -260,6 +260,18 @@ export const MobileFilterBar = ({
         aria-label="Filters"
         className="flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
+        {hasOfferCode ? (
+          <Pill asChild color="primary" className="shrink-0 cursor-pointer">
+            <button
+              onClick={() => updateParams({ offer_code: undefined })}
+              aria-label="Remove offer code filter"
+              className="inline-flex items-center gap-1"
+            >
+              {searchParams.offer_code}
+              <X className="size-4" />
+            </button>
+          </Pill>
+        ) : null}
         {visibleFilters.map((filter) => (
           <Pill
             key={filter.key}
@@ -279,18 +291,6 @@ export const MobileFilterBar = ({
             </button>
           </Pill>
         ))}
-        {hasOfferCode ? (
-          <Pill asChild color="primary" className="shrink-0 cursor-pointer">
-            <button
-              onClick={() => updateParams({ offer_code: undefined })}
-              aria-label="Remove offer code filter"
-              className="inline-flex items-center gap-1"
-            >
-              {searchParams.offer_code}
-              <X className="size-4" />
-            </button>
-          </Pill>
-        ) : null}
       </div>
 
       {filters.map((filter) => (
