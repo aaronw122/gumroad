@@ -71,13 +71,6 @@ export const MobileFilterBar = ({
     } else showAlert("Please set the price minimum to be lower than the maximum.", "error");
   };
 
-  const hasActiveFilters = Object.keys(searchParams).some(
-    (key) =>
-      !["from", "curated_product_ids"].includes(key) &&
-      searchParams[key] != null &&
-      searchParams[key] !== defaults[key],
-  );
-
   const uid = React.useId();
   const minPriceUid = React.useId();
   const maxPriceUid = React.useId();
@@ -100,6 +93,8 @@ export const MobileFilterBar = ({
     title: string;
     active: boolean;
     visible: boolean;
+    disabled: boolean;
+    onClear: (() => void) | null;
     content: React.ReactNode;
   }[] = [
     {
@@ -111,6 +106,8 @@ export const MobileFilterBar = ({
           : "Sort by",
       active: searchParams.sort !== defaults.sort && searchParams.sort != null,
       visible: !hideSort,
+      disabled: false,
+      onClear: searchParams.sort !== defaults.sort && searchParams.sort != null ? () => updateParams({ sort: defaults.sort }) : null,
       content: (
         <Fieldset role="group">
           {SORT_KEYS.map((key) => (
@@ -132,7 +129,9 @@ export const MobileFilterBar = ({
       title: "Tags",
       label: selectedTagsCount > 0 ? `Tags (${selectedTagsCount})` : "Tags",
       active: selectedTagsCount > 0,
-      visible: (results?.tags_data.length ?? 0) > 0 || selectedTagsCount > 0,
+      visible: true,
+      disabled: (results?.tags_data.length ?? 0) === 0 && selectedTagsCount === 0,
+      onClear: selectedTagsCount > 0 ? () => updateParams({ tags: undefined }) : null,
       content: (
         <Fieldset role="group">
           <Label className="w-full">
@@ -160,7 +159,9 @@ export const MobileFilterBar = ({
       title: "Contains",
       label: selectedFiletypesCount > 0 ? `Contains (${selectedFiletypesCount})` : "Contains",
       active: selectedFiletypesCount > 0,
-      visible: (results?.filetypes_data.length ?? 0) > 0 || selectedFiletypesCount > 0,
+      visible: true,
+      disabled: (results?.filetypes_data.length ?? 0) === 0 && selectedFiletypesCount === 0,
+      onClear: selectedFiletypesCount > 0 ? () => updateParams({ filetypes: undefined }) : null,
       content: (
         <Fieldset role="group">
           {results ? (
@@ -188,6 +189,8 @@ export const MobileFilterBar = ({
       })(),
       active: searchParams.min_price != null || searchParams.max_price != null,
       visible: true,
+      disabled: false,
+      onClear: searchParams.min_price != null || searchParams.max_price != null ? () => updateParams({ min_price: undefined, max_price: undefined }) : null,
       content: (
         <div
           style={{
@@ -240,6 +243,8 @@ export const MobileFilterBar = ({
       label: searchParams.rating != null ? `${searchParams.rating}+ stars` : "Rating",
       active: searchParams.rating != null,
       visible: true,
+      disabled: false,
+      onClear: searchParams.rating != null ? () => updateParams({ rating: undefined }) : null,
       content: (
         <RatingFilterOptions rating={searchParams.rating} onRatingChange={(rating) => updateParams({ rating })} />
       ),
@@ -259,12 +264,15 @@ export const MobileFilterBar = ({
           <Pill
             key={filter.key}
             asChild
-            className={`shrink-0 cursor-pointer ${filter.active ? "border-foreground bg-accent/20" : "bg-transparent"}`}
+            className={`shrink-0 ${filter.disabled ? "cursor-default opacity-50" : "cursor-pointer"} ${filter.active ? "border-foreground bg-accent/20" : "bg-transparent"}`}
           >
             <button
-              onClick={() => setOpenFilter(filter.key)}
+              onClick={() => {
+                if (!filter.disabled) setOpenFilter(filter.key);
+              }}
+              disabled={filter.disabled}
               aria-haspopup="dialog"
-              className="inline-flex items-center gap-1"
+              className="inline-flex min-h-11 items-center gap-1 text-base"
             >
               {filter.label}
               <ChevronDown className="size-4" />
@@ -283,11 +291,6 @@ export const MobileFilterBar = ({
             </button>
           </Pill>
         ) : null}
-        {hasActiveFilters ? (
-          <Pill asChild className="shrink-0 cursor-pointer bg-transparent">
-            <button onClick={() => dispatchAction({ type: "set-params", params: defaults })}>Clear all</button>
-          </Pill>
-        ) : null}
       </div>
 
       {filters.map((filter) => (
@@ -300,7 +303,15 @@ export const MobileFilterBar = ({
         >
           <BottomSheetHeader>{filter.title}</BottomSheetHeader>
           {filter.content}
-          <BottomSheetFooter />
+          <BottomSheetFooter>
+            <button
+              className={`mr-auto underline all-unset ${filter.onClear ? "cursor-pointer text-foreground" : "cursor-default text-muted"}`}
+              onClick={() => filter.onClear?.()}
+              disabled={!filter.onClear}
+            >
+              Clear
+            </button>
+          </BottomSheetFooter>
         </BottomSheet>
       ))}
     </>
