@@ -28,15 +28,13 @@ export const MobileFilterBar = ({
   const [openFilter, setOpenFilter] = React.useState<string | null>(null);
 
   const { params: searchParams } = state;
-  const results = state.results;
 
-  const { filters, updateParams } = useDiscoverFilters({
+  const { filters, updateParams, results } = useDiscoverFilters({
     state,
     dispatchAction,
     defaults,
     currencyCode,
     hideSort,
-    hasOfferCode,
   });
 
   const visibleFilters = filters.filter((f) => {
@@ -44,9 +42,7 @@ export const MobileFilterBar = ({
     return true;
   });
 
-  const disabledFilters = new Set(
-    visibleFilters.filter((f) => !f.hasData && !f.active).map((f) => f.key),
-  );
+  const disabledFilters = new Set(visibleFilters.filter((f) => !f.hasData && !f.active).map((f) => f.key));
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const filterLabels = visibleFilters.map((f) => f.label).join(",");

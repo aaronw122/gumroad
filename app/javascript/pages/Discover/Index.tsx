@@ -11,8 +11,8 @@ import { classNames } from "$app/utils/classNames";
 import { CurrencyCode, formatPriceCentsWithCurrencySymbol } from "$app/utils/currency";
 import { discoverTitleGenerator, Taxonomy } from "$app/utils/discover";
 
-import { MobileFilterBar } from "$app/components/Discover/MobileFilterBar";
 import { Layout } from "$app/components/Discover/Layout";
+import { MobileFilterBar } from "$app/components/Discover/MobileFilterBar";
 import { RecommendedWishlists } from "$app/components/Discover/RecommendedWishlists";
 import { HomeFooter } from "$app/components/Home/Shared/Footer";
 import { HorizontalCard } from "$app/components/Product/Card";
@@ -429,7 +429,7 @@ function DiscoverIndex() {
             </div>
           </header>
         ) : null}
-        <div className="grid gap-16! px-4 pt-2 pb-16 lg:pt-16 lg:ps-16 lg:pe-16">
+        <div className="grid gap-16! px-4 pt-2 pb-16 lg:ps-16 lg:pe-16 lg:pt-16">
           {showRecommendationSections ? (
             <Deferred data={["recommended_products"]} fallback={<ProductsCarouselSkeleton />}>
               {recommendedProducts.length ? (

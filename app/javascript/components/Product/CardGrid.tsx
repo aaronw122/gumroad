@@ -134,9 +134,10 @@ export const FilterCheckboxes = ({
   setSelection: (value: string[]) => void;
   disabled: boolean;
 }) => {
+  const [showingAll, setShowingAll] = React.useState(false);
   return (
     <>
-      {filters.map((option) => (
+      {(showingAll ? filters : filters.slice(0, 5)).map((option) => (
         <Label key={option.key} className="w-full">
           {option.key} ({option.doc_count})
           <Checkbox
@@ -153,6 +154,11 @@ export const FilterCheckboxes = ({
           />
         </Label>
       ))}
+      {filters.length > 5 && !showingAll ? (
+        <button className="cursor-pointer underline all-unset" onClick={() => setShowingAll(true)}>
+          Show more
+        </button>
+      ) : null}
     </>
   );
 };
@@ -201,7 +207,6 @@ export const useDiscoverFilters = ({
   defaults = {},
   currencyCode,
   hideSort,
-  hasOfferCode: _hasOfferCode,
   disableFilters,
 }: {
   state: State;
@@ -209,7 +214,6 @@ export const useDiscoverFilters = ({
   defaults?: SearchRequest;
   currencyCode: CurrencyCode;
   hideSort?: boolean | undefined;
-  hasOfferCode?: boolean | undefined;
   disableFilters?: boolean | undefined;
 }) => {
   const currencySymbol = getShortCurrencySymbol(currencyCode);
@@ -288,9 +292,7 @@ export const useDiscoverFilters = ({
       key: "sort",
       title: "Sort by",
       label:
-        sortActive && searchParams.sort
-          ? `Sort: ${sortLabels[searchParams.sort] ?? searchParams.sort}`
-          : "Sort by",
+        sortActive && searchParams.sort ? `Sort: ${sortLabels[searchParams.sort] ?? searchParams.sort}` : "Sort by",
       active: sortActive,
       alwaysShow: !hideSort,
       hasData: true,
@@ -391,9 +393,7 @@ export const useDiscoverFilters = ({
                 }}
                 value={enteredMinPrice ?? null}
               >
-                {(inputProps) => (
-                  <Input id={minPriceUid} placeholder="0" disabled={disableFilters} {...inputProps} />
-                )}
+                {(inputProps) => <Input id={minPriceUid} placeholder="0" disabled={disableFilters} {...inputProps} />}
               </NumberInput>
             </InputGroup>
           </Fieldset>
@@ -410,9 +410,7 @@ export const useDiscoverFilters = ({
                 }}
                 value={enteredMaxPrice ?? null}
               >
-                {(inputProps) => (
-                  <Input id={maxPriceUid} placeholder="∞" disabled={disableFilters} {...inputProps} />
-                )}
+                {(inputProps) => <Input id={maxPriceUid} placeholder="∞" disabled={disableFilters} {...inputProps} />}
               </NumberInput>
             </InputGroup>
           </Fieldset>
@@ -433,7 +431,7 @@ export const useDiscoverFilters = ({
     },
   ];
 
-  return { filters, updateParams, resetFilters, anyFilters };
+  return { filters, updateParams, resetFilters, anyFilters, results };
 };
 
 export const CardGrid = ({
