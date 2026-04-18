@@ -16,7 +16,7 @@ import { Layout } from "$app/components/Discover/Layout";
 import { RecommendedWishlists } from "$app/components/Discover/RecommendedWishlists";
 import { HomeFooter } from "$app/components/Home/Shared/Footer";
 import { HorizontalCard } from "$app/components/Product/Card";
-import { CardGrid, RatingFilterOptions, useSearchReducer } from "$app/components/Product/CardGrid";
+import { CardGrid, useSearchReducer } from "$app/components/Product/CardGrid";
 import { Skeleton } from "$app/components/Skeleton";
 import { CardContent } from "$app/components/ui/Card";
 import { Details, DetailsToggle } from "$app/components/ui/Details";
@@ -495,39 +495,24 @@ function DiscoverIndex() {
               hideSort={!state.params.query && !hasOfferCode}
               defaults={filterDefaults}
               appendFilters={
-                isDesktop ? (
-                  <>
-                    <CardContent asChild details>
-                      <Details>
-                        <DetailsToggle chevronPosition="right" className="grow">
-                          Rating
-                        </DetailsToggle>
-                        <RatingFilterOptions
-                          rating={state.params.rating}
-                          onRatingChange={(rating) => updateParams({ rating })}
-                        />
-                      </Details>
-                    </CardContent>
-                    {hasOfferCode ? (
-                      <CardContent asChild details>
-                        <Details open>
-                          <DetailsToggle chevronPosition="right" className="grow">
-                            Offer code
-                          </DetailsToggle>
-                          <div className="flex items-center justify-between gap-2 py-1">
-                            <span>{props.black_friday_offer_code}</span>
-                            <button
-                              onClick={() => updateParams({ offer_code: undefined })}
-                              className="flex cursor-pointer items-center justify-center all-unset"
-                              aria-label="Remove offer code filter"
-                            >
-                              <X className="size-4" />
-                            </button>
-                          </div>
-                        </Details>
-                      </CardContent>
-                    ) : null}
-                  </>
+                isDesktop && hasOfferCode ? (
+                  <CardContent asChild details>
+                    <Details open>
+                      <DetailsToggle chevronPosition="right" className="grow">
+                        Offer code
+                      </DetailsToggle>
+                      <div className="flex items-center justify-between gap-2 py-1">
+                        <span>{props.black_friday_offer_code}</span>
+                        <button
+                          onClick={() => updateParams({ offer_code: undefined })}
+                          className="flex cursor-pointer items-center justify-center all-unset"
+                          aria-label="Remove offer code filter"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </div>
+                    </Details>
+                  </CardContent>
                 ) : undefined
               }
               pagination="button"

@@ -2,24 +2,11 @@ import { ChevronDown, X } from "@boxicons/react";
 import * as React from "react";
 
 import { SearchRequest } from "$app/data/search";
-import { SORT_KEYS } from "$app/parsers/product";
-import { CurrencyCode, getShortCurrencySymbol } from "$app/utils/currency";
+import { CurrencyCode } from "$app/utils/currency";
 
-import { NumberInput } from "$app/components/NumberInput";
-import { Action, FilterCheckboxes, RatingFilterOptions, SORT_BY_LABELS, State } from "$app/components/Product/CardGrid";
-import { showAlert } from "$app/components/server-components/Alert";
+import { Action, State, useDiscoverFilters } from "$app/components/Product/CardGrid";
 import { BottomSheet, BottomSheetFooter, BottomSheetHeader } from "$app/components/ui/BottomSheet";
-import { Checkbox } from "$app/components/ui/Checkbox";
-import { Fieldset, FieldsetTitle } from "$app/components/ui/Fieldset";
-import { Input } from "$app/components/ui/Input";
-import { InputGroup } from "$app/components/ui/InputGroup";
-import { Label } from "$app/components/ui/Label";
 import { Pill } from "$app/components/ui/Pill";
-import { Radio } from "$app/components/ui/Radio";
-import { useDebouncedCallback } from "$app/components/useDebouncedCallback";
-import { useOnChange } from "$app/components/useOnChange";
-
-type FilterKey = "sort" | "tags" | "contains" | "price" | "rating";
 
 type MobileFilterBarProps = {
   state: State;
@@ -30,8 +17,6 @@ type MobileFilterBarProps = {
   hasOfferCode?: boolean;
 };
 
-const SORT_LABELS: Partial<Record<string, string>> = SORT_BY_LABELS;
-
 export const MobileFilterBar = ({
   state,
   dispatchAction,
@@ -40,222 +25,94 @@ export const MobileFilterBar = ({
   hideSort,
   hasOfferCode,
 }: MobileFilterBarProps) => {
-  const currencySymbol = getShortCurrencySymbol(currencyCode);
-  const [openFilter, setOpenFilter] = React.useState<FilterKey | null>(null);
+  const [openFilter, setOpenFilter] = React.useState<string | null>(null);
 
   const { params: searchParams } = state;
-  const lastResultsRef = React.useRef(state.results);
-  if (state.results != null) lastResultsRef.current = state.results;
-  const results = state.results ?? lastResultsRef.current;
+  const results = state.results;
 
-  const updateParams = (newParams: Partial<SearchRequest>) => {
-    const { from: _, ...params } = searchParams;
-    dispatchAction({ type: "set-params", params: { ...params, ...newParams } });
-  };
+  const { filters, updateParams } = useDiscoverFilters({
+    state,
+    dispatchAction,
+    defaults,
+    currencyCode,
+    hideSort,
+    hasOfferCode,
+  });
 
-  const [enteredMinPrice, setEnteredMinPrice] = React.useState(searchParams.min_price ?? null);
-  const [enteredMaxPrice, setEnteredMaxPrice] = React.useState(searchParams.max_price ?? null);
+  const visibleFilters = filters.filter((f) => {
+    if (f.key === "sort") return !hideSort;
+    return true;
+  });
 
-  useOnChange(() => {
-    setEnteredMinPrice(searchParams.min_price ?? null);
-    setEnteredMaxPrice(searchParams.max_price ?? null);
-  }, [searchParams]);
+  const disabledFilters = new Set(
+    visibleFilters.filter((f) => !f.hasData && !f.active).map((f) => f.key),
+  );
 
-  const debouncedTrySetPrice = useDebouncedCallback((minPrice: number | null, maxPrice: number | null) => {
-    trySetPrice(minPrice, maxPrice);
-  }, 500);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const filterLabels = visibleFilters.map((f) => f.label).join(",");
 
-  const trySetPrice = (minPrice: number | null, maxPrice: number | null) => {
-    if (minPrice == null || maxPrice == null || maxPrice > minPrice) {
-      updateParams({ min_price: minPrice ?? undefined, max_price: maxPrice ?? undefined });
-    } else showAlert("Please set the price minimum to be lower than the maximum.", "error");
-  };
+  React.useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const children: HTMLElement[] = Array.from(container.children).filter(
+      (c): c is HTMLElement => c instanceof HTMLElement,
+    );
+    if (children.length < 2) return;
 
-  const uid = React.useId();
-  const minPriceUid = React.useId();
-  const maxPriceUid = React.useId();
+    container.style.removeProperty("gap");
+    const computedStyles = getComputedStyle(container);
+    const containerPadding = parseFloat(computedStyles.paddingLeft) || 16;
+    const defaultGap = parseFloat(computedStyles.columnGap) || 8;
+    const minGap = 4;
+    const maxGap = 24;
+    const minPeek = 0.2;
+    const maxPeek = 0.8;
+    const candidatePeekIndices = [3, 4];
+    const containerWidth = container.clientWidth;
+    const pillWidths = children.map((c) => c.getBoundingClientRect().width);
 
-  const concatFoundAndNotFound = (
-    resultsData: { key: string; doc_count: number }[] | undefined,
-    searchedKeys: string[] | undefined,
-  ) => {
-    const foundData = resultsData ?? [];
-    const notFoundKeys = searchedKeys?.filter((s) => !foundData.some((f) => f.key === s)) ?? [];
-    return notFoundKeys.map((key) => ({ key, doc_count: 0 })).concat(foundData);
-  };
+    const cumulativeWidths = pillWidths.reduce<number[]>((acc, w) => {
+      acc.push((acc[acc.length - 1] ?? 0) + w);
+      return acc;
+    }, []);
+    const sumWidthsBefore = (index: number) => cumulativeWidths[index - 1] ?? 0;
 
-  const selectedTagsCount = searchParams.tags?.length ?? 0;
-  const selectedFiletypesCount = searchParams.filetypes?.length ?? 0;
+    const visibleFraction = (pillIndex: number, gap: number) => {
+      const width = pillWidths[pillIndex];
+      if (width == null) return -1;
+      const pillStart = containerPadding + sumWidthsBefore(pillIndex) + pillIndex * gap;
+      return Math.max(0, Math.min(1, (containerWidth - pillStart) / width));
+    };
 
-  const filters: {
-    key: FilterKey;
-    label: string;
-    title: string;
-    active: boolean;
-    visible: boolean;
-    disabled: boolean;
-    onClear: (() => void) | null;
-    content: React.ReactNode;
-  }[] = [
-    {
-      key: "sort",
-      title: "Sort by",
-      label:
-        searchParams.sort !== defaults.sort && searchParams.sort != null
-          ? `Sort: ${SORT_LABELS[searchParams.sort] ?? searchParams.sort}`
-          : "Sort by",
-      active: searchParams.sort !== defaults.sort && searchParams.sort != null,
-      visible: !hideSort,
-      disabled: false,
-      onClear: searchParams.sort !== defaults.sort && searchParams.sort != null ? () => updateParams({ sort: defaults.sort }) : null,
-      content: (
-        <Fieldset role="group">
-          {SORT_KEYS.map((key) => (
-            <Label key={key} className="w-full">
-              {SORT_BY_LABELS[key]}
-              <Radio
-                wrapperClassName="ml-auto"
-                name={`${uid}-mobile-sortBy`}
-                checked={(searchParams.sort ?? defaults.sort) === key}
-                onChange={() => updateParams({ sort: key })}
-              />
-            </Label>
-          ))}
-        </Fieldset>
-      ),
-    },
-    {
-      key: "tags",
-      title: "Tags",
-      label: selectedTagsCount > 0 ? `Tags (${selectedTagsCount})` : "Tags",
-      active: selectedTagsCount > 0,
-      visible: true,
-      disabled: (results?.tags_data.length ?? 0) === 0 && selectedTagsCount === 0,
-      onClear: selectedTagsCount > 0 ? () => updateParams({ tags: undefined }) : null,
-      content: (
-        <Fieldset role="group">
-          <Label className="w-full">
-            All Products
-            <Checkbox
-              wrapperClassName="ml-auto"
-              checked={!searchParams.tags?.length}
-              disabled={!searchParams.tags?.length}
-              onChange={() => updateParams({ tags: undefined })}
-            />
-          </Label>
-          {results ? (
-            <FilterCheckboxes
-              filters={concatFoundAndNotFound(results.tags_data, searchParams.tags)}
-              selection={searchParams.tags ?? []}
-              setSelection={(tags) => updateParams({ tags })}
-              disabled={false}
-            />
-          ) : null}
-        </Fieldset>
-      ),
-    },
-    {
-      key: "contains",
-      title: "Contains",
-      label: selectedFiletypesCount > 0 ? `Contains (${selectedFiletypesCount})` : "Contains",
-      active: selectedFiletypesCount > 0,
-      visible: true,
-      disabled: (results?.filetypes_data.length ?? 0) === 0 && selectedFiletypesCount === 0,
-      onClear: selectedFiletypesCount > 0 ? () => updateParams({ filetypes: undefined }) : null,
-      content: (
-        <Fieldset role="group">
-          {results ? (
-            <FilterCheckboxes
-              filters={concatFoundAndNotFound(results.filetypes_data, searchParams.filetypes)}
-              selection={searchParams.filetypes ?? []}
-              setSelection={(filetypes) => updateParams({ filetypes })}
-              disabled={false}
-            />
-          ) : null}
-        </Fieldset>
-      ),
-    },
-    {
-      key: "price",
-      title: "Price",
-      label: (() => {
-        const minSet = searchParams.min_price != null;
-        const maxSet = searchParams.max_price != null;
-        if (minSet && maxSet)
-          return `${currencySymbol}${searchParams.min_price}\u2013${currencySymbol}${searchParams.max_price}`;
-        if (minSet) return `${currencySymbol}${searchParams.min_price}+`;
-        if (maxSet) return `Up to ${currencySymbol}${searchParams.max_price}`;
-        return "Price";
-      })(),
-      active: searchParams.min_price != null || searchParams.max_price != null,
-      visible: true,
-      disabled: false,
-      onClear: searchParams.min_price != null || searchParams.max_price != null ? () => updateParams({ min_price: undefined, max_price: undefined }) : null,
-      content: (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(var(--dynamic-grid), 1fr))",
-            gridAutoFlow: "row",
-            gap: "var(--spacer-3)",
-          }}
-        >
-          <Fieldset>
-            <FieldsetTitle>
-              <Label htmlFor={minPriceUid}>Minimum price</Label>
-            </FieldsetTitle>
-            <InputGroup>
-              <Pill className="-ml-2 shrink-0">{currencySymbol}</Pill>
-              <NumberInput
-                onChange={(value) => {
-                  setEnteredMinPrice(value);
-                  debouncedTrySetPrice(value, enteredMaxPrice);
-                }}
-                value={enteredMinPrice ?? null}
-              >
-                {(props) => <Input id={minPriceUid} placeholder="0" {...props} />}
-              </NumberInput>
-            </InputGroup>
-          </Fieldset>
-          <Fieldset>
-            <FieldsetTitle>
-              <Label htmlFor={maxPriceUid}>Maximum price</Label>
-            </FieldsetTitle>
-            <InputGroup>
-              <Pill className="-ml-2 shrink-0">{currencySymbol}</Pill>
-              <NumberInput
-                onChange={(value) => {
-                  setEnteredMaxPrice(value);
-                  debouncedTrySetPrice(enteredMinPrice, value);
-                }}
-                value={enteredMaxPrice ?? null}
-              >
-                {(props) => <Input id={maxPriceUid} placeholder="∞" {...props} />}
-              </NumberInput>
-            </InputGroup>
-          </Fieldset>
-        </div>
-      ),
-    },
-    {
-      key: "rating",
-      title: "Rating",
-      label: searchParams.rating != null ? `${searchParams.rating}+ stars` : "Rating",
-      active: searchParams.rating != null,
-      visible: true,
-      disabled: false,
-      onClear: searchParams.rating != null ? () => updateParams({ rating: undefined }) : null,
-      content: (
-        <RatingFilterOptions rating={searchParams.rating} onRatingChange={(rating) => updateParams({ rating })} />
-      ),
-    },
-  ];
+    const alreadyHasPeek = candidatePeekIndices.some((i) => {
+      const fraction = visibleFraction(i, defaultGap);
+      return fraction >= minPeek && fraction <= maxPeek;
+    });
+    if (alreadyHasPeek) return;
 
-  const visibleFilters = filters.filter((f) => f.visible);
+    let bestGap = defaultGap;
+    let smallestGapDelta = Infinity;
+    for (const pillIndex of candidatePeekIndices) {
+      if (pillIndex >= pillWidths.length) continue;
+      const fraction = visibleFraction(pillIndex, defaultGap);
+      const targetFraction = fraction < minPeek ? minPeek : maxPeek;
+      const pillWidth = pillWidths[pillIndex];
+      if (pillWidth == null) continue;
+      const candidateGap =
+        (containerWidth - containerPadding - sumWidthsBefore(pillIndex) - pillWidth * targetFraction) / pillIndex;
+      if (candidateGap >= minGap && candidateGap <= maxGap && Math.abs(candidateGap - defaultGap) < smallestGapDelta) {
+        smallestGapDelta = Math.abs(candidateGap - defaultGap);
+        bestGap = candidateGap;
+      }
+    }
+
+    if (bestGap !== defaultGap) container.style.gap = `${bestGap}px`;
+  }, [filterLabels, hasOfferCode]);
 
   return (
     <>
       <div
+        ref={containerRef}
         role="toolbar"
         aria-label="Filters"
         className="flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -272,25 +129,28 @@ export const MobileFilterBar = ({
             </button>
           </Pill>
         ) : null}
-        {visibleFilters.map((filter) => (
-          <Pill
-            key={filter.key}
-            asChild
-            className={`shrink-0 ${filter.disabled ? "cursor-default opacity-50" : "cursor-pointer"} ${filter.active ? "border-foreground bg-accent/20" : "bg-transparent"}`}
-          >
-            <button
-              onClick={() => {
-                if (!filter.disabled) setOpenFilter(filter.key);
-              }}
-              disabled={filter.disabled}
-              aria-haspopup="dialog"
-              className="inline-flex min-h-11 items-center gap-1 text-base"
+        {visibleFilters.map((filter) => {
+          const disabled = disabledFilters.has(filter.key);
+          return (
+            <Pill
+              key={filter.key}
+              asChild
+              className={`shrink-0 ${disabled ? "cursor-default opacity-50" : "cursor-pointer"} ${filter.active ? "border-foreground bg-accent/20" : "bg-transparent"}`}
             >
-              {filter.label}
-              <ChevronDown className="size-4" />
-            </button>
-          </Pill>
-        ))}
+              <button
+                onClick={() => {
+                  if (!disabled) setOpenFilter(filter.key);
+                }}
+                disabled={disabled}
+                aria-haspopup="dialog"
+                className="inline-flex min-h-11 items-center gap-1 text-base"
+              >
+                {filter.label}
+                <ChevronDown className="size-4" />
+              </button>
+            </Pill>
+          );
+        })}
       </div>
 
       {filters.map((filter) => (
@@ -303,7 +163,14 @@ export const MobileFilterBar = ({
         >
           <BottomSheetHeader>{filter.title}</BottomSheetHeader>
           {filter.content}
-          <BottomSheetFooter>
+          <BottomSheetFooter
+            buttonLabel={
+              results
+                ? `Show ${results.total >= 99 ? "99+" : results.total} ${results.total === 1 ? "result" : "results"}`
+                : "Show results"
+            }
+            buttonDisabled={results?.total === 0}
+          >
             <button
               className={`mr-auto underline all-unset ${filter.onClear ? "cursor-pointer text-foreground" : "cursor-default text-muted"}`}
               onClick={() => filter.onClear?.()}
