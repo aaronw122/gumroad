@@ -5,7 +5,7 @@ import { SearchRequest } from "$app/data/search";
 import { classNames } from "$app/utils/classNames";
 import { CurrencyCode } from "$app/utils/currency";
 
-import { Action, State, useDiscoverFilterSections } from "$app/components/Product/CardGrid";
+import { Action, State, useDiscoverFilters } from "$app/components/Product/CardGrid";
 import { BottomSheet, BottomSheetFooter, BottomSheetHeader } from "$app/components/ui/BottomSheet";
 import { Pill } from "$app/components/ui/Pill";
 
@@ -30,7 +30,7 @@ export const MobileFilterBar = ({
 
   const { params: searchParams } = state;
 
-  const { filters, updateParams, results } = useDiscoverFilterSections({
+  const { filters, updateParams, results } = useDiscoverFilters({
     state,
     dispatchAction,
     defaults,

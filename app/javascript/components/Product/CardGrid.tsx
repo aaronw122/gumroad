@@ -201,7 +201,7 @@ export type FilterDefinition = {
   hasData: boolean;
 };
 
-export const useDiscoverFilterSections = ({
+export const useDiscoverFilters = ({
   state,
   dispatchAction,
   defaults = {},
@@ -452,7 +452,7 @@ export const CardGrid = ({
   const gridRef = React.useRef<HTMLDivElement | null>(null);
   const { results } = state;
 
-  const { filters, resetFilters, anyFilters } = useDiscoverFilterSections({
+  const { filters, resetFilters, anyFilters } = useDiscoverFilters({
     state,
     dispatchAction,
     defaults,
@@ -501,7 +501,7 @@ export const CardGrid = ({
           {prependFilters}
           {filters.map((filter) => {
             const local = localOpenState[filter.key];
-            const shouldShow = filter.isVisible || local?.open;
+            const shouldShow = filter.isVisible && (filter.hasData || local?.open);
             if (!shouldShow) return null;
             return (
               <CardContent key={filter.key} asChild details>
