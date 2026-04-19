@@ -195,7 +195,7 @@ export type FilterDefinition = {
   title: string;
   triggerLabel: string;
   active: boolean;
-  clear?: () => void;
+  clear?: (() => void) | undefined;
   content: React.ReactNode;
   isVisible: boolean;
   hasData: boolean;
@@ -296,7 +296,7 @@ export const useDiscoverFilters = ({
       active: sortActive,
       isVisible: !hideSort,
       hasData: true,
-      ...(sortActive ? { clear: () => updateParams({ sort: defaults.sort }) } : {}),
+      clear: sortActive ? () => updateParams({ sort: defaults.sort }) : undefined,
       content: (
         <Fieldset role="group">
           {(onProfile ? PROFILE_SORT_KEYS : SORT_KEYS).map((key) => (
@@ -321,7 +321,7 @@ export const useDiscoverFilters = ({
       active: selectedTagsCount > 0,
       isVisible: true,
       hasData: (results?.tags_data.length ?? 0) > 0 || selectedTagsCount > 0,
-      ...(selectedTagsCount > 0 ? { clear: () => updateParams({ tags: undefined }) } : {}),
+      clear: selectedTagsCount > 0 ? () => updateParams({ tags: undefined }) : undefined,
       content: (
         <Fieldset role="group">
           <Label className="w-full">
@@ -351,7 +351,7 @@ export const useDiscoverFilters = ({
       active: selectedFiletypesCount > 0,
       isVisible: true,
       hasData: (results?.filetypes_data.length ?? 0) > 0 || selectedFiletypesCount > 0,
-      ...(selectedFiletypesCount > 0 ? { clear: () => updateParams({ filetypes: undefined }) } : {}),
+      clear: selectedFiletypesCount > 0 ? () => updateParams({ filetypes: undefined }) : undefined,
       content: (
         <Fieldset role="group">
           {results ? (
@@ -372,7 +372,7 @@ export const useDiscoverFilters = ({
       active: priceActive,
       isVisible: true,
       hasData: true,
-      ...(priceActive ? { clear: () => updateParams({ min_price: undefined, max_price: undefined }) } : {}),
+      clear: priceActive ? () => updateParams({ min_price: undefined, max_price: undefined }) : undefined,
       content: (
         <div
           style={{
@@ -426,7 +426,7 @@ export const useDiscoverFilters = ({
       active: searchParams.rating != null,
       isVisible: true,
       hasData: true,
-      ...(searchParams.rating != null ? { clear: () => updateParams({ rating: undefined }) } : {}),
+      clear: searchParams.rating != null ? () => updateParams({ rating: undefined }) : undefined,
       content: (
         <RatingFilterOptions rating={searchParams.rating} onRatingChange={(rating) => updateParams({ rating })} />
       ),

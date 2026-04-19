@@ -8,7 +8,7 @@ export const BottomSheet = ({ children, ...props }: React.ComponentProps<typeof 
   <Dialog.Root {...props} modal>
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 z-40 bg-black/80" />
-      <Dialog.Content aria-describedby={undefined} className="fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] flex-col gap-4 overflow-auto rounded-t border-t border-border bg-background p-6">
+      <Dialog.Content aria-describedby={undefined} className="fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] flex-col gap-4 overflow-auto rounded-t border-t border-border bg-background p-4">
         {children}
       </Dialog.Content>
     </Dialog.Portal>
@@ -24,11 +24,25 @@ export const BottomSheetHeader = ({ children }: { children: React.ReactNode }) =
   </div>
 );
 
-export const BottomSheetFooter = ({ children }: { children?: React.ReactNode }) => (
+export const BottomSheetFooter = ({
+  children,
+  buttonLabel = "Done",
+  buttonDisabled,
+}: {
+  children?: React.ReactNode;
+  buttonLabel?: string;
+  buttonDisabled?: boolean;
+}) => (
   <div className="flex items-center justify-end gap-4 pt-2">
     {children}
-    <Dialog.Close asChild>
-      <Button color="primary">Done</Button>
-    </Dialog.Close>
+    {buttonDisabled ? (
+      <Button color="primary" disabled className="pointer-events-none">
+        {buttonLabel}
+      </Button>
+    ) : (
+      <Dialog.Close asChild>
+        <Button color="primary">{buttonLabel}</Button>
+      </Dialog.Close>
+    )}
   </div>
 );
