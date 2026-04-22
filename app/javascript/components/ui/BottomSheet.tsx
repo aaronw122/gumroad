@@ -8,7 +8,10 @@ export const BottomSheet = ({ children, ...props }: React.ComponentProps<typeof 
   <Dialog.Root {...props} modal>
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 z-40 bg-black/80" />
-      <Dialog.Content aria-describedby={undefined} className="fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] flex-col gap-4 overflow-auto rounded-t border-t border-border bg-background p-4">
+      <Dialog.Content
+        aria-describedby={undefined}
+        className="fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] flex-col gap-4 overflow-auto rounded-t border-t border-border bg-background p-4"
+      >
         {children}
       </Dialog.Content>
     </Dialog.Portal>

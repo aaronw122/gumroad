@@ -42,77 +42,11 @@ export const MobileFilterBar = ({
 
   const disabledFilters = new Set(visibleFilters.filter((f) => !f.hasData && !f.active).map((f) => f.key));
 
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const filterLabels = visibleFilters.map((filter) => filter.triggerLabel).join(",");
-
-  React.useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const children: HTMLElement[] = Array.from(container.children).filter(
-      (c): c is HTMLElement => c instanceof HTMLElement,
-    );
-    if (children.length < 2) return;
-
-    container.style.removeProperty("gap");
-    const computedStyles = getComputedStyle(container);
-    const containerPadding = parseFloat(computedStyles.paddingLeft) || 16;
-    const defaultGap = parseFloat(computedStyles.columnGap) || 8;
-    const minGap = 4;
-    const maxGap = 24;
-    const minPeek = 0.2;
-    const maxPeek = 0.8;
-    const candidatePeekIndices = [3, 4];
-    const containerWidth = container.clientWidth;
-    const pillWidths = children.map((c) => c.getBoundingClientRect().width);
-
-    const cumulativeWidths = pillWidths.reduce<number[]>((acc, w) => {
-      acc.push((acc[acc.length - 1] ?? 0) + w);
-      return acc;
-    }, []);
-    const sumWidthsBefore = (index: number) => cumulativeWidths[index - 1] ?? 0;
-
-    const visibleFraction = (pillIndex: number, gap: number) => {
-      const width = pillWidths[pillIndex];
-      if (width == null) return -1;
-      const pillStart = containerPadding + sumWidthsBefore(pillIndex) + pillIndex * gap;
-      return Math.max(0, Math.min(1, (containerWidth - pillStart) / width));
-    };
-
-    const alreadyHasPeek = candidatePeekIndices.some((i) => {
-      const fraction = visibleFraction(i, defaultGap);
-      return fraction >= minPeek && fraction <= maxPeek;
-    });
-    if (alreadyHasPeek) return;
-
-    let bestGap = defaultGap;
-    let smallestGapDelta = Infinity;
-    for (const pillIndex of candidatePeekIndices) {
-      if (pillIndex >= pillWidths.length) continue;
-      const fraction = visibleFraction(pillIndex, defaultGap);
-      const targetFraction = fraction < minPeek ? minPeek : maxPeek;
-      const pillWidth = pillWidths[pillIndex];
-      if (pillWidth == null) continue;
-      const candidateGap =
-        (containerWidth - containerPadding - sumWidthsBefore(pillIndex) - pillWidth * targetFraction) / pillIndex;
-      if (candidateGap >= minGap && candidateGap <= maxGap && Math.abs(candidateGap - defaultGap) < smallestGapDelta) {
-        smallestGapDelta = Math.abs(candidateGap - defaultGap);
-        bestGap = candidateGap;
-      }
-    }
-
-    if (bestGap !== defaultGap) container.style.gap = `${bestGap}px`;
-  }, [filterLabels, hasOfferCode]);
-
   return (
     <>
-      <div
-        ref={containerRef}
-        role="toolbar"
-        aria-label="Filters"
-        className="flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
+      <div role="toolbar" aria-label="Filters" className="flex flex-wrap gap-2 px-4">
         {hasOfferCode ? (
-          <Pill asChild color="primary" className="shrink-0 cursor-pointer">
+          <Pill asChild color="primary" className="cursor-pointer">
             <button
               onClick={() => updateParams({ offer_code: undefined })}
               aria-label="Remove offer code filter"
@@ -130,7 +64,6 @@ export const MobileFilterBar = ({
               key={filter.key}
               asChild
               className={classNames(
-                "shrink-0",
                 disabled ? "cursor-default opacity-50" : "cursor-pointer",
                 filter.active ? "border-foreground bg-accent/20" : "bg-transparent",
               )}
